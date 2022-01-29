@@ -1,0 +1,12 @@
+[package]
+name = "kagurin_rs"
+description = "速くて安心で効率的な Rust製のかぐりんぼっと"
+version = "0.1.0"
+authors = ["Rinrin.py"]
+license = "[GPL-3.0] GNU General Public License v3.0"
+repository = "https://github.com/Rinrin0413/kagurin-rs"
+edition = "2018"
+
+[dependencies]
+serenity = "0.10"
+tokio = { version = "1.6.1", features = ["macros", "rt-multi-thread"] }
