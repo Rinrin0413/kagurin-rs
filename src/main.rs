@@ -38,6 +38,13 @@ async fn main() {
 
 #[command]
 async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
+    println!("{:?}", ctx.shard);
     msg.reply(ctx, "Pong!").await?;
+    msg.reply(ctx, "Pong!2").await?;
+    Ok(())
+}
+#[command]
+async fn ping2(ctx: &Context, msg: &Message) -> CommandResult {
+    msg.reply(ctx, "Pong!2").await?;
     Ok(())
 }
