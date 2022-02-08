@@ -4,6 +4,7 @@ use serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready},
     prelude::*,
+    utils::MessageBuilder,
 };
 
 struct Handler;
@@ -12,14 +13,53 @@ struct Handler;
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content == "kgrs!ping" {
+        if msg.content == "kgrs!ping" { // Nomal MSG
             if let Err(why) = msg.channel_id.say(&ctx.http, "贵樣!").await {
-                er(why);
+                er("sending msg", why);
             }
         }
-        if msg.content == "kgrs!ping2" {
-            if let Err(why) = msg.channel_id.say(&ctx.http, "贵樣！!").await {
-                er(why);
+        if msg.content == "kgrs!dm" { // dm
+            let dm = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
+            if let Err(why) = dm {
+                er("when direct msging user", why);
+            }
+        }
+        if msg.content == "kgrs!MessageBuilder" { // dynamically(decorationary) MSG
+            let channel = match msg.channel_id.to_channel(&ctx).await {
+                Ok(channel) => channel,
+                Err(why) => {
+                    er("getting channel", why);
+                    return;
+                },
+            };
+            let content = MessageBuilder::new()
+                .push("贵樣(")
+                .push_bold_safe(&msg.author.name)
+                .push(") ば `kgrs!dynamiccmd` を ")
+                .mention(&channel)
+                .push(" で使用レだ。")
+                .build();
+            if let Err(why) = msg.channel_id.say(&ctx.http, &content).await {
+                er("sending message", why);
+            }
+        }
+        if msg.content == "kgrs!MessageBuilder2" {
+            let content = MessageBuilder::new()
+                .push("通常の文字列")
+                .push_codeblock("print(\"コードブロック\")", Some("py"))
+                .push_mono("コードインライン")
+                .push_italic("斜体")
+                .push_bold("太字")
+                .push_underline("下線")
+                .push_strike("取り消し線")
+                .push_spoiler("スポイラー")
+                .push_quote("引用")
+                .push_line("末尾に改行")
+                .push_safe("*アスタリスク*`グレイヴ・アクセント`_アンダーライン_")
+                .build();
+                println!("{:?}", content);
+            if let Err(why) = msg.channel_id.say(&ctx.http, &content).await {
+                er("sending message", why);
             }
         }
     }
@@ -46,6 +86,6 @@ async fn main() {
     }
 }
 
-fn er(why: serenity::Error) {
-    println!("Error sending message: {:?}", why);
+fn er(err: &str, why: serenity::Error) {
+    println!("Error {}: {:?}", err, why);
 }
