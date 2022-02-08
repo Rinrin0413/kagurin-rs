@@ -8,5 +8,7 @@ repository = "https://github.com/Rinrin0413/kagurin-rs"
 edition = "2018"
 
 [dependencies]
-serenity = "0.10"
+serenity = { version = "0.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model"] }
 tokio = { version = "1.6.1", features = ["macros", "rt-multi-thread"] }
+#serenity = "0.10"
+#tokio = { version = "1.6.1", features = ["macros", "rt-multi-thread"] }

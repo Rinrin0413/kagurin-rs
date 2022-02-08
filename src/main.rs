@@ -1,50 +1,42 @@
-use serenity::async_trait;
-use serenity::client::{Client, Context, EventHandler};
-use serenity::framework::standard::{
-    macros::{command, group},
-    CommandResult, StandardFramework,
-};
-use serenity::model::channel::Message;
 use std::env;
 
-#[group]
-#[commands(ping)]
-struct General;
+use serenity::{
+    async_trait,
+    model::{channel::Message, gateway::Ready},
+    prelude::*,
+};
 
 struct Handler;
 
 #[async_trait]
-impl EventHandler for Handler {}
-
-#[tokio::main]
-async fn main() {
-    let framework = StandardFramework::new()
-        .configure(|c| c.prefix("kgrs!")) // cmd prefix
-        .group(&GENERAL_GROUP);
-
-    // Login with a bot token from the environment
-    let token = env::var("KAGURIN_RS_TOKEN").expect("token");
-    let mut client = Client::builder(token)
-        .event_handler(Handler)
-        .framework(framework)
-        .await
-        .expect("Error creating client");
-
-    // start listening for events by starting a single shard
-    if let Err(why) = client.start().await {
-        println!("An error occurred while running the client: {:?}", why);
+impl EventHandler for Handler {
+    // メッセージイベント
+    async fn message(&self, ctx: Context, msg: Message) {
+        if msg.content == "kgrs!ping" {
+            if let Err(why) = msg.channel_id.say(&ctx.http, "贵樣!").await {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+    }
+    // 起動イベント
+    async fn ready(&self, _: Context, ready: Ready) {
+        println!("{} is connected", ready.user.name);
     }
 }
 
-#[command]
-async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
-    println!("{:?}", ctx.shard);
-    msg.reply(ctx, "Pong!").await?;
-    msg.reply(ctx, "Pong!2").await?;
-    Ok(())
-}
-#[command]
-async fn ping2(ctx: &Context, msg: &Message) -> CommandResult {
-    msg.reply(ctx, "Pong!2").await?;
-    Ok(())
+#[tokio::main]
+async fn main() {
+    // Configure the client with your Discord bot token in the environment.
+    let token = env::var("KAGURIN_RS_TOKEN").expect("Expected a token in the environment");
+
+    // Create a new instance of the Client, logging in as a bot. 
+    let mut client = Client::builder(&token)
+        .event_handler(Handler)
+        .await
+        .expect("Err creating client");
+
+    // Finally, start a single shard, and start listening to events.
+    if let Err(why) = client.start().await {
+        println!("Client error: {:?}", why);
+    }
 }
