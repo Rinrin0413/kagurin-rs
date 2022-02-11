@@ -1,13 +1,14 @@
-use std::env;
+use std::{collections::HashMap, env};
 
 use serenity::{
     async_trait,
+    //builder::CreateEmbedAuthor,
     model::{channel::Message, gateway::Ready, prelude::*},
     prelude::*,
-    utils::MessageBuilder,
+    utils::{MessageBuilder, Colour}
 };
 
-use serde_json::json;
+use serde_json::{json, Value};
 
 struct Handler;
 
@@ -89,34 +90,60 @@ impl EventHandler for Handler {
         }
 
         if msg.content == "kgrs!embed&img" {
-            // The create message builder allows you to easily create embeds and messages
-            // using a builder syntax.
-            // This example will create a message that says "Hello, World!", with an embed that has
-            // a title, description, an image, three fields, and a footer.
+            let mut author: HashMap<&'static str, Value> = HashMap::new();
+            author.insert("贵樣", Value::String(String::from("a")));
             let msg = msg
                 .channel_id
                 .send_message(&ctx.http, |m| {
                     m.content("ただの文章")
                         .embed(|e| {
-                            e.title("全体タイトル")
-                                .description("全体説明")
-                                .image("https://media.discordapp.net/attachments/894239318330179624/938502857404088382/unknown.png?width=764&height=663")
-                                .fields(vec![
-                                    ("第壱フィールドタイトル", "第壱フィールドボディ(インライン)", true),
-                                    ("第贰フィールドタイトル", "第贰フィールドボディ(インライン)", true),
-                                ])
-                                .field(
-                                    "第叁フィールドタイトル",
-                                    "第叁フィールドボディ(インラインじゃないよ)",
-                                    false,
-                                )
-                                .footer(|f| f.text("フッター"))
-                                // Add a timestamp for the current time
-                                // This also accepts a rfc3339 Timestamp
-                                .timestamp(chrono::Utc::now())
-                        })
+
+                            // 埋め込み(E.bed)のタイトル
+                            e.title("全体タイトル");
+
+                            // 埋め込みの説明
+                            e.description("全体説明");
+
+                            // 画像添付
+                            e.image("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/MCSplashScreen.scale-200.png");//./static/MCSplashScreen.scale-200.png")
+
+                            // インラインのフィールド(複数)
+                            e.fields(vec![
+                                ("第壱フィールドタイトル", "第壱フィールドボディ(インライン)", true),
+                                ("第贰フィールドタイトル", "第贰フィールドボディ(インライン)", true),
+                            ]);
+
+                            // ブロックのフィールド
+                            e.field(
+                                "第叁フィールドタイトル",
+                                "第叁フィールドボディ(インラインじゃないよ)",
+                                false,
+                            );
+
+                            // フッター
+                            e.footer(|f| f.text("フッター"));
+
+                            // タイムスタンプ
+                            e.timestamp(chrono::Utc::now());
+
+                            // 著者
+                            e.author(|a| {
+                                // authorアイコン
+                                a.icon_url(&msg.author.face());
+                                // author名
+                                a.name(&msg.author.name)
+                            });
+
+                            // 埋め込みカラー
+                            e.color(Colour(0xFFCDC9));
+
+                            // サムネイル
+                            e.thumbnail("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/atking-of-the-pancake.png");//./static/atking-of-the-pancake.png")
+
+                            e // いろいろ改変した挙句 e を返す
+                    })
                         // ↓ ただの画像添付
-                        .add_file("https://media.discordapp.net/attachments/894239318330179624/938470521748725840/unknown.png")//"./ferris_eyes.png")
+                        .add_file("./static/atk-of-the-pancake.png")
                 })
                 .await;
 
