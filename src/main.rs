@@ -2,10 +2,12 @@ use std::env;
 
 use serenity::{
     async_trait,
-    model::{channel::Message, gateway::Ready},
+    model::{channel::Message, gateway::Ready, prelude::*},
     prelude::*,
     utils::MessageBuilder,
 };
+
+use serde_json::json;
 
 struct Handler;
 
@@ -13,7 +15,6 @@ struct Handler;
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-
         //if msg.author.bot { return; }
 
         if msg.content == "kgrs!ping" {
@@ -53,6 +54,15 @@ impl EventHandler for Handler {
         }
 
         if msg.content == "kgrs!MessageBuilder2" {
+            let emoji = serde_json::from_value::<Emoji>(json!({
+                "animated": false,
+                "id": EmojiId(921759722170904618),
+                "managed": true,
+                "name": "yushyu_no_jinzay".to_string(),
+                "require_colons": true,
+                "roles": Vec::<Role>::new(),
+            }))
+            .unwrap();
             let content = MessageBuilder::new()
                 .push("通常の文字列")
                 .push_codeblock("print(\"コードブロック\")", Some("py"))
@@ -64,7 +74,13 @@ impl EventHandler for Handler {
                 .push_spoiler("スポイラー")
                 .push_quote("引用")
                 .push_line("末尾に改行")
-                .push_safe("*アスタリスク*`グレイヴ・アクセント`_アンダーライン_")
+                .push_safe("discord.gg/7QhMDfyPHR @here *アスタリスク* `グレイヴ・アクセント` _アンダーライン_")
+                .push_underline_safe("下__線")
+                .channel(ChannelId(894239318330179624))
+                .emoji(&emoji)
+                .mention(&UserId(724976600873041940))
+                .role(RoleId(835851285982478346))
+                .user(&UserId(801082943371477022))
                 .build();
             println!("{:?}", content);
             if let Err(why) = msg.channel_id.say(&ctx.http, &content).await {
