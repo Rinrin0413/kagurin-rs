@@ -5,7 +5,7 @@ use serenity::{
     //builder::CreateEmbedAuthor,
     model::{channel::Message, gateway::Ready, prelude::*},
     prelude::*,
-    utils::{MessageBuilder, Colour}
+    utils::{Colour, MessageBuilder},
 };
 
 use serde_json::{json, Value};
@@ -97,7 +97,6 @@ impl EventHandler for Handler {
                 .send_message(&ctx.http, |m| {
                     m.content("ただの文章")
                         .embed(|e| {
-
                             // 埋め込み(E.bed)のタイトル
                             e.title("全体タイトル");
 
@@ -105,12 +104,20 @@ impl EventHandler for Handler {
                             e.description("全体説明");
 
                             // 画像添付
-                            e.image("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/MCSplashScreen.scale-200.png");//./static/MCSplashScreen.scale-200.png")
+                            e.image("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/MCSplashScreen.scale-200.png"); //./static/MCSplashScreen.scale-200.png")
 
                             // インラインのフィールド(複数)
                             e.fields(vec![
-                                ("第壱フィールドタイトル", "第壱フィールドボディ(インライン)", true),
-                                ("第贰フィールドタイトル", "第贰フィールドボディ(インライン)", true),
+                                (
+                                    "第壱フィールドタイトル",
+                                    "第壱フィールドボディ(インライン)",
+                                    true,
+                                ),
+                                (
+                                    "第贰フィールドタイトル",
+                                    "第贰フィールドボディ(インライン)",
+                                    true,
+                                ),
                             ]);
 
                             // ブロックのフィールド
@@ -138,10 +145,10 @@ impl EventHandler for Handler {
                             e.color(Colour(0xFFCDC9));
 
                             // サムネイル
-                            e.thumbnail("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/atking-of-the-pancake.png");//./static/atking-of-the-pancake.png")
+                            e.thumbnail("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/atking-of-the-pancake.png"); //./static/atking-of-the-pancake.png")
 
                             e // いろいろ改変した挙句 e を返す
-                    })
+                        })
                         // ↓ ただの画像添付
                         .add_file("./static/atk-of-the-pancake.png")
                 })
