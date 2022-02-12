@@ -1,0 +1,11 @@
+[package]
+name = "kgrs"
+version = "0.1.0"
+edition = "2021"
+authors = ["Rinrin.rs"]
+license = "[GPL-3.0] GNU General Public License v3.0"
+repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

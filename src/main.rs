@@ -1,50 +1,197 @@
 use std::{collections::HashMap, env};
-
-use serenity::{
+use kgrs::serenity::{
     async_trait,
-    //builder::CreateEmbedAuthor,
     model::{channel::Message, gateway::Ready, prelude::*},
     prelude::*,
     utils::{Colour, MessageBuilder},
 };
-
 use serde_json::{json, Value};
+use kgrs::util::*;
 
 struct Handler;
 
+const VER: &'static str = env!("CARGO_PKG_VERSION");
+const EMBED_LABEL_COL: u32 = 0xB89089;
+const BOT_ICON: &str =
+    "https://cdn.discordapp.com/avatars/936116497502318654/a0b82d4e3d428cd578e24029ad05d2aa.png";
+
 #[async_trait]
 impl EventHandler for Handler {
+
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-        //if msg.author.bot { return; }
-
         // help
         if msg.content == "kgrs!help" {
+            let cn = "help";
             let content = msg
                 .channel_id
                 .send_message(&ctx.http, |m| {
-                    m.content("ただの文章").embed(|e| {
-                        e.author(|a| {
-                            a.icon_url("https://cdn.discordapp.com/avatars/936116497502318654/a0b82d4e3d428cd578e24029ad05d2aa.png")
-                                .name(&"かぐりん.rs's Commands")
-                        });
+                    m.embed(|e| {
+                        e.author(|a| a.icon_url(BOT_ICON).name("かぐりん.rs's Commands"));
                         e.title("コマンド一覧");
                         e.description("Command prefix: `kgrs!`");
                         e.fields(vec![
                             ("```kgrs!help```", "`コマンドのヘルプを表示`", true),
-                            ("```kgrs!info```", "`このボットの詳細を表示`", true)
+                            ("```kgrs!info```", "`このボットの詳細を表示`", true),
+                        ]);
+                        e.footer(|f| {
+                            f.text(format!(
+                                "kgrs!help by {}",
+                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
+                                    Some(n) => n,
+                                    None => &msg.author.name,
+                                }
+                            ))
+                        });
+                        e.timestamp(chrono::Utc::now());
+                        e.color(Colour(EMBED_LABEL_COL));
+                        e
+                    })
+                })
+                .await;
+
+            if let Err(why) = content {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+
+        // info
+        if msg.content == "kgrs!info" {
+            let cn = "info";
+            let content = msg
+                .channel_id
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.author(|a| {
+                            a.icon_url(BOT_ICON)
+                                .name(format!("{} ℹnformation", msg.author.name))
+                        });
+                        e.title("Bot name:");
+                        e.description("かぐりん.rs#5790");
+                        e.fields(vec![
+                            ("ID:", "```c\n936116497502318654```", true),
+                            ("Bot version:", &format!("```c\n{}```", VER)[..], true),
+                            ("Created at:", "<t:1643258000:R>"/*```diff\n-```"*/, true),
+                            //("Guilds:", "-", true),
+                            ("Invile link:", "[URL](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
+                            ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
+                            ("Language:", "```yaml\nRust: [1.58.1]```", true),
+                            ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
                         ]);
                         e.footer(|f|
                             f.text(format!(
-                                "kgrs!help by {}", 
-                                match &msg.member.as_ref().expect("kgrs!help / FOOTER").nick {
+                                "kgrs!info by {}", 
+                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
                                     Some(n) => n,
                                     None => &msg.author.name,
                                 }
                             ))
                         );
                         e.timestamp(chrono::Utc::now());
-                        e.color(Colour(0xB89089));
+                        e.color(Colour(EMBED_LABEL_COL));
+                        e
+                    })
+                })
+                .await;
+
+            if let Err(why) = content {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+
+        // profile
+        if msg.content == "kgrs!user_info" {
+            let cn = "user_info";
+            let content = msg
+                .channel_id
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.author(|a| {
+                            a.icon_url(msg.author.face()) // defa
+                                .name(format!("{}'s ℹnformation", msg.author.name))
+                        });
+                        if let Some(b) = msg.author.banner_url() {
+                            e.thumbnail(b);
+                        }
+                        e.title("User name:");
+                        e.description(format!(
+                            "```py\n{}#{}```",
+                            msg.author.name, msg.author.discriminator
+                        ));
+                        e.fields(vec![
+                            (
+                                "Nickname:",
+                                format!(
+                                    "`{}`",
+                                    match &msg
+                                        .member
+                                        .as_ref()
+                                        .expect("kgrs!user_info / GET NICKNAME")
+                                        .nick
+                                    {
+                                        Some(n) => n,
+                                        None => "None",
+                                    }
+                                ),
+                                true,
+                            ),
+                            (
+                                "Created at:",
+                                format!("<t:{}:R>", msg.author.created_at().timestamp()),
+                                true,
+                            ),
+                            (
+                                "Joined this server at:",
+                                match &msg
+                                    .member
+                                    .as_ref()
+                                    .expect("kgrs!user_info / GET JOINED AT")
+                                    .joined_at
+                                {
+                                    Some(t) => format!("<t:{}:R>", t.timestamp()),
+                                    None => "None".to_string(),
+                                },
+                                true,
+                            ),
+                            (
+                                "Is mute:",
+                                format!(
+                                    "`{}`",
+                                    msg.member
+                                        .as_ref()
+                                        .expect("kgrs!user_info / GET MUTE BOOL")
+                                        .mute
+                                ),
+                                true,
+                            ),
+                            (
+                                "Roles:",
+                                format!(
+                                    "`{} roles`",
+                                    msg.member
+                                        .as_ref()
+                                        .expect("kgrs!user_info / GET ROLES")
+                                        .roles
+                                        .len()
+                                ),
+                                true,
+                            ),
+                        ]);
+                        e.footer(|f| {
+                            f.text(format!(
+                                "kgrs!user_info by {}",
+                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
+                                    Some(n) => n,
+                                    None => &msg.author.name,
+                                }
+                            ))
+                        });
+                        e.timestamp(chrono::Utc::now());
+                        if let Some(c) = msg.author.accent_colour {
+                            e.color(c);
+                        } else {
+                            e.color(Colour(EMBED_LABEL_COL));
+                        }
                         e
                     })
                 })
