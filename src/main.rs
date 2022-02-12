@@ -6,7 +6,7 @@ use kgrs::serenity::{
     utils::{Colour, MessageBuilder},
 };
 use serde_json::{json, Value};
-use kgrs::util::*;
+use kgrs::util::{emsg,er};
 
 struct Handler;
 
@@ -370,8 +370,4 @@ async fn main() {
     if let Err(why) = client.start().await {
         println!("Client error: {:?}", why);
     }
-}
-
-fn er(err: &str, why: serenity::Error) {
-    println!("Error {}: {:?}", err, why);
 }
