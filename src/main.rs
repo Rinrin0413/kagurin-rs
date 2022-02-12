@@ -20,7 +20,6 @@ impl EventHandler for Handler {
 
         // help
         if msg.content == "kgrs!help" {
-            let message = &msg.clone();
             let content = msg
                 .channel_id
                 .send_message(&ctx.http, |m| {
@@ -38,9 +37,9 @@ impl EventHandler for Handler {
                         e.footer(|f|
                             f.text(format!(
                                 "kgrs!help by {}", 
-                                match &message.member.as_ref().expect("kgrs!help / FOOTER").nick {
+                                match &msg.member.as_ref().expect("kgrs!help / FOOTER").nick {
                                     Some(n) => n,
-                                    None => &message.author.name,
+                                    None => &msg.author.name,
                                 }
                             ))
                         );
