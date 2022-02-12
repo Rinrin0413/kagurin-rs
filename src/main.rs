@@ -18,6 +18,45 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         //if msg.author.bot { return; }
 
+        // help
+        if msg.content == "kgrs!help" {
+            let message = &msg.clone();
+            let content = msg
+                .channel_id
+                .send_message(&ctx.http, |m| {
+                    m.content("ただの文章").embed(|e| {
+                        e.author(|a| {
+                            a.icon_url("https://cdn.discordapp.com/avatars/936116497502318654/a0b82d4e3d428cd578e24029ad05d2aa.png")
+                                .name(&"かぐりん.rs's Commands")
+                        });
+                        e.title("コマンド一覧");
+                        e.description("Command prefix: `kgrs!`");
+                        e.fields(vec![
+                            ("```kgrs!help```", "`コマンドのヘルプを表示`", true),
+                            ("```kgrs!info```", "`このボットの詳細を表示`", true)
+                        ]);
+                        e.footer(|f|
+                            f.text(format!(
+                                "kgrs!help by {}", 
+                                match &message.member.as_ref().expect("kgrs!help / FOOTER").nick {
+                                    Some(n) => n,
+                                    None => &message.author.name,
+                                }
+                            ))
+                        );
+                        e.timestamp(chrono::Utc::now());
+                        e.color(Colour(0xB89089));
+                        e
+                    })
+                })
+                .await;
+
+            if let Err(why) = content {
+                println!("Error sending message: {:?}", why);
+            }
+        }
+
+        // ping
         if msg.content == "kgrs!ping" {
             // Nomal MSG
             if let Err(why) = msg.channel_id.say(&ctx.http, "贵樣!").await {
@@ -25,7 +64,8 @@ impl EventHandler for Handler {
             }
         }
 
-        if msg.content == "kgrs!dm" {
+        // directMsg
+        if msg.content == "kgrs!directMsg" {
             // dm
             let dm = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
             if let Err(why) = dm {
@@ -33,6 +73,7 @@ impl EventHandler for Handler {
             }
         }
 
+        // MessageBuilder
         if msg.content == "kgrs!MessageBuilder" {
             // dynamically(decorationary) MSG
             let channel = match msg.channel_id.to_channel(&ctx).await {
@@ -54,6 +95,7 @@ impl EventHandler for Handler {
             }
         }
 
+        // MessageBuilder2
         if msg.content == "kgrs!MessageBuilder2" {
             let emoji = serde_json::from_value::<Emoji>(json!({
                 "animated": false,
@@ -89,10 +131,11 @@ impl EventHandler for Handler {
             }
         }
 
+        // embed&img
         if msg.content == "kgrs!embed&img" {
             let mut author: HashMap<&'static str, Value> = HashMap::new();
             author.insert("贵樣", Value::String(String::from("a")));
-            let msg = msg
+            let content = msg
                 .channel_id
                 .send_message(&ctx.http, |m| {
                     m.content("ただの文章")
@@ -154,11 +197,12 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            if let Err(why) = msg {
+            if let Err(why) = content {
                 println!("Error sending message: {:?}", why);
             }
         }
     }
+
     // READY event
     async fn ready(&self, _: Context, ready: Ready) {
         println!("{} is connected", ready.user.name);
