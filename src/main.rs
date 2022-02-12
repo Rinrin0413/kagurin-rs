@@ -1,12 +1,12 @@
-use std::{collections::HashMap, env};
 use kgrs::serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready, prelude::*},
     prelude::*,
     utils::{Colour, MessageBuilder},
 };
+use kgrs::util::*;
 use serde_json::{json, Value};
-use kgrs::util::{emsg,er};
+use std::{collections::HashMap, env};
 
 struct Handler;
 
@@ -17,7 +17,6 @@ const BOT_ICON: &str =
 
 #[async_trait]
 impl EventHandler for Handler {
-
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
         // help
@@ -50,9 +49,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            if let Err(why) = content {
-                println!("Error sending message: {:?}", why);
-            }
+            err_detect(content);
         }
 
         // info
@@ -94,9 +91,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            if let Err(why) = content {
-                println!("Error sending message: {:?}", why);
-            }
+            err_detect(content);
         }
 
         // profile
@@ -197,9 +192,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            if let Err(why) = content {
-                println!("Error sending message: {:?}", why);
-            }
+            err_detect(content);
         }
 
         // ping
@@ -343,9 +336,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            if let Err(why) = content {
-                println!("Error sending message: {:?}", why);
-            }
+            err_detect(content);
         }
     }
 
