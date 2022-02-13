@@ -2,7 +2,7 @@
 name = "kagurin_rs"
 description = "速くて安心で効率的な Rust製のかぐりんぼっと"
 version = "0.2.3"
-authors = ["Rinrin.rs"]
+authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
 license = "[GPL-3.0] GNU General Public License v3.0"
 repository = "https://github.com/Rinrin0413/kagurin-rs"
 edition = "2018"
