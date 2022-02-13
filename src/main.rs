@@ -1,10 +1,10 @@
 use kgrs::serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready, prelude::*},
-    prelude::*,
+    prelude::{Client, Context, EventHandler},
     utils::{Colour, MessageBuilder},
 };
-use kgrs::util::*;
+use kgrs::util::{emsg, err_detect, l, Et};
 use serde_json::{json, Value};
 use std::{collections::HashMap, env};
 
@@ -36,10 +36,15 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!help by {}",
-                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
-                                    Some(n) => n,
-                                    None => &msg.author.name,
-                                }
+                                l(cn, "FOOTER",
+                                    Et::Optn(
+                                        msg.member
+                                            .as_ref()
+                                            .expect(&emsg(cn, "FOOTER REF")[..])
+                                            .nick.as_ref(),
+                                        msg
+                                    )
+                                )
                             ))
                         });
                         e.timestamp(chrono::Utc::now());
@@ -197,45 +202,42 @@ impl EventHandler for Handler {
 
         // ping
         if msg.content == "kgrs!ping" {
-            // Nomal MSG
-            if let Err(why) = msg.channel_id.say(&ctx.http, "贵樣!").await {
-                er("sending msg", why);
-            }
+            let cn = "ping";
+            let content = msg.channel_id.say(&ctx.http, "贵樣!").await;
+            l(cn, "SEND", Et::Rslt(content));
         }
 
         // directMsg
         if msg.content == "kgrs!directMsg" {
-            // dm
-            let dm = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
-            if let Err(why) = dm {
-                er("when direct msging user", why);
-            }
+            let cn = "directMsg";
+            let content = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
+            l(cn, "SEND DM", Et::Rslt(content));
         }
 
         // MessageBuilder
         if msg.content == "kgrs!MessageBuilder" {
-            // dynamically(decorationary) MSG
+            let cn = "MessageBuilder";
             let channel = match msg.channel_id.to_channel(&ctx).await {
-                Ok(channel) => channel,
+                Ok(c) => c,
                 Err(why) => {
-                    er("getting channel", why);
+                    println!("kgrs!{} / {} : {:?}", cn, "GET CHANNEL", why);
                     return;
                 }
-            };
-            let content = MessageBuilder::new()
+            }; //l(cn, "GET CHANNEL", Et::Rslt(msg.channel_id.to_channel(&ctx).await)); // e fun not compatible
+            let message = MessageBuilder::new()
                 .push("贵樣(")
                 .push_bold_safe(&msg.author.name)
                 .push(") ば `kgrs!dynamiccmd` を ")
                 .mention(&channel)
                 .push(" で使用レだ。")
                 .build();
-            if let Err(why) = msg.channel_id.say(&ctx.http, &content).await {
-                er("sending message", why);
-            }
+            let content = msg.channel_id.say(&ctx.http, &message).await;
+            l(cn, "SEND", Et::Rslt(content));
         }
 
         // MessageBuilder2
         if msg.content == "kgrs!MessageBuilder2" {
+            let cn = "MessageBuilder2";
             let emoji = serde_json::from_value::<Emoji>(json!({
                 "animated": false,
                 "id": EmojiId(921759722170904618),
@@ -264,10 +266,12 @@ impl EventHandler for Handler {
                 .role(RoleId(835851285982478346))
                 .user(&UserId(801082943371477022))
                 .build();
-            println!("{:?}", content);
-            if let Err(why) = msg.channel_id.say(&ctx.http, &content).await {
-                er("sending message", why);
-            }
+            //println!("{:?}", content);
+            l(
+                cn,
+                "SEND",
+                Et::Rslt(msg.channel_id.say(&ctx.http, &content).await),
+            );
         }
 
         // embed&img

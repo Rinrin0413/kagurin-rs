@@ -2,16 +2,16 @@ use serenity::model::prelude::Message;
 use std::fmt::Debug;
 //use serenity::self;
 
-pub enum Et<'a, T, E, U> {
-    Rslt(Result<T, E>),
-    Optn(Option<U>, &'a Message),
+pub enum Et<E, T> {
+    Rslt(Result<Message, E>),
+    Optn(Option<T>, Message),
     Other,
 }
 
-pub fn l<T, E, U>(cmd: &str, at: &str, enm: Et<T, E, U>) -> String 
+pub fn l<E, T>(cmd: &str, at: &str, enm: Et<E, T>) -> String 
 where
     E: Debug,
-    U: ToString,
+    T: ToString,
 {
     match enm {
         Et::Rslt(v) => {
@@ -22,7 +22,7 @@ where
             }
         },
         Et::Optn(v, msg) => {
-            if let Ok(val) = v {
+            if let Some(val) = v {
                 val.to_string()
             } else {
                 msg.author.name
