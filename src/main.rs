@@ -40,9 +40,11 @@ impl EventHandler for Handler {
                                     msg.member
                                         .as_ref()
                                         .expect(&Et::Other("").l(cn, "GET MEMBER"))
-                                        .nick.as_ref(),
+                                        .nick
+                                        .as_ref(),
                                     &msg
-                                ).l(cn, "FOOTER")
+                                )
+                                .l(cn, "FOOTER")
                             ))
                         });
                         e.timestamp(chrono::Utc::now());
@@ -178,7 +180,12 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!user_info by {}",
-                                match &msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick {
+                                match &msg
+                                    .member
+                                    .as_ref()
+                                    .expect(&Et::Other("").l(cn, "GET MEMBER"))
+                                    .nick
+                                {
                                     Some(n) => n,
                                     None => &msg.author.name,
                                 }
