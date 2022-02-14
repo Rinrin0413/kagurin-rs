@@ -4,7 +4,7 @@ use kgrs::serenity::{
     prelude::{Client, Context, EventHandler},
     utils::{Colour, MessageBuilder},
 };
-use kgrs::util::{emsg, err_detect, l, Et};
+use kgrs::util::Et;
 use serde_json::{json, Value};
 use std::{collections::HashMap, env};
 
@@ -36,15 +36,13 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!help by {}",
-                                l(cn, "FOOTER",
-                                    Et::Optn(
-                                        msg.member
-                                            .as_ref()
-                                            .expect(&emsg(cn, "FOOTER REF")[..])
-                                            .nick.as_ref(),
-                                        msg
-                                    )
-                                )
+                                Et::Optn(
+                                    msg.member
+                                        .as_ref()
+                                        .expect(&Et::Other("").l(cn, "GET MEMBER"))
+                                        .nick.as_ref(),
+                                    &msg
+                                ).l(cn, "FOOTER")
                             ))
                         });
                         e.timestamp(chrono::Utc::now());
@@ -54,7 +52,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            err_detect(content);
+            Et::Rslt(content).l(cn, "SEND");
         }
 
         // info
@@ -83,7 +81,7 @@ impl EventHandler for Handler {
                         e.footer(|f|
                             f.text(format!(
                                 "kgrs!info by {}", 
-                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
+                                match &msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick {
                                     Some(n) => n,
                                     None => &msg.author.name,
                                 }
@@ -96,7 +94,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            err_detect(content);
+            Et::Rslt(content).l(cn, "SEND");
         }
 
         // profile
@@ -180,7 +178,7 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!user_info by {}",
-                                match &msg.member.as_ref().expect(&emsg(cn, "FOOTER")[..]).nick {
+                                match &msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick {
                                     Some(n) => n,
                                     None => &msg.author.name,
                                 }
@@ -197,21 +195,21 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            err_detect(content);
+            Et::Rslt(content).l(cn, "SEND");
         }
 
         // ping
         if msg.content == "kgrs!ping" {
             let cn = "ping";
             let content = msg.channel_id.say(&ctx.http, "贵樣!").await;
-            l(cn, "SEND", Et::Rslt(content));
+            Et::Rslt(content).l(cn, "SEND");
         }
 
         // directMsg
         if msg.content == "kgrs!directMsg" {
             let cn = "directMsg";
             let content = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
-            l(cn, "SEND DM", Et::Rslt(content));
+            Et::Rslt(content).l(cn, "SEND DM");
         }
 
         // MessageBuilder
@@ -232,7 +230,7 @@ impl EventHandler for Handler {
                 .push(" で使用レだ。")
                 .build();
             let content = msg.channel_id.say(&ctx.http, &message).await;
-            l(cn, "SEND", Et::Rslt(content));
+            Et::Rslt(content).l(cn, "SEND");
         }
 
         // MessageBuilder2
@@ -267,15 +265,12 @@ impl EventHandler for Handler {
                 .user(&UserId(801082943371477022))
                 .build();
             //println!("{:?}", content);
-            l(
-                cn,
-                "SEND",
-                Et::Rslt(msg.channel_id.say(&ctx.http, &content).await),
-            );
+            Et::Rslt(msg.channel_id.say(&ctx.http, &content).await).l(cn, "SEND");
         }
 
         // embed&img
         if msg.content == "kgrs!embed&img" {
+            let cn = "!embed&img";
             let mut author: HashMap<&'static str, Value> = HashMap::new();
             author.insert("贵樣", Value::String(String::from("a")));
             let content = msg
@@ -340,7 +335,7 @@ impl EventHandler for Handler {
                 })
                 .await;
 
-            err_detect(content);
+            Et::Rslt(content).l(cn, "SEND");
         }
     }
 
