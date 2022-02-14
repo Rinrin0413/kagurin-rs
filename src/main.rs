@@ -83,10 +83,7 @@ impl EventHandler for Handler {
                         e.footer(|f|
                             f.text(format!(
                                 "kgrs!info by {}", 
-                                match &msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick {
-                                    Some(n) => n,
-                                    None => &msg.author.name,
-                                }
+                                Et::Optn(msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick.as_ref(), &msg).l(cn, "FOOTER")
                             ))
                         );
                         e.timestamp(chrono::Utc::now());
@@ -126,7 +123,7 @@ impl EventHandler for Handler {
                                     match &msg
                                         .member
                                         .as_ref()
-                                        .expect("kgrs!user_info / GET NICKNAME")
+                                        .expect(&Et::Other("").l(cn, "GET NICKNAME"))
                                         .nick
                                     {
                                         Some(n) => n,
@@ -145,7 +142,7 @@ impl EventHandler for Handler {
                                 match &msg
                                     .member
                                     .as_ref()
-                                    .expect("kgrs!user_info / GET JOINED AT")
+                                    .expect(&Et::Other("").l(cn, "GET JOINED AT"))
                                     .joined_at
                                 {
                                     Some(t) => format!("<t:{}:R>", t.timestamp()),
@@ -180,15 +177,7 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!user_info by {}",
-                                match &msg
-                                    .member
-                                    .as_ref()
-                                    .expect(&Et::Other("").l(cn, "GET MEMBER"))
-                                    .nick
-                                {
-                                    Some(n) => n,
-                                    None => &msg.author.name,
-                                }
+                                Et::Optn(msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick.as_ref(), &msg).l(cn, "FOOTER")
                             ))
                         });
                         e.timestamp(chrono::Utc::now());
