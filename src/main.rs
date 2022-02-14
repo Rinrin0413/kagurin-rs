@@ -177,7 +177,15 @@ impl EventHandler for Handler {
                         e.footer(|f| {
                             f.text(format!(
                                 "kgrs!user_info by {}",
-                                Et::Optn(msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick.as_ref(), &msg).l(cn, "FOOTER")
+                                Et::Optn(
+                                    msg.member
+                                        .as_ref()
+                                        .expect(&Et::Other("").l(cn, "GET MEMBER"))
+                                        .nick
+                                        .as_ref(),
+                                    &msg
+                                )
+                                .l(cn, "FOOTER")
                             ))
                         });
                         e.timestamp(chrono::Utc::now());
