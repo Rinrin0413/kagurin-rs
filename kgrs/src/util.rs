@@ -1,4 +1,4 @@
-use serenity::model::prelude::Message;
+use serenity::model::prelude::{Message, UserId};
 use std::fmt::Debug;
 //use serenity::self;
 
@@ -31,4 +31,24 @@ where
             Et::Other(_) => format!("kgrs!{} / {}", cmd, at),
         }
     }
+}
+
+pub fn want_arg(n: usize) -> String {
+    format!("Error: 最低{}つの引数が必要です", n)
+}
+
+pub fn is_trusted(author: UserId, trusted: &[u64]) -> bool {
+    trusted.contains(author.as_u64())
+}
+
+pub fn is_developer(author: UserId, developer: [&'static u64; 2]) -> bool {
+    developer.contains(&author.as_u64())
+}
+
+pub fn cb(content: &str, lang: &str) -> String {
+    format!("```{}\n{}\n```", lang, content)
+}
+
+pub fn invalid_arg(false_arg: &str, true_args: &str) -> String {
+    format!("無効な引数`{}`を確認\n利用可能な引数: `{}`", false_arg, true_args)
 }
