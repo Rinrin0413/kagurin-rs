@@ -235,7 +235,7 @@ impl EventHandler for Handler {
 
             // kgrs!info | show info
             if cmd == "info" {
-                println!("{:?}", &ctx.a);
+                println!("{:?}", &ctx.cache);
                 let content = msg
                     .channel_id
                     .send_message(&ctx.http, |m| {
