@@ -4,7 +4,7 @@ use kgrs::serenity::{
     prelude::{Client, Context, EventHandler},
     utils::{Colour, MessageBuilder},
 };
-use kgrs::util::Et;
+use kgrs::util::{cb, invalid_arg, is_developer, is_trusted, want_arg, Et};
 use serde_json::{json, Value};
 use std::{collections::HashMap, env};
 
@@ -14,88 +14,326 @@ const VER: &'static str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
 const BOT_ICON: &str =
     "https://cdn.discordapp.com/avatars/936116497502318654/a0b82d4e3d428cd578e24029ad05d2aa.png";
+const TRUSTED: [u64; 2] = [
+    724976600873041940, // Rinrin.rs
+    801082943371477022, // Rinrin.hlsl
+];
+const DEVELIPER: [&u64; 2] = [&TRUSTED[0], &TRUSTED[1]];
 
 #[async_trait]
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-        // help
-        if msg.content == "kgrs!help" {
-            let cn = "help";
-            let content = msg
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.author(|a| a.icon_url(BOT_ICON).name("かぐりん.rs's Commands"));
-                        e.title("コマンド一覧");
-                        e.description("Command prefix: `kgrs!`");
-                        e.fields(vec![
-                            ("```kgrs!help```", "`コマンドのヘルプを表示`", true),
-                            ("```kgrs!info```", "`このボットの詳細を表示`", true),
-                        ]);
-                        e.footer(|f| {
-                            f.text(format!(
-                                "kgrs!help by {}",
-                                Et::Optn(
-                                    msg.member
-                                        .as_ref()
-                                        .expect(&Et::Other("").l(cn, "GET MEMBER"))
-                                        .nick
-                                        .as_ref(),
-                                    &msg
+        // COMMANDS
+        if Some("kgrs") == msg.content.split('!').nth(0) {
+            // ▼ DB
+            let cmd = match msg.content.split(' ').nth(0) {
+                Some(v) => v.to_string().replace("kgrs!", ""),
+                None => return,
+            };
+            let cmd: &str = &cmd;
+            let arg_i = msg.content.split(' ').nth(1);
+            let arg_ii = msg.content.split(' ').nth(2);
+            let ftr = &format!(
+                "kgrs!{} by {}",
+                cmd,
+                Et::Optn(
+                    msg.member
+                        .as_ref()
+                        .expect(&Et::Other("").l(cmd, "GET MEMBER"))
+                        .nick
+                        .as_ref(),
+                    &msg
+                )
+                .l(cmd, "FOOTER")
+            );
+            // ▲ DB「
+
+            // kgrs!help [type:HELP_TYPE] | show help
+            //  HELP_TYPE = [display, util, fun, mod, trusted, dev]
+            if cmd == "help" {
+                let note_cp = "Command prefix: `kgrs!`";
+                if let Some(hlp_type) = arg_i {
+                    match hlp_type {
+                        "display" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(BOT_ICON)
+                                                .name("かぐりん.rs's Commands(display)")
+                                        });
+                                        e.title("表示系コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![
+                                            ("kgrs!help", "コマンドのヘルプ(ハブ)を表示", false),
+                                            ("kgrs!info", "このボットの詳細を表示", false),
+                                        ]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(chrono::Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        "util" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(BOT_ICON)
+                                                .name("かぐりん.rs's Commands(util)")
+                                        });
+                                        e.title("機能系コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![("kgrs!-", "-", false)]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(chrono::Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        "fun" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(fun)")
+                                        });
+                                        e.title("娯楽系コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![("kgrs!-", "-", false)]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(chrono::Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        "mod" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(mod)")
+                                        });
+                                        e.title("管理者用コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![("kgrs!-", "-", false)]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(chrono::Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        "trusted" => {
+                            let content = msg
+                            .channel_id
+                            .send_message(&ctx.http, |m| {
+                                m.embed(|e| {
+                                    e.author(|a| a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(trusted)"));
+                                    e.title("開発者に信頼されている人用のコマンド一覧");
+                                    e.description(note_cp);
+                                    e.fields(vec![
+                                        (
+                                            "kgrs!set_activity <type:ACTIVITY-TYPE> <content:str>", 
+                                            "`ACTIVITY-TYPE = [playing, listening, watching, competing]`\nBot のアクティビティを変更する", 
+                                            false
+                                        ),
+                                    ]);
+                                    e.footer(|f| {f.text(ftr)});
+                                    e.timestamp(chrono::Utc::now());
+                                    e.color(Colour(EMBED_LABEL_COL));
+                                    e
+                                })
+                            })
+                            .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        "dev" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(dev)")
+                                        });
+                                        e.title("Rinrin用コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![(
+                                            "kgrs!sd",
+                                            "serenity-rs のドキュメントの URL を出す",
+                                            false,
+                                        )]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(chrono::Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                        other => {
+                            let content = msg
+                                .channel_id
+                                .say(
+                                    &ctx.http,
+                                    invalid_arg(other, "[display, util, fun, mod, trusted, dev]"),
                                 )
-                                .l(cn, "FOOTER")
-                            ))
-                        });
-                        e.timestamp(chrono::Utc::now());
-                        e.color(Colour(EMBED_LABEL_COL));
-                        e
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
+                    }
+                } else {
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.icon_url(BOT_ICON).name("かぐりん.rs's Commands HUB")
+                                });
+                                e.title("コマンドの種類一覧");
+                                e.description(note_cp);
+                                e.fields(vec![
+                                    ("kgrs!help", "コマンドのヘルプ(ハブ)を表示", false),
+                                    ("kgrs!help display", "表示系のコマンド一覧を表示", false),
+                                    ("kgrs!help util", "機能系のコマンド一覧を表示", false),
+                                    ("kgrs!help fun", "娯楽系のコマンド一覧を表示", false),
+                                    ("kgrs!help mod", "管理者用のコマンド一覧を表示", false),
+                                    (
+                                        "kgrs!help trusted",
+                                        "開発者に信頼されている人用のコマンド一覧を表示",
+                                        false,
+                                    ),
+                                    ("kgrs!help dev", "Rinrin用のコマンド一覧を表示", false),
+                                ]);
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(Colour(EMBED_LABEL_COL));
+                                e
+                            })
+                        })
+                        .await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+            }
+
+            // kgrs!info | show info
+            if cmd == "info" {
+                println!("{:?}", &ctx.a);
+                let content = msg
+                    .channel_id
+                    .send_message(&ctx.http, |m| {
+                        m.embed(|e| {
+                            e.author(|a| {
+                                a.icon_url(BOT_ICON)
+                                    .name(format!("{} ℹnformation", "なんかあああ"))
+                            });
+                            e.title("Bot name:");
+                            e.description("かぐりん.rs#5790");
+                            e.fields(vec![
+                                ("ID:", "```c\n936116497502318654```", true),
+                                ("Bot version:", &format!("```c\n{}```", VER)[..], true),
+                                ("Created at:", "<t:1643258000:R>"/*```diff\n-```"*/, true),
+                                //("Guilds:", "-", true),
+                                ("Invile link:", "[URL](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
+                                ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
+                                ("Language:", "```yaml\nRust: [1.58.1]```", true),
+                                ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
+                            ]);
+                            e.footer(|f| {f.text(ftr)});
+                            e.timestamp(chrono::Utc::now());
+                            e.color(Colour(EMBED_LABEL_COL));
+                            e
+                        })
                     })
-                })
-                .await;
+                    .await;
 
-            Et::Rslt(content).l(cn, "SEND");
-        }
+                Et::Rslt(content).l(cmd, "SEND");
+            }
 
-        // info
-        if msg.content == "kgrs!info" {
-            let cn = "info";
-            let content = msg
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.author(|a| {
-                            a.icon_url(BOT_ICON)
-                                .name(format!("{} ℹnformation", msg.author.name))
-                        });
-                        e.title("Bot name:");
-                        e.description("かぐりん.rs#5790");
-                        e.fields(vec![
-                            ("ID:", "```c\n936116497502318654```", true),
-                            ("Bot version:", &format!("```c\n{}```", VER)[..], true),
-                            ("Created at:", "<t:1643258000:R>"/*```diff\n-```"*/, true),
-                            //("Guilds:", "-", true),
-                            ("Invile link:", "[URL](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
-                            ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
-                            ("Language:", "```yaml\nRust: [1.58.1]```", true),
-                            ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
-                        ]);
-                        e.footer(|f|
-                            f.text(format!(
-                                "kgrs!info by {}", 
-                                Et::Optn(msg.member.as_ref().expect(&Et::Other("").l(cn, "GET MEMBER")).nick.as_ref(), &msg).l(cn, "FOOTER")
-                            ))
+            // FOR TRUSTED USER
+            if is_trusted(msg.author.id, &TRUSTED) {
+                // kgrs!set_activity <type:ACTIVITY-TYPE> <content:str> || Change Kagurin.rs activity
+                //  ACTIVITY-TYPE = [playing, listening, watching, competing]
+                if cmd == "set_activity" {
+                    if let (Some(r#type), Some(content)) = (arg_i, arg_ii) {
+                        match r#type {
+                            "playing" => ctx.set_activity(Activity::playing(content)).await,
+                            "listening" => ctx.set_activity(Activity::listening(content)).await,
+                            "watching" => ctx.set_activity(Activity::watching(content)).await,
+                            "competing" => ctx.set_activity(Activity::competing(content)).await,
+                            other => {
+                                let content = msg
+                                    .channel_id
+                                    .say(
+                                        &ctx.http,
+                                        invalid_arg(
+                                            other,
+                                            "[playing, listening, watching, competing]",
+                                        ),
+                                    )
+                                    .await;
+                                Et::Rslt(content).l(cmd, "SEND");
+                                return;
+                            }
+                        }
+                        let reaction = msg
+                            .reaction_users(
+                                &ctx.http,
+                                ReactionType::Custom {
+                                    animated: false,
+                                    id: EmojiId(856911443390627840),
+                                    name: Some(String::from("HAAKU_death")),
+                                },
+                                Some(64),
+                                Some(msg.author.id),
+                            )
+                            .await;
+                        if let Err(why) = reaction {
+                            println!("kgrs!{} / REACTION : {:?}", cmd, why);
+                        }
+                        println!(
+                            "{} が botアクティビティを {} の `{}` に変更",
+                            msg.author.name, r#type, content
                         );
-                        e.timestamp(chrono::Utc::now());
-                        e.color(Colour(EMBED_LABEL_COL));
-                        e
-                    })
-                })
-                .await;
+                    } else {
+                        let content = msg.channel_id.say(&ctx.http, &want_arg(2)).await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                    }
+                }
+            }
 
-            Et::Rslt(content).l(cn, "SEND");
+            // DEV
+            if is_developer(msg.author.id, DEVELIPER) {
+                // kgrs!sd | show serenity-rs doc
+                if cmd == "sd" {
+                    let content = msg
+                        .channel_id
+                        .say(&ctx.http, "https://docs.rs/serenity/latest/serenity")
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+            }
         }
 
+        /*
         // profile
         if msg.content == "kgrs!user_info" {
             let cn = "user_info";
@@ -174,20 +412,7 @@ impl EventHandler for Handler {
                                 true,
                             ),
                         ]);
-                        e.footer(|f| {
-                            f.text(format!(
-                                "kgrs!user_info by {}",
-                                Et::Optn(
-                                    msg.member
-                                        .as_ref()
-                                        .expect(&Et::Other("").l(cn, "GET MEMBER"))
-                                        .nick
-                                        .as_ref(),
-                                    &msg
-                                )
-                                .l(cn, "FOOTER")
-                            ))
-                        });
+                        e.footer(|f| {f.text(ftr)});
                         e.timestamp(chrono::Utc::now());
                         if let Some(c) = msg.author.accent_colour {
                             e.color(c);
@@ -341,11 +566,14 @@ impl EventHandler for Handler {
 
             Et::Rslt(content).l(cn, "SEND");
         }
+        */
     }
 
     // READY event
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected", ready.user.name);
+    async fn ready(&self, ctx: Context, ready: Ready) {
+        println!("{} is connected: {}", ready.user.name, chrono::Utc::now());
+        ctx.set_activity(Activity::playing("kgrs!help | 開発者:Rinrin.rs#5671"))
+            .await;
     }
 }
 
