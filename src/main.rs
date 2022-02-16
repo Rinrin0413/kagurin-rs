@@ -4,7 +4,7 @@ use kgrs::serenity::{
     prelude::{Client, Context, EventHandler},
     utils::{Colour, MessageBuilder},
 };
-use kgrs::util::{cb, invalid_arg, is_developer, is_trusted, want_arg, Et};
+use kgrs::util::{*, fmt::*,};
 use serde_json::{json, Value};
 use std::{collections::HashMap, env};
 
@@ -18,7 +18,10 @@ const TRUSTED: [u64; 2] = [
     724976600873041940, // Rinrin.rs
     801082943371477022, // Rinrin.hlsl
 ];
-const DEVELIPER: [&u64; 2] = [&TRUSTED[0], &TRUSTED[1]];
+const DEVELIPER: [u64; 2] = [
+    724976600873041940, // Rinrin.rs
+    801082943371477022, // Rinrin.hlsl
+];
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -268,7 +271,7 @@ impl EventHandler for Handler {
             }
 
             // FOR TRUSTED USER
-            if is_trusted(msg.author.id, &TRUSTED) {
+            if restrict_users(msg.author.id, &TRUSTED) {
                 // kgrs!set_activity <type:ACTIVITY-TYPE> <content:str> || Change Kagurin.rs activity
                 //  ACTIVITY-TYPE = [playing, listening, watching, competing]
                 if cmd == "set_activity" {
@@ -320,7 +323,7 @@ impl EventHandler for Handler {
             }
 
             // DEV
-            if is_developer(msg.author.id, DEVELIPER) {
+            if restrict_users(msg.author.id, &DEVELIPER) {
                 // kgrs!sd | show serenity-rs doc
                 if cmd == "sd" {
                     let content = msg
