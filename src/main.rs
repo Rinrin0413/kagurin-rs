@@ -1,10 +1,10 @@
 use kgrs::serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready, prelude::*},
-    prelude::{Client, Context, EventHandler},
+    prelude::{Client, Context, EventHandler, SerenityError},
     utils::{Colour, MessageBuilder},
 };
-use kgrs::util::{*, fmt::*,};
+use kgrs::util::{fmt::*, *};
 use serde_json::{json, Value};
 use std::{collections::HashMap, env};
 
@@ -76,6 +76,7 @@ impl EventHandler for Handler {
                                         e.fields(vec![
                                             ("kgrs!help", "コマンドのヘルプ(ハブ)を表示", false),
                                             ("kgrs!info", "このボットの詳細を表示", false),
+                                            ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
@@ -97,7 +98,11 @@ impl EventHandler for Handler {
                                         });
                                         e.title("機能系コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![("kgrs!timestamp", "現在のタイムスタンプを取得", false)]);
+                                        e.fields(vec![(
+                                            "kgrs!timestamp",
+                                            "現在のタイムスタンプを取得",
+                                            false,
+                                        )]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -113,7 +118,8 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(fun)")
+                                            a.icon_url(bot_avatar)
+                                                .name("かぐりん.rs's Commands(fun)")
                                         });
                                         e.title("娯楽系コマンド一覧");
                                         e.description(note_cp);
@@ -133,7 +139,8 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(mod)")
+                                            a.icon_url(bot_avatar)
+                                                .name("かぐりん.rs's Commands(mod)")
                                         });
                                         e.title("管理者用コマンド一覧");
                                         e.description(note_cp);
@@ -177,7 +184,8 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(dev)")
+                                            a.icon_url(bot_avatar)
+                                                .name("かぐりん.rs's Commands(dev)")
                                         });
                                         e.title("Rinrin用コマンド一覧");
                                         e.description(note_cp);
@@ -242,7 +250,7 @@ impl EventHandler for Handler {
 
             // kgrs!info | show info
             if cmd == "info" {
-                let guilds = cache.guild_count().await; //cache.guilds().await;
+                let guilds = cache.guild_count().await;
                 let content = msg
                     .channel_id
                     .send_message(&ctx.http, |m| {
@@ -283,6 +291,255 @@ impl EventHandler for Handler {
                     .await;
 
                 Et::Rslt(content).l(cmd, "SEND");
+            }
+
+            // kgrs!profile [userID:int] | get the user desctiption
+            if cmd == "profile" {
+                if let Some(id) = arg_i {
+                    let user = match UserId(match id.parse() {
+                        Ok(id) => id,
+                        Err(_) => {
+                            let _ = msg
+                                .channel_id
+                                .say(
+                                    &ctx.http,
+                                    &format!(
+                                        "無効な引数`{}`を確認\n引数には数値を入れてください",
+                                        id
+                                    ),
+                                )
+                                .await
+                                .unwrap();
+                            return;
+                        }
+                    })
+                    .to_user(&ctx.http)
+                    .await
+                    {
+                        Ok(u) => u,
+                        Err(_) => {
+                            let _ = msg
+                                .channel_id
+                                .say(&ctx.http, &format!("無効なユーザIDです: {}", id))
+                                .await
+                                .unwrap();
+                            return;
+                        }
+                    };
+                    let member = match msg
+                        .guild_id
+                        .expect(&Et::Other("").l(cmd, "GET GUILD ID"))
+                        .member(&ctx.http, user.id)
+                        .await
+                    {
+                        Ok(m) => Some(m),
+                        Err(_) => {
+                            None
+                            /*
+                            let _ = msg
+                                .channel_id
+                                .say(&ctx.http, &format!("そのユーザは恐らくこのサーバーにいません | id: {}", id))
+                                .await
+                                .unwrap();
+                            return;
+                            */
+                        }
+                    };
+                    /*&cache.member(
+                        msg.guild_id.expect(
+                            &Et::Other("").l(cmd, "GET GUILD ID")
+                        ),
+                        user.id
+                    ).await.expect(
+                        &Et::Other("").l(cmd, "GET MEMBER")
+                    );*/
+                    let user_color = ctx.http.get_user(*user.id.as_u64()).await;
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.icon_url(user.face())
+                                        .name(format!("{}'s ℹnformation", user.name))
+                                });
+                                if let Some(b) = user.banner_url() {
+                                    e.thumbnail(b);
+                                }
+                                e.title("User name:");
+                                e.description(format!(
+                                    "```py\n{}#{}```",
+                                    user.name, user.discriminator
+                                ));
+                                e.fields(vec![
+                                    (
+                                        "Nickname:",
+                                        format!(
+                                            "`{}`",
+                                            if let Some(m) = &member {
+                                                if let Some(n) = &m.nick {
+                                                    n
+                                                } else {
+                                                    "None"
+                                                }
+                                            } else {
+                                                "None"
+                                            }
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        "Created at:",
+                                        format!("<t:{}:R>", user.created_at().timestamp()),
+                                        true,
+                                    ),
+                                    (
+                                        "Joined this server at:",
+                                        if let Some(m) = &member {
+                                            if let Some(t) = m.joined_at {
+                                                format!("<t:{}:R>", t.timestamp())
+                                            } else {
+                                                "None".to_string()
+                                            }
+                                        } else {
+                                            "None".to_string()
+                                        },
+                                        true,
+                                    ),
+                                    (
+                                        "Is mute:",
+                                        format!(
+                                            "`{}`",
+                                            if let Some(m) = &member { m.mute } else { false },
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        "Roles:",
+                                        format!(
+                                            "`{} roles`",
+                                            if let Some(m) = &member {
+                                                m.roles.len()
+                                            } else {
+                                                0
+                                            },
+                                        ),
+                                        true,
+                                    ),
+                                    ("IsBot:", user.bot.to_string(), true),
+                                ]);
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(if let Ok(u) = user_color {
+                                    //msg.author.accent_colour
+                                    if let Some(c) = u.accent_colour {
+                                        c
+                                    } else {
+                                        Colour(EMBED_LABEL_COL)
+                                    }
+                                } else {
+                                    Colour(EMBED_LABEL_COL)
+                                });
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                } else {
+                    let author_color = ctx.http.get_user(*msg.author.id.as_u64()).await;
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.icon_url(msg.author.face())
+                                        .name(format!("{}'s ℹnformation", msg.author.name))
+                                });
+                                if let Some(b) = msg.author.banner_url() {
+                                    e.thumbnail(b);
+                                }
+                                e.title("User name:");
+                                e.description(format!(
+                                    "```py\n{}#{}```",
+                                    msg.author.name, msg.author.discriminator
+                                ));
+                                e.fields(vec![
+                                    (
+                                        "Nickname:",
+                                        format!(
+                                            "`{}`",
+                                            match &msg
+                                                .member
+                                                .as_ref()
+                                                .expect(&Et::Other("").l(cmd, "GET NICKNAME"))
+                                                .nick
+                                            {
+                                                Some(n) => n,
+                                                None => "None",
+                                            }
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        "Created at:",
+                                        format!("<t:{}:R>", msg.author.created_at().timestamp()),
+                                        true,
+                                    ),
+                                    (
+                                        "Joined this server at:",
+                                        match &msg
+                                            .member
+                                            .as_ref()
+                                            .expect(&Et::Other("").l(cmd, "GET JOINED AT"))
+                                            .joined_at
+                                        {
+                                            Some(t) => format!("<t:{}:R>", t.timestamp()),
+                                            None => "None".to_string(),
+                                        },
+                                        true,
+                                    ),
+                                    (
+                                        "Is mute:",
+                                        format!(
+                                            "`{}`",
+                                            msg.member
+                                                .as_ref()
+                                                .expect("kgrs!user_info / GET MUTE BOOL")
+                                                .mute
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        "Roles:",
+                                        format!(
+                                            "`{} roles`",
+                                            msg.member
+                                                .as_ref()
+                                                .expect("kgrs!user_info / GET ROLES")
+                                                .roles
+                                                .len()
+                                        ),
+                                        true,
+                                    ),
+                                ]);
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(if let Ok(u) = author_color {
+                                    if let Some(c) = u.accent_colour {
+                                        c
+                                    } else {
+                                        Colour(EMBED_LABEL_COL)
+                                    }
+                                } else {
+                                    Colour(EMBED_LABEL_COL)
+                                });
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
             }
 
             // FOR TRUSTED USER
@@ -354,99 +611,6 @@ impl EventHandler for Handler {
         }
 
         /*
-        // profile
-        if msg.content == "kgrs!user_info" {
-            let cn = "user_info";
-            let content = msg
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.embed(|e| {
-                        e.author(|a| {
-                            a.icon_url(msg.author.face()) // defa
-                                .name(format!("{}'s ℹnformation", msg.author.name))
-                        });
-                        if let Some(b) = msg.author.banner_url() {
-                            e.thumbnail(b);
-                        }
-                        e.title("User name:");
-                        e.description(format!(
-                            "```py\n{}#{}```",
-                            msg.author.name, msg.author.discriminator
-                        ));
-                        e.fields(vec![
-                            (
-                                "Nickname:",
-                                format!(
-                                    "`{}`",
-                                    match &msg
-                                        .member
-                                        .as_ref()
-                                        .expect(&Et::Other("").l(cn, "GET NICKNAME"))
-                                        .nick
-                                    {
-                                        Some(n) => n,
-                                        None => "None",
-                                    }
-                                ),
-                                true,
-                            ),
-                            (
-                                "Created at:",
-                                format!("<t:{}:R>", msg.author.created_at().timestamp()),
-                                true,
-                            ),
-                            (
-                                "Joined this server at:",
-                                match &msg
-                                    .member
-                                    .as_ref()
-                                    .expect(&Et::Other("").l(cn, "GET JOINED AT"))
-                                    .joined_at
-                                {
-                                    Some(t) => format!("<t:{}:R>", t.timestamp()),
-                                    None => "None".to_string(),
-                                },
-                                true,
-                            ),
-                            (
-                                "Is mute:",
-                                format!(
-                                    "`{}`",
-                                    msg.member
-                                        .as_ref()
-                                        .expect("kgrs!user_info / GET MUTE BOOL")
-                                        .mute
-                                ),
-                                true,
-                            ),
-                            (
-                                "Roles:",
-                                format!(
-                                    "`{} roles`",
-                                    msg.member
-                                        .as_ref()
-                                        .expect("kgrs!user_info / GET ROLES")
-                                        .roles
-                                        .len()
-                                ),
-                                true,
-                            ),
-                        ]);
-                        e.footer(|f| {f.text(ftr)});
-                        e.timestamp(chrono::Utc::now());
-                        if let Some(c) = msg.author.accent_colour {
-                            e.color(c);
-                        } else {
-                            e.color(Colour(EMBED_LABEL_COL));
-                        }
-                        e
-                    })
-                })
-                .await;
-
-            Et::Rslt(content).l(cn, "SEND");
-        }
-
         // ping
         if msg.content == "kgrs!ping" {
             let cn = "ping";
