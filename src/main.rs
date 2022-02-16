@@ -260,7 +260,7 @@ impl EventHandler for Handler {
                                     .name(format!("{} ℹnformation", client.name))
                             });
                             e.title("Bot name:");
-                            e.description(&format!("{}#{}", client.name, client.discriminator));
+                            e.description(&format!("```py\n{}#{}\n```", client.name, client.discriminator));
                             e.fields(vec![
                                 // If don't make the first type a &String slice, won't be able to use &str behind it
                                 ("ID:", &format!("```c\n{}\n```", client.id)[..], true),
@@ -271,6 +271,7 @@ impl EventHandler for Handler {
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
                                 ("Language:", "```yaml\nRust: [1.58.1]```", true),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
+                                ("Source code:", &format!("[GitHub]({})", env!("CARGO_PKG_REPOSITORY")), true),
                             ]);
                             e.footer(|f| {f.text(ftr)});
                             e.timestamp(chrono::Utc::now());
@@ -425,7 +426,7 @@ impl EventHandler for Handler {
                                         ),
                                         true,
                                     ),
-                                    ("IsBot:", user.bot.to_string(), true),
+                                    ("Is Bot:", user.bot.to_string(), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(chrono::Utc::now());
@@ -521,6 +522,7 @@ impl EventHandler for Handler {
                                         ),
                                         true,
                                     ),
+                                    ("Is Bot:", msg.author.bot.to_string(), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(chrono::Utc::now());
@@ -755,7 +757,7 @@ impl EventHandler for Handler {
 
     // READY event
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} is connected: {}", ready.user.name, chrono::Utc::now());
+        println!("{} v{} is connected: {}", ready.user.name, VER, chrono::Utc::now());
         ctx.set_activity(Activity::playing("kgrs!help | 開発者:Rinrin.rs#5671"))
             .await;
     }
