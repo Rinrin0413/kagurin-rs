@@ -198,7 +198,11 @@ impl EventHandler for Handler {
                                             ),
                                             ("kgrs!direct_msg", "実行者に dm を送る", false),
                                             ("kgrs!message_builder", "MessageBuilder test1", false),
-                                            ("kgrs!message_builder2", "MessageBuilder test2", false),
+                                            (
+                                                "kgrs!message_builder2",
+                                                "MessageBuilder test2",
+                                                false,
+                                            ),
                                             ("kgrs!embed_and_img", "embed & img test", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
@@ -304,45 +308,12 @@ impl EventHandler for Handler {
             // kgrs!profile [userID:int] | get the user desctiption
             if cmd == "profile" {
                 if let Some(id) = arg_i {
-                    let user = match UserId(match id.parse() {
-                        Ok(id) => id,
-                        Err(_) => {
-                            let _ = msg
-                                .channel_id
-                                .say(
-                                    &ctx.http,
-                                    &format!(
-                                        "無効な引数`{}`を確認\n引数には数値を入れてください",
-                                        id
-                                    ),
-                                )
-                                .await
-                                .unwrap();
-                            return;
-                        }
-                    })
-                    .to_user(&ctx.http)
-                    .await
-                    {
-                        Ok(u) => u,
-                        Err(_) => {
-                            let _ = msg
-                                .channel_id
-                                .say(&ctx.http, &format!("無効なユーザIDです: {}", id))
-                                .await
-                                .unwrap();
-                            return;
-                        }
+                    let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
+                        u
+                    } else {
+                        return;
                     };
-                    let member = match msg
-                        .guild_id
-                        .expect(&Et::Other("").l(cmd, "GET GUILD ID"))
-                        .member(&ctx.http, user.id)
-                        .await
-                    {
-                        Ok(m) => Some(m),
-                        Err(_) => None,
-                    };
+                    let member = get_member_from_user(&user, &msg, &ctx).await;
                     let user_color = ctx.http.get_user(*user.id.as_u64()).await;
                     let content = msg
                         .channel_id
@@ -549,6 +520,75 @@ impl EventHandler for Handler {
                     })
                     .await
                     .expect(&Et::Other("").l(cmd, "SEND PONG"));
+            }
+
+            // kgrs!avatar [userID:int] | get the user avatar
+            if cmd == "avatar" {
+                if let Some(id) = arg_i {
+                    let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
+                        u
+                    } else {
+                        return;
+                    };
+                    let user_color = ctx.http.get_user(*user.id.as_u64()).await;
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.description(format!(
+                                    "**[{}'s avatar]({})**",
+                                    user.name,
+                                    user.face()
+                                ));
+                                e.image(user.face());
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(if let Ok(u) = user_color {
+                                    //msg.author.accent_colour
+                                    if let Some(c) = u.accent_colour {
+                                        c
+                                    } else {
+                                        Colour(EMBED_LABEL_COL)
+                                    }
+                                } else {
+                                    Colour(EMBED_LABEL_COL)
+                                });
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                } else {
+                    let author_color = ctx.http.get_user(*msg.author.id.as_u64()).await;
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.description(format!(
+                                    "**[{}'s avatar]({})**",
+                                    msg.author.name,
+                                    msg.author.face()
+                                ));
+                                e.image(msg.author.face());
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(if let Ok(u) = author_color {
+                                    if let Some(c) = u.accent_colour {
+                                        c
+                                    } else {
+                                        Colour(EMBED_LABEL_COL)
+                                    }
+                                } else {
+                                    Colour(EMBED_LABEL_COL)
+                                });
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
             }
 
             // FOR TRUSTED USER
