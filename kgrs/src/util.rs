@@ -1,7 +1,56 @@
-use serenity::model::prelude::UserId;
-
+use crate::util::fmt::Et;
+use serenity::{
+    model::{
+        prelude::{UserId, User, Message}, 
+        guild::Member,
+    },
+    prelude::Context,
+};
 pub fn restrict_users(author: UserId, auth_user: &[u64]) -> bool {
     auth_user.contains(&author.as_u64())
+}
+
+pub async fn get_user_from_arg(arg: &str, msg: &Message, ctx: &Context) -> Option<User> {
+    match UserId(
+        match arg.parse() {
+            Ok(id) => id,
+            Err(_) => {
+                let _ = msg
+                    .channel_id
+                    .say(
+                        &ctx.http,
+                        &format!(
+                            "無効な引数`{}`を確認\n引数には数値を入れてください",
+                            arg
+                        ),
+                    )
+                    .await
+                    .unwrap();
+                return None
+            }
+        }
+    ).to_user(&ctx.http).await {
+        Ok(u) => Some(u),
+        Err(_) => {
+            let _ = msg
+                .channel_id
+                .say(&ctx.http, &format!("無効なユーザIDです: {}", arg))
+                .await
+                .unwrap();
+            return None
+        }
+    }
+}
+
+pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> Option<Member> {
+    match msg
+        .guild_id
+        .expect(&Et::Other("").l("_", "GET GUILD ID"))
+        .member(&ctx.http, user.id)
+        .await {
+            Ok(m) => Some(m),
+            Err(_) => None,
+        }
 }
 
 pub mod fmt {
