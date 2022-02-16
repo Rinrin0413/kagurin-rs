@@ -78,6 +78,7 @@ impl EventHandler for Handler {
                                             ("kgrs!info", "このボットの詳細を表示", false),
                                             ("kgrs!ping", "pong!", false),
                                             ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
+                                            ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンが表示される", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
