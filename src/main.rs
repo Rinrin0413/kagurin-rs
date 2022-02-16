@@ -10,10 +10,8 @@ use std::{collections::HashMap, env};
 
 struct Handler;
 
-const VER: &'static str = env!("CARGO_PKG_VERSION");
+const VER: &str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
-const BOT_ICON: &str =
-    "https://cdn.discordapp.com/avatars/936116497502318654/a0b82d4e3d428cd578e24029ad05d2aa.png";
 const TRUSTED: [u64; 2] = [
     724976600873041940, // Rinrin.rs
     801082943371477022, // Rinrin.hlsl
@@ -27,6 +25,12 @@ const DEVELIPER: [u64; 2] = [
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
+        // ▼ DB
+        let cache = &ctx.cache;
+        let client = cache.current_user().await;
+        let bot_avatar = &client.face();
+        // ▲ DB
+
         // COMMANDS
         if Some("kgrs") == msg.content.split('!').nth(0) {
             // ▼ DB
@@ -64,7 +68,7 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(BOT_ICON)
+                                            a.icon_url(bot_avatar)
                                                 .name("かぐりん.rs's Commands(display)")
                                         });
                                         e.title("表示系コマンド一覧");
@@ -88,12 +92,12 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(BOT_ICON)
+                                            a.icon_url(bot_avatar)
                                                 .name("かぐりん.rs's Commands(util)")
                                         });
                                         e.title("機能系コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![("kgrs!-", "-", false)]);
+                                        e.fields(vec![("kgrs!timestamp", "現在のタイムスタンプを取得", false)]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -109,7 +113,7 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(fun)")
+                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(fun)")
                                         });
                                         e.title("娯楽系コマンド一覧");
                                         e.description(note_cp);
@@ -129,7 +133,7 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(mod)")
+                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(mod)")
                                         });
                                         e.title("管理者用コマンド一覧");
                                         e.description(note_cp);
@@ -148,7 +152,7 @@ impl EventHandler for Handler {
                             .channel_id
                             .send_message(&ctx.http, |m| {
                                 m.embed(|e| {
-                                    e.author(|a| a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(trusted)"));
+                                    e.author(|a| a.icon_url(bot_avatar).name("かぐりん.rs's Commands(trusted)"));
                                     e.title("開発者に信頼されている人用のコマンド一覧");
                                     e.description(note_cp);
                                     e.fields(vec![
@@ -173,7 +177,7 @@ impl EventHandler for Handler {
                                 .send_message(&ctx.http, |m| {
                                     m.embed(|e| {
                                         e.author(|a| {
-                                            a.icon_url(BOT_ICON).name("かぐりん.rs's Commands(dev)")
+                                            a.icon_url(bot_avatar).name("かぐりん.rs's Commands(dev)")
                                         });
                                         e.title("Rinrin用コマンド一覧");
                                         e.description(note_cp);
@@ -208,7 +212,7 @@ impl EventHandler for Handler {
                         .send_message(&ctx.http, |m| {
                             m.embed(|e| {
                                 e.author(|a| {
-                                    a.icon_url(BOT_ICON).name("かぐりん.rs's Commands HUB")
+                                    a.icon_url(bot_avatar).name("かぐりん.rs's Commands HUB")
                                 });
                                 e.title("コマンドの種類一覧");
                                 e.description(note_cp);
@@ -238,23 +242,24 @@ impl EventHandler for Handler {
 
             // kgrs!info | show info
             if cmd == "info" {
-                println!("{:?}", &ctx.cache);
+                let guilds = cache.guild_count().await; //cache.guilds().await;
                 let content = msg
                     .channel_id
                     .send_message(&ctx.http, |m| {
                         m.embed(|e| {
                             e.author(|a| {
-                                a.icon_url(BOT_ICON)
-                                    .name(format!("{} ℹnformation", "なんかあああ"))
+                                a.icon_url(bot_avatar)
+                                    .name(format!("{} ℹnformation", client.name))
                             });
                             e.title("Bot name:");
-                            e.description("かぐりん.rs#5790");
+                            e.description(&format!("{}#{}", client.name, client.discriminator));
                             e.fields(vec![
-                                ("ID:", "```c\n936116497502318654```", true),
-                                ("Bot version:", &format!("```c\n{}```", VER)[..], true),
-                                ("Created at:", "<t:1643258000:R>"/*```diff\n-```"*/, true),
-                                //("Guilds:", "-", true),
-                                ("Invile link:", "[URL](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
+                                // If don't make the first type a &String slice, won't be able to use &str behind it
+                                ("ID:", &format!("```c\n{}\n```", client.id)[..], true),
+                                ("Bot version:", &format!("```c\n{}```", VER), true),
+                                ("Created at:", &format!("<t:{}:R>", client.id.created_at().timestamp()), true), // 1643258000
+                                ("Guilds:", &format!("```c\n{} guilds\n```", guilds), true),
+                                ("Invile link:", "[here](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
                                 ("Language:", "```yaml\nRust: [1.58.1]```", true),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
@@ -265,6 +270,16 @@ impl EventHandler for Handler {
                             e
                         })
                     })
+                    .await;
+
+                Et::Rslt(content).l(cmd, "SEND");
+            }
+
+            // kgrs!timestamp | get the current timestamp
+            if cmd == "timestamp" {
+                let content = msg
+                    .channel_id
+                    .say(&ctx.http, chrono::Utc::now().timestamp())
                     .await;
 
                 Et::Rslt(content).l(cmd, "SEND");
@@ -296,6 +311,7 @@ impl EventHandler for Handler {
                                 return;
                             }
                         }
+                        /*// do not work
                         let reaction = msg
                             .reaction_users(
                                 &ctx.http,
@@ -311,6 +327,7 @@ impl EventHandler for Handler {
                         if let Err(why) = reaction {
                             println!("kgrs!{} / REACTION : {:?}", cmd, why);
                         }
+                        */
                         println!(
                             "{} が botアクティビティを {} の `{}` に変更",
                             msg.author.name, r#type, content
