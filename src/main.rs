@@ -6,7 +6,7 @@ use kgrs::serenity::{
 };
 use kgrs::util::{fmt::*, *};
 use serde_json::{json, Value};
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, time::Instant};
 
 struct Handler;
 
@@ -76,6 +76,7 @@ impl EventHandler for Handler {
                                         e.fields(vec![
                                             ("kgrs!help", "コマンドのヘルプ(ハブ)を表示", false),
                                             ("kgrs!info", "このボットの詳細を表示", false),
+                                            ("kgrs!ping", "pong!", false),
                                             ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
@@ -334,26 +335,8 @@ impl EventHandler for Handler {
                         .await
                     {
                         Ok(m) => Some(m),
-                        Err(_) => {
-                            None
-                            /*
-                            let _ = msg
-                                .channel_id
-                                .say(&ctx.http, &format!("そのユーザは恐らくこのサーバーにいません | id: {}", id))
-                                .await
-                                .unwrap();
-                            return;
-                            */
-                        }
+                        Err(_) => None,
                     };
-                    /*&cache.member(
-                        msg.guild_id.expect(
-                            &Et::Other("").l(cmd, "GET GUILD ID")
-                        ),
-                        user.id
-                    ).await.expect(
-                        &Et::Other("").l(cmd, "GET MEMBER")
-                    );*/
                     let user_color = ctx.http.get_user(*user.id.as_u64()).await;
                     let content = msg
                         .channel_id
@@ -505,7 +488,7 @@ impl EventHandler for Handler {
                                             "`{}`",
                                             msg.member
                                                 .as_ref()
-                                                .expect("kgrs!user_info / GET MUTE BOOL")
+                                                .expect(&Et::Other("").l(cmd, "GET MUTE BOOL"))
                                                 .mute
                                         ),
                                         true,
@@ -516,7 +499,7 @@ impl EventHandler for Handler {
                                             "`{} roles`",
                                             msg.member
                                                 .as_ref()
-                                                .expect("kgrs!user_info / GET ROLES")
+                                                .expect(&Et::Other("").l(cmd, "GET ROLES"))
                                                 .roles
                                                 .len()
                                         ),
@@ -542,6 +525,24 @@ impl EventHandler for Handler {
 
                     Et::Rslt(content).l(cmd, "SEND");
                 }
+            }
+
+            // kgrs!ping | pong!
+            if cmd == "ping" {
+                let before = Instant::now();
+                let mut content = msg
+                    .channel_id
+                    .say(&ctx.http, "pong!")
+                    .await
+                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
+                //Et::Rslt(content).l(cmd, "SEND");
+                let after = Instant::now();
+                content
+                    .edit(&ctx, |m| {
+                        m.content(format!("pong! ({}ms)", (after - before).as_millis()))
+                    })
+                    .await
+                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
             }
 
             // FOR TRUSTED USER
@@ -613,12 +614,6 @@ impl EventHandler for Handler {
         }
 
         /*
-        // ping
-        if msg.content == "kgrs!ping" {
-            let cn = "ping";
-            let content = msg.channel_id.say(&ctx.http, "贵樣!").await;
-            Et::Rslt(content).l(cn, "SEND");
-        }
 
         // directMsg
         if msg.content == "kgrs!directMsg" {
@@ -757,7 +752,12 @@ impl EventHandler for Handler {
 
     // READY event
     async fn ready(&self, ctx: Context, ready: Ready) {
-        println!("{} v{} is connected: {}", ready.user.name, VER, chrono::Utc::now());
+        println!(
+            "{} v{} is connected: {}",
+            ready.user.name,
+            VER,
+            chrono::Utc::now()
+        );
         ctx.set_activity(Activity::playing("kgrs!help | 開発者:Rinrin.rs#5671"))
             .await;
     }
