@@ -1,7 +1,7 @@
 use kgrs::serenity::{
     async_trait,
     model::{channel::Message, gateway::Ready, prelude::*},
-    prelude::{Client, Context, EventHandler, SerenityError},
+    prelude::{Client, Context, EventHandler},
     utils::{Colour, MessageBuilder},
 };
 use kgrs::util::{fmt::*, *};
@@ -190,11 +190,17 @@ impl EventHandler for Handler {
                                         });
                                         e.title("Rinrin用コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![(
-                                            "kgrs!sd",
-                                            "serenity-rs のドキュメントの URL を出す",
-                                            false,
-                                        )]);
+                                        e.fields(vec![
+                                            (
+                                                "kgrs!sd",
+                                                "serenity-rs のドキュメントの URL を出す",
+                                                false,
+                                            ),
+                                            ("kgrs!direct_msg", "実行者に dm を送る", false),
+                                            ("kgrs!message_builder", "MessageBuilder test1", false),
+                                            ("kgrs!message_builder2", "MessageBuilder test2", false),
+                                            ("kgrs!embed_and_img", "embed & img test", false),
+                                        ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -610,144 +616,136 @@ impl EventHandler for Handler {
 
                     Et::Rslt(content).l(cmd, "SEND");
                 }
+
+                // kgrs!direct_msg | send dm yo
+                if cmd == "direct_msg" {
+                    let content = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
+                    Et::Rslt(content).l(cmd, "SEND DM");
+                }
+
+                // kgrs!message_builder | MessageBuilder test1
+                if cmd == "message_builder" {
+                    let channel = msg
+                        .channel_id
+                        .to_channel(&ctx)
+                        .await
+                        .expect(&Et::Other("").l(cmd, "GET CHANNEL"));
+                    let mb = MessageBuilder::new()
+                        .push("贵樣(")
+                        .push_bold_safe(&msg.author.name)
+                        .push(") ば `kgrs!dynamiccmd` を ")
+                        .mention(&channel)
+                        .push(" で使用レだ。")
+                        .build();
+                    let content = msg.channel_id.say(&ctx.http, &mb).await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+
+                // kgrs!message_builder2 | MessageBuilder test2
+                if cmd == "message_builder2" {
+                    let emoji = serde_json::from_value::<Emoji>(json!({
+                        "animated": false,
+                        "id": EmojiId(921759722170904618),
+                        "managed": true,
+                        "name": "yushyu_no_jinzay".to_string(),
+                        "require_colons": true,
+                        "roles": Vec::<Role>::new(),
+                    }))
+                    .unwrap();
+                    let mb = MessageBuilder::new()
+                        .push("通常の文字列")
+                        .push_codeblock("print(\"コードブロック\")", Some("py"))
+                        .push_mono("コードインライン")
+                        .push_italic("斜体")
+                        .push_bold("太字")
+                        .push_underline("下線")
+                        .push_strike("取り消し線")
+                        .push_spoiler("スポイラー")
+                        .push_quote("引用")
+                        .push_line("末尾に改行")
+                        .push_safe("discord.gg/7QhMDfyPHR @here *アスタリスク* `グレイヴ・アクセント` _アンダーライン_")
+                        .push_underline_safe("下__線")
+                        .channel(ChannelId(894239318330179624))
+                        .emoji(&emoji)
+                        .mention(&UserId(724976600873041940))
+                        .role(RoleId(835851285982478346))
+                        .user(&UserId(801082943371477022))
+                        .build();
+                    //println!("{:?}", mb);
+                    let content = msg.channel_id.say(&ctx.http, &mb).await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+
+                // kgrs!embed_and_img | embed & img test
+                if cmd == "embed_and_img" {
+                    let mut author: HashMap<&'static str, Value> = HashMap::new();
+                    author.insert("贵樣", Value::String(String::from("a")));
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.content("ただの文章")
+                                .embed(|e| {
+                                    // 埋め込み(E.bed)のタイトル
+                                    e.title("全体タイトル");
+
+                                    // 埋め込みの説明
+                                    e.description("全体説明");
+
+                                    // 画像添付
+                                    e.image("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/MCSplashScreen.scale-200.png"); //./static/MCSplashScreen.scale-200.png")
+
+                                    // インラインのフィールド(複数)
+                                    e.fields(vec![
+                                        (
+                                            "第壱フィールドタイトル",
+                                            "第壱フィールドボディ(インライン)",
+                                            true,
+                                        ),
+                                        (
+                                            "第贰フィールドタイトル",
+                                            "第贰フィールドボディ(インライン)",
+                                            true,
+                                        ),
+                                    ]);
+
+                                    // ブロックのフィールド
+                                    e.field(
+                                        "第叁フィールドタイトル",
+                                        "第叁フィールドボディ(インラインじゃないよ)",
+                                        false,
+                                    );
+
+                                    // フッター
+                                    e.footer(|f| f.text("フッター"));
+
+                                    // タイムスタンプ
+                                    e.timestamp(chrono::Utc::now());
+
+                                    // 著者
+                                    e.author(|a| {
+                                        // authorアイコン
+                                        a.icon_url(&msg.author.face());
+                                        // author名
+                                        a.name(&msg.author.name)
+                                    });
+
+                                    // 埋め込みカラー
+                                    e.color(Colour(0xFFCDC9));
+
+                                    // サムネイル
+                                    e.thumbnail("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/atking-of-the-pancake.png"); //./static/atking-of-the-pancake.png")
+
+                                    e // いろいろ改変した挙句 e を返す
+                                })
+                                // ↓ ただの画像添付
+                                .add_file("./static/atk-of-the-pancake.png")
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
             }
         }
-
-        /*
-
-        // directMsg
-        if msg.content == "kgrs!directMsg" {
-            let cn = "directMsg";
-            let content = msg.author.dm(&ctx, |m| m.content("Yoooo")).await;
-            Et::Rslt(content).l(cn, "SEND DM");
-        }
-
-        // MessageBuilder
-        if msg.content == "kgrs!MessageBuilder" {
-            let cn = "MessageBuilder";
-            let channel = match msg.channel_id.to_channel(&ctx).await {
-                Ok(c) => c,
-                Err(why) => {
-                    println!("kgrs!{} / {} : {:?}", cn, "GET CHANNEL", why);
-                    return;
-                }
-            }; //l(cn, "GET CHANNEL", Et::Rslt(msg.channel_id.to_channel(&ctx).await)); // e fun not compatible
-            let message = MessageBuilder::new()
-                .push("贵樣(")
-                .push_bold_safe(&msg.author.name)
-                .push(") ば `kgrs!dynamiccmd` を ")
-                .mention(&channel)
-                .push(" で使用レだ。")
-                .build();
-            let content = msg.channel_id.say(&ctx.http, &message).await;
-            Et::Rslt(content).l(cn, "SEND");
-        }
-
-        // MessageBuilder2
-        if msg.content == "kgrs!MessageBuilder2" {
-            let cn = "MessageBuilder2";
-            let emoji = serde_json::from_value::<Emoji>(json!({
-                "animated": false,
-                "id": EmojiId(921759722170904618),
-                "managed": true,
-                "name": "yushyu_no_jinzay".to_string(),
-                "require_colons": true,
-                "roles": Vec::<Role>::new(),
-            }))
-            .unwrap();
-            let content = MessageBuilder::new()
-                .push("通常の文字列")
-                .push_codeblock("print(\"コードブロック\")", Some("py"))
-                .push_mono("コードインライン")
-                .push_italic("斜体")
-                .push_bold("太字")
-                .push_underline("下線")
-                .push_strike("取り消し線")
-                .push_spoiler("スポイラー")
-                .push_quote("引用")
-                .push_line("末尾に改行")
-                .push_safe("discord.gg/7QhMDfyPHR @here *アスタリスク* `グレイヴ・アクセント` _アンダーライン_")
-                .push_underline_safe("下__線")
-                .channel(ChannelId(894239318330179624))
-                .emoji(&emoji)
-                .mention(&UserId(724976600873041940))
-                .role(RoleId(835851285982478346))
-                .user(&UserId(801082943371477022))
-                .build();
-            //println!("{:?}", content);
-            Et::Rslt(msg.channel_id.say(&ctx.http, &content).await).l(cn, "SEND");
-        }
-
-        // embed&img
-        if msg.content == "kgrs!embed&img" {
-            let cn = "!embed&img";
-            let mut author: HashMap<&'static str, Value> = HashMap::new();
-            author.insert("贵樣", Value::String(String::from("a")));
-            let content = msg
-                .channel_id
-                .send_message(&ctx.http, |m| {
-                    m.content("ただの文章")
-                        .embed(|e| {
-                            // 埋め込み(E.bed)のタイトル
-                            e.title("全体タイトル");
-
-                            // 埋め込みの説明
-                            e.description("全体説明");
-
-                            // 画像添付
-                            e.image("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/MCSplashScreen.scale-200.png"); //./static/MCSplashScreen.scale-200.png")
-
-                            // インラインのフィールド(複数)
-                            e.fields(vec![
-                                (
-                                    "第壱フィールドタイトル",
-                                    "第壱フィールドボディ(インライン)",
-                                    true,
-                                ),
-                                (
-                                    "第贰フィールドタイトル",
-                                    "第贰フィールドボディ(インライン)",
-                                    true,
-                                ),
-                            ]);
-
-                            // ブロックのフィールド
-                            e.field(
-                                "第叁フィールドタイトル",
-                                "第叁フィールドボディ(インラインじゃないよ)",
-                                false,
-                            );
-
-                            // フッター
-                            e.footer(|f| f.text("フッター"));
-
-                            // タイムスタンプ
-                            e.timestamp(chrono::Utc::now());
-
-                            // 著者
-                            e.author(|a| {
-                                // authorアイコン
-                                a.icon_url(&msg.author.face());
-                                // author名
-                                a.name(&msg.author.name)
-                            });
-
-                            // 埋め込みカラー
-                            e.color(Colour(0xFFCDC9));
-
-                            // サムネイル
-                            e.thumbnail("https://raw.githubusercontent.com/Rinrin0413/kagurin-rs/master/static/atking-of-the-pancake.png"); //./static/atking-of-the-pancake.png")
-
-                            e // いろいろ改変した挙句 e を返す
-                        })
-                        // ↓ ただの画像添付
-                        .add_file("./static/atk-of-the-pancake.png")
-                })
-                .await;
-
-            Et::Rslt(content).l(cn, "SEND");
-        }
-        */
     }
 
     // READY event
