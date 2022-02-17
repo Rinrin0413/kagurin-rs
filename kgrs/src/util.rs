@@ -58,7 +58,7 @@ pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> 
 
 pub fn rand_choise<T>(list: &[T]) -> &T {
     let max = list.len() - 1;
-    &list[rand::thread_rng().gen_range(0..max)]
+    &list[rand::thread_rng().gen_range(0..=max)]
 }
 
 pub async fn upper_lower_uuid(arg_ii: Option<&str>, msg: &Message, ctx: &Context) -> Option<String> {
