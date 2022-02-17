@@ -46,14 +46,14 @@ pub async fn get_user_from_arg(arg: &str, msg: &Message, ctx: &Context) -> Optio
 }
 
 pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> Option<Member> {
-    match msg
-        .guild_id
-        .expect(&Et::Other("").l("_", "GET GUILD ID"))
-        .member(&ctx.http, user.id)
-        .await {
+    if let Some(g) = msg.guild_id {
+        match g.member(&ctx.http, user.id).await {
             Ok(m) => Some(m),
             Err(_) => None,
         }
+    } else {
+        None
+    }
 }
 
 pub fn rand_choise<T>(list: &[T]) -> &T {
@@ -85,6 +85,7 @@ pub async fn upper_lower_uuid(arg_ii: Option<&str>, msg: &Message, ctx: &Context
 pub mod fmt {
     use serenity::model::prelude::Message;
     use std::fmt::Debug;
+
     pub enum Et<'a, T> {
         Rslt(Result<Message, T>),
         Optn(Option<T>, &'a Message),
@@ -92,8 +93,7 @@ pub mod fmt {
     }
     
     impl<T> Et<'_, T> 
-    where 
-        T: ToString + Debug,
+    where T: ToString + Debug,
     {
         pub fn l(&self, cmd: &str, at: &str) -> String {
             match self {
