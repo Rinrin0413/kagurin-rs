@@ -9,7 +9,7 @@ use kgrs::{
     thread_rng, Rng,
 };
 use serde_json::{json, Value};
-use std::{collections::HashMap, env, time::Instant};
+use std::{collections::HashMap, env, process, time::Instant};
 
 struct Handler;
 
@@ -39,6 +39,16 @@ impl EventHandler for Handler {
         let bot_avatar = &client.face();
         // ▲ DB
 
+        // If mentioned to bot, will send about help cmd
+        if msg
+            .mentions_me(&ctx.http)
+            .await
+            .expect("GET MENTIONS TO ME")
+        {
+            let content = msg.reply(&ctx.http, "ヘルプは `kgrs!help` でどうぞ").await;
+            Et::Rslt(content).l("_こん", "SEND");
+        }
+
         // COMMANDS
         if Some("kgrs") == msg.content.split('!').nth(0) {
             // ▼ DB
@@ -53,16 +63,35 @@ impl EventHandler for Handler {
                 "kgrs!{} by {}",
                 cmd,
                 Et::Optn(
-                    msg.member
-                        .as_ref()
-                        .expect(&Et::Other("").l(cmd, "GET MEMBER"))
-                        .nick
-                        .as_ref(),
+                    // If there is no member data(dm...?), return nick, else name
+                    if let Some(m) = &msg.member {
+                        m.nick.as_ref()
+                    } else {
+                        Some(&msg.author.name)
+                    },
                     &msg
                 )
                 .l(cmd, "FOOTER")
             );
-            // ▲ DB「
+            // ▲ DB
+
+            // kgrs!ping | pong!
+            if cmd == "ping" {
+                let before = Instant::now();
+                let mut content = msg
+                    .channel_id
+                    .say(&ctx.http, "pong!")
+                    .await
+                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
+                //Et::Rslt(content).l(cmd, "SEND");
+                let after = Instant::now();
+                content
+                    .edit(&ctx, |m| {
+                        m.content(format!("pong! ({}ms)", (after - before).as_millis()))
+                    })
+                    .await
+                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
+            }
 
             // kgrs!help [type:HELP_TYPE] | show help
             //  HELP_TYPE = [display, util, fun, mod, trusted, dev]
@@ -203,6 +232,7 @@ impl EventHandler for Handler {
                                         e.title("Rinrin用コマンド一覧");
                                         e.description(note_cp);
                                         e.fields(vec![
+                                            ("kgrs!exit", "プロセスを強制終了", false),
                                             (
                                                 "kgrs!sd",
                                                 "serenity-rs のドキュメントの URL を出す",
@@ -441,14 +471,16 @@ impl EventHandler for Handler {
                                         "Nickname:",
                                         format!(
                                             "`{}`",
-                                            match &msg
-                                                .member
-                                                .as_ref()
-                                                .expect(&Et::Other("").l(cmd, "GET NICKNAME"))
-                                                .nick
+                                            if let Some(n) = 
+                                                if let Some(m) = &msg.member {
+                                                    m.nick.as_ref()
+                                                } else {
+                                                    Some(&msg.author.name)
+                                                } 
                                             {
-                                                Some(n) => n,
-                                                None => "None",
+                                               n
+                                            } else {
+                                                "None"
                                             }
                                         ),
                                         true,
@@ -460,14 +492,16 @@ impl EventHandler for Handler {
                                     ),
                                     (
                                         "Joined this server at:",
-                                        match &msg
-                                            .member
-                                            .as_ref()
-                                            .expect(&Et::Other("").l(cmd, "GET JOINED AT"))
-                                            .joined_at
+                                        if let Some(n) = 
+                                            if let Some(m) = &msg.member {
+                                                m.joined_at.as_ref()
+                                            } else {
+                                                None
+                                            } 
                                         {
-                                            Some(t) => format!("<t:{}:R>", t.timestamp()),
-                                            None => "None".to_string(),
+                                            format!("<t:{}:R>", n.timestamp())
+                                        } else {
+                                            "None".to_string()
                                         },
                                         true,
                                     ),
@@ -475,10 +509,11 @@ impl EventHandler for Handler {
                                         "Is mute:",
                                         format!(
                                             "`{}`",
-                                            msg.member
-                                                .as_ref()
-                                                .expect(&Et::Other("").l(cmd, "GET MUTE BOOL"))
-                                                .mute
+                                            if let Some(m) = &msg.member {
+                                                m.mute
+                                            } else {
+                                                false
+                                            }
                                         ),
                                         true,
                                     ),
@@ -486,11 +521,11 @@ impl EventHandler for Handler {
                                         "Roles:",
                                         format!(
                                             "`{} roles`",
-                                            msg.member
-                                                .as_ref()
-                                                .expect(&Et::Other("").l(cmd, "GET ROLES"))
-                                                .roles
-                                                .len()
+                                            if let Some(m) = &msg.member {
+                                                m.roles.len()
+                                            } else {
+                                                0
+                                            }
                                         ),
                                         true,
                                     ),
@@ -514,24 +549,6 @@ impl EventHandler for Handler {
 
                     Et::Rslt(content).l(cmd, "SEND");
                 }
-            }
-
-            // kgrs!ping | pong!
-            if cmd == "ping" {
-                let before = Instant::now();
-                let mut content = msg
-                    .channel_id
-                    .say(&ctx.http, "pong!")
-                    .await
-                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
-                //Et::Rslt(content).l(cmd, "SEND");
-                let after = Instant::now();
-                content
-                    .edit(&ctx, |m| {
-                        m.content(format!("pong! ({}ms)", (after - before).as_millis()))
-                    })
-                    .await
-                    .expect(&Et::Other("").l(cmd, "SEND PONG"));
             }
 
             // kgrs!avatar [userID:int] | get the user avatar
@@ -688,23 +705,20 @@ impl EventHandler for Handler {
                                 return;
                             }
                         }
-                        /*// do not work
+                        // do not work
                         let reaction = msg
-                            .reaction_users(
-                                &ctx.http,
+                            .react(
+                                &ctx,
                                 ReactionType::Custom {
                                     animated: false,
                                     id: EmojiId(856911443390627840),
                                     name: Some(String::from("HAAKU_death")),
                                 },
-                                Some(64),
-                                Some(msg.author.id),
                             )
                             .await;
                         if let Err(why) = reaction {
                             println!("kgrs!{} / REACTION : {:?}", cmd, why);
                         }
-                        */
                         println!(
                             "{} が botアクティビティを {} の `{}` に変更",
                             msg.author.name, r#type, content
@@ -718,6 +732,19 @@ impl EventHandler for Handler {
 
             // DEV
             if restrict_users(msg.author.id, &DEVELIPER) {
+                // kgrs!exit | process exit
+                if cmd == "exit" {
+                    let content = msg
+                        .channel_id
+                        .say(
+                            &ctx.http,
+                            format!("Process exited at <t:{}:T>", chrono::Utc::now().timestamp()),
+                        )
+                        .await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                    process::exit(0b1110111);
+                }
+
                 // kgrs!sd | show serenity-rs doc
                 if cmd == "sd" {
                     let content = msg
@@ -861,8 +888,8 @@ impl EventHandler for Handler {
         {
             // こん... | hellow
             if msg.content.starts_with("こん") {
-                let hellowes = ["こんちゃ", "こんにちは"];
-                let content = msg.channel_id.say(&ctx.http, rand_choise(&hellowes)).await;
+                let lines = ["こんちゃ", "こんにちは"];
+                let content = msg.channel_id.say(&ctx.http, rand_choise(&lines)).await;
                 Et::Rslt(content).l("_こん", "SEND");
             }
         }
