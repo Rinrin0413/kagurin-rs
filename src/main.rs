@@ -1,10 +1,13 @@
-use kgrs::serenity::{
-    async_trait,
-    model::{channel::Message, gateway::Ready, prelude::*},
-    prelude::{Client, Context, EventHandler},
-    utils::{Colour, MessageBuilder},
-};
 use kgrs::util::{fmt::*, *};
+use kgrs::{
+    serenity::{
+        async_trait,
+        model::{channel::Message, gateway::Ready, prelude::*},
+        prelude::{Client, Context, EventHandler},
+        utils::{Colour, MessageBuilder},
+    },
+    thread_rng, Rng,
+};
 use serde_json::{json, Value};
 use std::{collections::HashMap, env, time::Instant};
 
@@ -25,7 +28,7 @@ const DEVELIPER: [u64; 2] = [
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-        // if msg.author.bot { return }
+        // return if msg author is bot
         if msg.author.bot {
             return;
         }
@@ -35,13 +38,6 @@ impl EventHandler for Handler {
         let client = cache.current_user().await;
         let bot_avatar = &client.face();
         // ▲ DB
-
-        // こん... | hello
-        if msg.content.starts_with("こん") {
-            let helloes = ["こんちゃ", "こんにちは"];
-            let content = msg.channel_id.say(&ctx.http, rand_choise(&helloes)).await;
-            Et::Rslt(content).l("_こん", "SEND");
-        }
 
         // COMMANDS
         if Some("kgrs") == msg.content.split('!').nth(0) {
@@ -859,6 +855,15 @@ impl EventHandler for Handler {
 
                     Et::Rslt(content).l(cmd, "SEND");
                 }
+            }
+        } else if thread_rng().gen_bool(1.0 / 5.0)
+        // CONVERSATIONS
+        {
+            // こん... | hellow
+            if msg.content.starts_with("こん") {
+                let hellowes = ["こんちゃ", "こんにちは"];
+                let content = msg.channel_id.say(&ctx.http, rand_choise(&hellowes)).await;
+                Et::Rslt(content).l("_こん", "SEND");
             }
         }
     }
