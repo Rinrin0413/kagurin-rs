@@ -1,6 +1,6 @@
 [package]
 name = "kgrs"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2021"
 authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
 license = "[GPL-3.0] GNU General Public License v3.0"
@@ -10,3 +10,5 @@ repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
 
 [dependencies]
 serenity = { version = "0.10.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache"] }
+rand = "0.8.5"
+uuid = { version = "0.8.2", features = ["v4"] }

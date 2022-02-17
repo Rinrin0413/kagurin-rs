@@ -6,6 +6,9 @@ use serenity::{
     },
     prelude::Context,
 };
+use rand::Rng;
+use uuid::Uuid;
+
 pub fn restrict_users(author: UserId, auth_user: &[u64]) -> bool {
     auth_user.contains(&author.as_u64())
 }
@@ -51,6 +54,32 @@ pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> 
             Ok(m) => Some(m),
             Err(_) => None,
         }
+}
+
+pub fn rand_choise<T>(list: &[T]) -> &T {
+    let max = list.len() - 1;
+    &list[rand::thread_rng().gen_range(0..max)]
+}
+
+pub async fn upper_lower_uuid(arg_ii: Option<&str>, msg: &Message, ctx: &Context) -> Option<String> {
+    let uc_uuid = Some(Uuid::new_v4().to_string().to_ascii_uppercase());
+    let lc_uuid = Some(Uuid::new_v4().to_string().to_string().to_ascii_lowercase());
+    if let Some(b) = arg_ii {
+        match b {
+            "true"|"True"|"t"|"T" => uc_uuid,
+            "false"|"False"|"f"|"F" => lc_uuid,
+            _ => {
+                let content = msg
+                    .channel_id
+                    .say(&ctx.http, "無効な引数を確認\n第2引数には真偽値を入れてください")
+                    .await;
+                Et::Rslt(content).l("uuid", "SEND");
+                return None
+            }
+        }
+    } else {
+        lc_uuid
+    }
 }
 
 pub mod fmt {
