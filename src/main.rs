@@ -25,6 +25,11 @@ const DEVELIPER: [u64; 2] = [
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
+        // if msg.author.bot { return }
+        if msg.author.bot {
+            return;
+        }
+
         // ▼ DB
         let cache = &ctx.cache;
         let client = cache.current_user().await;
@@ -34,10 +39,7 @@ impl EventHandler for Handler {
         // こん... | hello
         if msg.content.starts_with("こん") {
             let helloes = ["こんちゃ", "こんにちは"];
-            let content = msg
-                .channel_id
-                .say(&ctx.http, rand_choise(&helloes))
-                .await;
+            let content = msg.channel_id.say(&ctx.http, rand_choise(&helloes)).await;
             Et::Rslt(content).l("_こん", "SEND");
         }
 
@@ -112,7 +114,11 @@ impl EventHandler for Handler {
                                         e.description(note_cp);
                                         e.fields(vec![
                                             ("kgrs!timestamp", "現在のタイムスタンプを取得", false),
-                                            ("kgrs!uuid [How-many:int] [Is-uppercase:bool]", "uuidを生成", false),
+                                            (
+                                                "kgrs!uuid [How-many:int] [Is-uppercase:bool]",
+                                                "uuidを生成",
+                                                false,
+                                            ),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
@@ -609,8 +615,8 @@ impl EventHandler for Handler {
                         let mut uuids = String::new();
                         for _ in 0..n {
                             uuids = format!(
-                                "{}```yaml\n{}\n```", 
-                                uuids, 
+                                "{}```yaml\n{}\n```",
+                                uuids,
                                 match upper_lower_uuid(arg_ii, &msg, &ctx).await {
                                     Some(id) => id,
                                     None => return,
