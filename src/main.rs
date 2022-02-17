@@ -31,6 +31,16 @@ impl EventHandler for Handler {
         let bot_avatar = &client.face();
         // ▲ DB
 
+        // こん... | hello
+        if msg.content.starts_with("こん") {
+            let helloes = ["こんちゃ", "こんにちは"];
+            let content = msg
+                .channel_id
+                .say(&ctx.http, rand_choise(&helloes))
+                .await;
+            Et::Rslt(content).l("_こん", "SEND");
+        }
+
         // COMMANDS
         if Some("kgrs") == msg.content.split('!').nth(0) {
             // ▼ DB
@@ -100,11 +110,10 @@ impl EventHandler for Handler {
                                         });
                                         e.title("機能系コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![(
-                                            "kgrs!timestamp",
-                                            "現在のタイムスタンプを取得",
-                                            false,
-                                        )]);
+                                        e.fields(vec![
+                                            ("kgrs!timestamp", "現在のタイムスタンプを取得", false),
+                                            ("kgrs!uuid [How-many:int] [Is-uppercase:bool]", "uuidを生成", false),
+                                        ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(chrono::Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -387,7 +396,7 @@ impl EventHandler for Handler {
                                         ),
                                         true,
                                     ),
-                                    ("Is Bot:", user.bot.to_string(), true),
+                                    ("Is Bot:", format!("`{}`", user.bot.to_string()), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(chrono::Utc::now());
@@ -483,7 +492,7 @@ impl EventHandler for Handler {
                                         ),
                                         true,
                                     ),
-                                    ("Is Bot:", msg.author.bot.to_string(), true),
+                                    ("Is Bot:", format!("`{}`", msg.author.bot.to_string()), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(chrono::Utc::now());
@@ -588,6 +597,65 @@ impl EventHandler for Handler {
                         })
                         .await;
 
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+            }
+
+            // kgrs!uuid [How-many:int] [Is-uppercase:bool] | genelate uuids
+            if cmd == "uuid" {
+                if let Some(n) = arg_i {
+                    let n: u8 = if let Ok(n) = n.parse() { n } else { 0 };
+                    if n != 0 && n <= 16 {
+                        let mut uuids = String::new();
+                        for _ in 0..n {
+                            uuids = format!(
+                                "{}```yaml\n{}\n```", 
+                                uuids, 
+                                match upper_lower_uuid(arg_ii, &msg, &ctx).await {
+                                    Some(id) => id,
+                                    None => return,
+                                }
+                            );
+                        }
+                        let content = msg
+                            .channel_id
+                            .send_message(&ctx.http, |m| {
+                                m.embed(|e| {
+                                    e.title("Successful!");
+                                    e.description(format!("{}", uuids));
+                                    e.footer(|f| f.text(ftr));
+                                    e.timestamp(chrono::Utc::now());
+                                    e.color(Colour(EMBED_LABEL_COL));
+                                    e
+                                })
+                            })
+                            .await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                    } else {
+                        let content = msg
+                            .channel_id
+                            .say(&ctx.http, "無効な引数を確認\n第1引数には `0` から `16` までの整数値を入れてください")
+                            .await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                    }
+                } else {
+                    let uuid = match upper_lower_uuid(arg_ii, &msg, &ctx).await {
+                        Some(id) => id,
+                        None => return,
+                    };
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.title("Successful!");
+                                e.description(format!("```yaml\n{}\n```", uuid));
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(chrono::Utc::now());
+                                e.color(Colour(EMBED_LABEL_COL));
+                                e
+                            })
+                        })
+                        .await;
                     Et::Rslt(content).l(cmd, "SEND");
                 }
             }
