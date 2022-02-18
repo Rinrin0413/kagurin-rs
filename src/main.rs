@@ -1,3 +1,4 @@
+use chrono::{DateTime, Duration, Utc};
 use kgrs::util::{fmt::*, *};
 use kgrs::{
     serenity::{
@@ -57,8 +58,11 @@ impl EventHandler for Handler {
                 None => return,
             };
             let cmd: &str = &cmd;
-            let arg_i = msg.content.split(' ').nth(1);
-            let arg_ii = msg.content.split(' ').nth(2);
+            let mut arg = Vec::new();
+            // iter -> 0..(numOfArg+1)
+            for i in 0..8 {
+                arg.push(msg.content.split(' ').nth(i));
+            }
             let ftr = &format!(
                 "kgrs!{} by {}",
                 cmd,
@@ -97,7 +101,7 @@ impl EventHandler for Handler {
             //  HELP_TYPE = [display, util, fun, mod, trusted, dev]
             if cmd == "help" {
                 let note_cp = "Command prefix: `kgrs!`";
-                if let Some(hlp_type) = arg_i {
+                if let Some(hlp_type) = arg[1] {
                     match hlp_type {
                         "display" => {
                             let content = msg
@@ -116,9 +120,10 @@ impl EventHandler for Handler {
                                             ("kgrs!ping", "pong!", false),
                                             ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
                                             ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンが表示される", false),
+                                            ("kgrs!sky", "Sky:CotL の次の更新時刻を表示", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
-                                        e.timestamp(chrono::Utc::now());
+                                        e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
                                         e
                                     })
@@ -138,7 +143,8 @@ impl EventHandler for Handler {
                                         e.title("機能系コマンド一覧");
                                         e.description(note_cp);
                                         e.fields(vec![
-                                            ("kgrs!timestamp", "現在のタイムスタンプを取得", false),
+                                            ("kgrs!now", "現在の UNIX時間を取得", false),
+                                            ("kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]", "指定された日時の UNIX時間を取得", false),
                                             (
                                                 "kgrs!uuid [How-many:int] [Is-uppercase:bool]",
                                                 "uuidを生成",
@@ -146,7 +152,7 @@ impl EventHandler for Handler {
                                             ),
                                         ]);
                                         e.footer(|f| f.text(ftr));
-                                        e.timestamp(chrono::Utc::now());
+                                        e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
                                         e
                                     })
@@ -167,7 +173,7 @@ impl EventHandler for Handler {
                                         e.description(note_cp);
                                         e.fields(vec![("kgrs!-", "-", false)]);
                                         e.footer(|f| f.text(ftr));
-                                        e.timestamp(chrono::Utc::now());
+                                        e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
                                         e
                                     })
@@ -188,7 +194,7 @@ impl EventHandler for Handler {
                                         e.description(note_cp);
                                         e.fields(vec![("kgrs!-", "-", false)]);
                                         e.footer(|f| f.text(ftr));
-                                        e.timestamp(chrono::Utc::now());
+                                        e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
                                         e
                                     })
@@ -212,7 +218,7 @@ impl EventHandler for Handler {
                                         ),
                                     ]);
                                     e.footer(|f| {f.text(ftr)});
-                                    e.timestamp(chrono::Utc::now());
+                                    e.timestamp(Utc::now());
                                     e.color(Colour(EMBED_LABEL_COL));
                                     e
                                 })
@@ -248,7 +254,7 @@ impl EventHandler for Handler {
                                             ("kgrs!embed_and_img", "embed & img test", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
-                                        e.timestamp(chrono::Utc::now());
+                                        e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
                                         e
                                     })
@@ -291,7 +297,7 @@ impl EventHandler for Handler {
                                     ("kgrs!help dev", "Rinrin用のコマンド一覧を表示", false),
                                 ]);
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(Colour(EMBED_LABEL_COL));
                                 e
                             })
@@ -327,7 +333,7 @@ impl EventHandler for Handler {
                                 ("Source code:", &format!("[GitHub]({})", env!("CARGO_PKG_REPOSITORY")), true),
                             ]);
                             e.footer(|f| {f.text(ftr)});
-                            e.timestamp(chrono::Utc::now());
+                            e.timestamp(Utc::now());
                             e.color(Colour(EMBED_LABEL_COL));
                             e
                         })
@@ -337,19 +343,71 @@ impl EventHandler for Handler {
                 Et::Rslt(content).l(cmd, "SEND");
             }
 
-            // kgrs!timestamp | get the current timestamp
+            // kgrs!now | get the current unixtime
+            if cmd == "now" {
+                let content = msg.channel_id.say(&ctx.http, Utc::now().timestamp()).await;
+                Et::Rslt(content).l(cmd, "SEND");
+            }
+
+            // kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int] | get unixtime
             if cmd == "timestamp" {
+                let dt: String = if let (Some(yea), Some(mon), Some(day)) = (arg[1], arg[2], arg[3])
+                {
+                    if let Some(hou) = arg[4] {
+                        if let Some(min) = arg[5] {
+                            if let Some(sec) = arg[6] {
+                                if let Some(ms) = arg[7] {
+                                    format!(
+                                        "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.+{:0>4}",
+                                        yea, mon, day, hou, min, sec, ms
+                                    )
+                                } else {
+                                    format!(
+                                        "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.+0000",
+                                        yea, mon, day, hou, min, sec
+                                    )
+                                }
+                            } else {
+                                format!(
+                                    "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:00.+0000",
+                                    yea, mon, day, hou, min
+                                )
+                            }
+                        } else {
+                            format!(
+                                "{:0>4}-{:0>2}-{:0>2} {:0>2}:00:00.+0000",
+                                yea, mon, day, hou
+                            )
+                        }
+                    } else {
+                        format!("{:0>4}-{:0>2}-{:0>2} 00:00:00.+0000", yea, mon, day)
+                    }
+                } else {
+                    let content = msg.channel_id.say(&ctx.http, &want_arg(3)).await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                    return;
+                };
+
+                let dt_fmt = "%Y-%m-%d %H:%M:%S.%z";
                 let content = msg
                     .channel_id
-                    .say(&ctx.http, chrono::Utc::now().timestamp())
+                    .say(
+                        &ctx.http,
+                        format!(
+                            "{}",
+                            match DateTime::parse_from_str(&dt, dt_fmt) {
+                                Ok(dt) => dt.timestamp().to_string(),
+                                Err(why) => format!("```rs\nError: {}\n{}\n```", why, dt),
+                            }
+                        ),
+                    )
                     .await;
-
                 Et::Rslt(content).l(cmd, "SEND");
             }
 
             // kgrs!profile [userID:int] | get the user desctiption
             if cmd == "profile" {
-                if let Some(id) = arg_i {
+                if let Some(id) = arg[1] {
                     let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
                         u
                     } else {
@@ -431,7 +489,7 @@ impl EventHandler for Handler {
                                     ("Is Bot:", format!("`{}`", user.bot.to_string()), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(if let Ok(u) = user_color {
                                     //msg.author.accent_colour
                                     if let Some(c) = u.accent_colour {
@@ -471,14 +529,12 @@ impl EventHandler for Handler {
                                         "Nickname:",
                                         format!(
                                             "`{}`",
-                                            if let Some(n) = 
-                                                if let Some(m) = &msg.member {
-                                                    m.nick.as_ref()
-                                                } else {
-                                                    Some(&msg.author.name)
-                                                } 
-                                            {
-                                               n
+                                            if let Some(n) = if let Some(m) = &msg.member {
+                                                m.nick.as_ref()
+                                            } else {
+                                                Some(&msg.author.name)
+                                            } {
+                                                n
                                             } else {
                                                 "None"
                                             }
@@ -492,13 +548,11 @@ impl EventHandler for Handler {
                                     ),
                                     (
                                         "Joined this server at:",
-                                        if let Some(n) = 
-                                            if let Some(m) = &msg.member {
-                                                m.joined_at.as_ref()
-                                            } else {
-                                                None
-                                            } 
-                                        {
+                                        if let Some(n) = if let Some(m) = &msg.member {
+                                            m.joined_at.as_ref()
+                                        } else {
+                                            None
+                                        } {
                                             format!("<t:{}:R>", n.timestamp())
                                         } else {
                                             "None".to_string()
@@ -532,7 +586,7 @@ impl EventHandler for Handler {
                                     ("Is Bot:", format!("`{}`", msg.author.bot.to_string()), true),
                                 ]);
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(if let Ok(u) = author_color {
                                     if let Some(c) = u.accent_colour {
                                         c
@@ -553,7 +607,7 @@ impl EventHandler for Handler {
 
             // kgrs!avatar [userID:int] | get the user avatar
             if cmd == "avatar" {
-                if let Some(id) = arg_i {
+                if let Some(id) = arg[1] {
                     let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
                         u
                     } else {
@@ -571,7 +625,7 @@ impl EventHandler for Handler {
                                 ));
                                 e.image(user.face());
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(if let Ok(u) = user_color {
                                     //msg.author.accent_colour
                                     if let Some(c) = u.accent_colour {
@@ -601,7 +655,7 @@ impl EventHandler for Handler {
                                 ));
                                 e.image(msg.author.face());
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(if let Ok(u) = author_color {
                                     if let Some(c) = u.accent_colour {
                                         c
@@ -622,7 +676,7 @@ impl EventHandler for Handler {
 
             // kgrs!uuid [How-many:int] [Is-uppercase:bool] | genelate uuids
             if cmd == "uuid" {
-                if let Some(n) = arg_i {
+                if let Some(n) = arg[1] {
                     let n: u8 = if let Ok(n) = n.parse() { n } else { 0 };
                     if n != 0 && n <= 16 {
                         let mut uuids = String::new();
@@ -630,7 +684,7 @@ impl EventHandler for Handler {
                             uuids = format!(
                                 "{}```yaml\n{}\n```",
                                 uuids,
-                                match upper_lower_uuid(arg_ii, &msg, &ctx).await {
+                                match upper_lower_uuid(arg[2], &msg, &ctx).await {
                                     Some(id) => id,
                                     None => return,
                                 }
@@ -643,7 +697,7 @@ impl EventHandler for Handler {
                                     e.title("Successful!");
                                     e.description(format!("{}", uuids));
                                     e.footer(|f| f.text(ftr));
-                                    e.timestamp(chrono::Utc::now());
+                                    e.timestamp(Utc::now());
                                     e.color(Colour(EMBED_LABEL_COL));
                                     e
                                 })
@@ -658,7 +712,7 @@ impl EventHandler for Handler {
                         Et::Rslt(content).l(cmd, "SEND");
                     }
                 } else {
-                    let uuid = match upper_lower_uuid(arg_ii, &msg, &ctx).await {
+                    let uuid = match upper_lower_uuid(arg[2], &msg, &ctx).await {
                         Some(id) => id,
                         None => return,
                     };
@@ -669,7 +723,7 @@ impl EventHandler for Handler {
                                 e.title("Successful!");
                                 e.description(format!("```yaml\n{}\n```", uuid));
                                 e.footer(|f| f.text(ftr));
-                                e.timestamp(chrono::Utc::now());
+                                e.timestamp(Utc::now());
                                 e.color(Colour(EMBED_LABEL_COL));
                                 e
                             })
@@ -679,12 +733,74 @@ impl EventHandler for Handler {
                 }
             }
 
+            // kgrs!sky
+            if cmd == "sky" {
+                // Time difference
+                let td = Duration::hours(9);
+                // now(JST)
+                let now = Utc::now() + td;
+                // now hour(JST)
+                let now_h: u8 = now
+                    .format("%H")
+                    .to_string()
+                    .parse()
+                    .expect("String PARSE TO u8");
+                // Summer time hour
+                let summer_time_h: u8 = 17;
+                // Base update time
+                let ut_str: &str = &now.format("%Y/%m/%d 17:00:00.+0000").to_string();
+                // Update time(unfinished)
+                let ut = match DateTime::parse_from_str(ut_str, "%Y/%m/%d %H:%M:%S.%z") {
+                    Ok(dt) => dt - td,
+                    Err(why) => {
+                        let content = msg
+                            .channel_id
+                            .say(&ctx.http, &format!("えらー: ```rs\n{}\n```", why))
+                            .await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                        return;
+                    }
+                };
+
+                // Update time Result
+                let ut =
+                    // 00:00 ~ (summer time hour - 1min) 
+                    if now_h < summer_time_h {
+                        ut.timestamp()
+                    // summer time hour ~ 23:59
+                    } else if summer_time_h <= now_h {
+                        let ut_next_day = ut + Duration::days(1);
+                        ut_next_day.timestamp()
+                    } else {
+                        let content = msg
+                            .channel_id
+                            .say(&ctx.http, &format!("例外処理です\nError: {}", now_h))
+                            .await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                        return
+                };
+                let content = msg
+                    .channel_id
+                    .send_message(&ctx.http, |m| {
+                        m.embed(|e| {
+                            e.title("Sky:CotL 次の更新時刻");
+                            e.description(&format!("<t:{}:R>", ut));
+                            e.footer(|f| f.text(ftr));
+                            e.timestamp(Utc::now());
+                            e.color(Colour(EMBED_LABEL_COL));
+                            e
+                        })
+                    })
+                    .await;
+                Et::Rslt(content).l(cmd, "SEND");
+            }
+
             // FOR TRUSTED USER
             if restrict_users(msg.author.id, &TRUSTED) {
                 // kgrs!set_activity <type:ACTIVITY-TYPE> <content:str> || Change Kagurin.rs activity
                 //  ACTIVITY-TYPE = [playing, listening, watching, competing]
                 if cmd == "set_activity" {
-                    if let (Some(r#type), Some(content)) = (arg_i, arg_ii) {
+                    if let (Some(r#type), Some(content)) = (arg[1], arg[2]) {
                         match r#type {
                             "playing" => ctx.set_activity(Activity::playing(content)).await,
                             "listening" => ctx.set_activity(Activity::listening(content)).await,
@@ -738,7 +854,7 @@ impl EventHandler for Handler {
                         .channel_id
                         .say(
                             &ctx.http,
-                            format!("Process exited at <t:{}:T>", chrono::Utc::now().timestamp()),
+                            format!("Process exited at <t:{}:T>", Utc::now().timestamp()),
                         )
                         .await;
                     Et::Rslt(content).l(cmd, "SEND");
@@ -857,7 +973,7 @@ impl EventHandler for Handler {
                                     e.footer(|f| f.text("フッター"));
 
                                     // タイムスタンプ
-                                    e.timestamp(chrono::Utc::now());
+                                    e.timestamp(Utc::now());
 
                                     // 著者
                                     e.author(|a| {
@@ -897,11 +1013,13 @@ impl EventHandler for Handler {
 
     // READY event
     async fn ready(&self, ctx: Context, ready: Ready) {
+        // now(JST)
+        let now = Utc::now() + Duration::hours(9);
         println!(
             "{} v{} is connected: {}",
             ready.user.name,
             VER,
-            chrono::Utc::now()
+            now.format("%Y-%m-%d %H:%M:%S.%z")
         );
         ctx.set_activity(Activity::playing("kgrs!help | 開発者:Rinrin.rs#5671"))
             .await;
