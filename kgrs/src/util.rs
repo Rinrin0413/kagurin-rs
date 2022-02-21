@@ -1,4 +1,5 @@
-use crate::util::fmt::Et;
+use std::{collections::HashMap, fmt::Display};
+use crate::util::fmt::*;
 use serenity::{
     model::{
         prelude::{UserId, User, Message}, 
@@ -13,7 +14,11 @@ pub fn restrict_users(author: UserId, auth_user: &[u64]) -> bool {
     auth_user.contains(&author.as_u64())
 }
 
-pub async fn get_user_from_arg(arg: &str, msg: &Message, ctx: &Context) -> Option<User> {
+pub async fn get_user_from_arg(
+    arg: &str, 
+    msg: &Message, 
+    ctx: &Context
+) -> Option<User> {
     match UserId(
         match arg.parse() {
             Ok(id) => id,
@@ -45,7 +50,11 @@ pub async fn get_user_from_arg(arg: &str, msg: &Message, ctx: &Context) -> Optio
     }
 }
 
-pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> Option<Member> {
+pub async fn get_member_from_user(
+    user: &User, 
+    msg: &Message, 
+    ctx: &Context
+) -> Option<Member> {
     if let Some(g) = msg.guild_id {
         match g.member(&ctx.http, user.id).await {
             Ok(m) => Some(m),
@@ -61,7 +70,11 @@ pub fn rand_choise<T>(list: &[T]) -> &T {
     &list[rand::thread_rng().gen_range(0..=max)]
 }
 
-pub async fn upper_lower_uuid(arg_ii: Option<&str>, msg: &Message, ctx: &Context) -> Option<String> {
+pub async fn upper_lower_uuid(
+    arg_ii: Option<&str>, 
+    msg: &Message, 
+    ctx: &Context
+) -> Option<String> {
     let uc_uuid = Some(Uuid::new_v4().to_string().to_ascii_uppercase());
     let lc_uuid = Some(Uuid::new_v4().to_string().to_string().to_ascii_lowercase());
     if let Some(b) = arg_ii {
@@ -82,9 +95,43 @@ pub async fn upper_lower_uuid(arg_ii: Option<&str>, msg: &Message, ctx: &Context
     }
 }
 
+pub fn set_arg(num_of_arg: usize, msg_content: &str) -> Vec<Option<&str>> {
+    let mut args = Vec::new();
+    for i in 0..num_of_arg+1 {
+        args.push(msg_content.split(' ').nth(i));
+    }
+    args
+}
+
+pub fn optn_unzip<T: ToString>(optn: Option<String>, if_none: T) -> String {
+    if let Some(v) = optn {
+        v
+    } else {
+        if_none.to_string()
+    }
+}
+
+pub fn get_elm_len_vc<T, E>(elm: Result<Vec<T>, E>) -> String 
+where E: Display
+{
+    match elm {
+        Ok(hm) => hm.len().to_string(),
+        Err(why) => ftg(why),
+    }
+}
+
+pub fn get_elm_len_hm<E, K, V>(elm: Result<HashMap<K, V>, E>) -> String 
+where E: Display
+{
+    match elm {
+        Ok(hm) => hm.len().to_string(),
+        Err(why) => ftg(why),
+    }
+}
+
 pub mod fmt {
     use serenity::model::prelude::Message;
-    use std::fmt::Debug;
+    use std::fmt::{Debug, Display};
 
     pub enum Et<'a, T> {
         Rslt(Result<Message, T>),
@@ -128,4 +175,7 @@ pub mod fmt {
         format!("無効な引数`{}`を確認\n利用可能な引数: `{}`", false_arg, true_args)
     }
 
+    pub fn ftg<T: Display>(why: T) -> String {
+        format!("Failed to get: {}", why)
+    }
 }
