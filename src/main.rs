@@ -116,6 +116,7 @@ impl EventHandler for Handler {
                                             ("kgrs!ping", "pong!", false),
                                             ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
                                             ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンが表示される", false),
+                                            ("kgrs!server_info [ServerID:int]", "対象のサーバーの詳細を表示\n引数がない場合は実行したサーバーの詳細が送られる", false),
                                             ("kgrs!sky", "Sky:CotL の次の更新時刻を表示", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
@@ -811,15 +812,52 @@ impl EventHandler for Handler {
 
             // kgrs!server_info
             if cmd == "server_info" {
-                if let Some(_id) = arg[1] {
+                if let Some(id) = arg[1] {
+                    let id: u64 = match id.parse() {
+                        Ok(i) => i,
+                        Err(_) => {
+                            let content = msg
+                                .channel_id
+                                .say(&ctx.http, &format!(
+                                    "無効な引数`{}`を確認\n引数にはサーバーIDを入れてください", 
+                                    arg[1].unwrap()
+                                ))
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                            return;
+                        }        
+                    };
+                    let guild = GuildId(id);
+                    let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
+                    let g_bans = get_elm_len_vc(guild.bans(&ctx.http).await);
+                    let g_channels = get_elm_len_hm(guild.channels(&ctx.http).await);
+                    let g_roles = get_elm_len_hm(guild.roles(&ctx.http).await);
+                    let g_emojis = get_elm_len_vc(guild.emojis(&ctx.http).await);
+                    //let g_members = get_elm_len_vc(guild.members(&ctx.http, None, None).await);
                     let content = msg
                         .channel_id
                         .send_message(&ctx.http, |m| {
                             m.embed(|e| {
                                 e.author(|a| {
                                     a.icon_url(msg.author.face())
-                                        .name(format!("{}'s ℹnformation", "ちょいまち"))
+                                        .name(format!("{} ℹnformation", g_name))
                                 });
+                                if let Some(b) = msg.author.banner_url() {
+                                    e.thumbnail(b);
+                                }
+                                e.fields(vec![
+                                    ("ID:", format!("```c\n{}\n```", guild), true),
+                                    //("Members", format!("```c\n{}\n```", g_members), true),
+                                    ("Bans:", format!("```c\n{} users\n```", g_bans), true),
+                                    ("Channels:", format!("```c\n{}\n```", g_channels), true),
+                                    ("Roles:", format!("```c\n{}\n```", g_roles), true),
+                                    ("Emojis:", format!("```c\n{}\n```", g_emojis), true),
+                                    (
+                                        "Created at",
+                                        format!("<t:{}:R>", guild.created_at().timestamp()),
+                                        true,
+                                    ),
+                                ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(Utc::now());
                                 e.color(Colour(EMBED_LABEL_COL));
@@ -827,7 +865,6 @@ impl EventHandler for Handler {
                             })
                         })
                         .await;
-
                     Et::Rslt(content).l(cmd, "SEND");
                 } else {
                     let guild = match msg.guild_id {
@@ -878,7 +915,6 @@ impl EventHandler for Handler {
                             })
                         })
                         .await;
-
                     Et::Rslt(content).l(cmd, "SEND");
                 }
             }
