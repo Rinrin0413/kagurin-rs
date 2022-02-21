@@ -58,11 +58,7 @@ impl EventHandler for Handler {
                 None => return,
             };
             let cmd: &str = &cmd;
-            let mut arg = Vec::new();
-            // iter -> 0..(numOfArg+1)
-            for i in 0..8 {
-                arg.push(msg.content.split(' ').nth(i));
-            }
+            let arg = set_arg(7, &msg.content);
             let ftr = &format!(
                 "kgrs!{} by {}",
                 cmd,
@@ -171,7 +167,9 @@ impl EventHandler for Handler {
                                         });
                                         e.title("娯楽系コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![("kgrs!-", "-", false)]);
+                                        e.fields(vec![
+                                            ("kgrs!gtb", "伝統的なオニオンガーリックブリトーランダム", false),
+                                        ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -795,6 +793,90 @@ impl EventHandler for Handler {
                 Et::Rslt(content).l(cmd, "SEND");
             }
 
+            // kgrs!gtb | onion garlic burrito
+            if cmd == "gtb" {
+                let tamanegi = ["オニオン", "ガーリック", "ブリトー"];
+                let content = msg
+                    .channel_id
+                    .say(&ctx.http, format!("{}が当たりました", rand_choise(&tamanegi)))
+                    .await;
+
+                Et::Rslt(content).l(cmd, "SEND");
+            }
+
+            // kgrs!server_info
+            if cmd == "server_info" {
+                if let Some(_id) = arg[1] {
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.icon_url(msg.author.face())
+                                        .name(format!("{}'s ℹnformation", "ちょいまち"))
+                                });
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(Utc::now());
+                                e.color(Colour(EMBED_LABEL_COL));
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                } else {
+                    let guild = match msg.guild_id {
+                        Some(g) => g,
+                        None => {
+                            let content = msg
+                                .channel_id
+                                .say(&ctx.http, "ここはサーバーではないようです")
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                            return
+                        }
+                    };
+                    let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
+                    let g_bans = get_elm_len_vc(guild.bans(&ctx.http).await);
+                    let g_channels = get_elm_len_hm(guild.channels(&ctx.http).await);
+                    let g_roles = get_elm_len_hm(guild.roles(&ctx.http).await);
+                    let g_emojis = get_elm_len_vc(guild.emojis(&ctx.http).await);
+                    //let g_members = get_elm_len_vc(guild.members(&ctx.http, None, None).await);
+                    let content = msg
+                        .channel_id
+                        .send_message(&ctx.http, |m| {
+                            m.embed(|e| {
+                                e.author(|a| {
+                                    a.icon_url(msg.author.face())
+                                        .name(format!(
+                                            "{} ℹnformation", 
+                                            g_name
+                                        ))
+                                });
+                                if let Some(b) = msg.author.banner_url() {
+                                    e.thumbnail(b);
+                                }
+                                e.fields(vec![
+                                    ("ID:", format!("```c\n{}\n```", guild), true),
+                                    //("Members", format!("```c\n{}\n```", g_members), true),
+                                    ("Bans:", format!("```c\n{} users\n```", g_bans), true),
+                                    ("Channels:", format!("```c\n{}\n```", g_channels), true),
+                                    ("Roles:", format!("```c\n{}\n```", g_roles), true),
+                                    ("Emojis:", format!("```c\n{}\n```", g_emojis), true),
+                                    ("Created at", format!("<t:{}:R>", guild.created_at().timestamp()), true),
+                                ]);
+                                e.footer(|f| f.text(ftr));
+                                e.timestamp(Utc::now());
+                                e.color(Colour(EMBED_LABEL_COL));
+                                e
+                            })
+                        })
+                        .await;
+
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+            }
+
             // FOR TRUSTED USER
             if restrict_users(msg.author.id, &TRUSTED) {
                 // kgrs!set_activity <type:ACTIVITY-TYPE> <content:str> || Change Kagurin.rs activity
@@ -867,7 +949,6 @@ impl EventHandler for Handler {
                         .channel_id
                         .say(&ctx.http, "https://docs.rs/serenity/latest/serenity")
                         .await;
-
                     Et::Rslt(content).l(cmd, "SEND");
                 }
 
@@ -1002,11 +1083,18 @@ impl EventHandler for Handler {
         } else if thread_rng().gen_bool(1.0 / 5.0)
         // CONVERSATIONS
         {
-            // こん... | hellow
+            // こん... | hello
             if msg.content.starts_with("こん") {
                 let lines = ["こんちゃ", "こんにちは"];
                 let content = msg.channel_id.say(&ctx.http, rand_choise(&lines)).await;
                 Et::Rslt(content).l("_こん", "SEND");
+            }
+
+            // ねる... | 安らかに眠れ
+            if msg.content.starts_with("ねる") {
+                let lines = ["安らかに眠れ", "おやずみ"];
+                let content = msg.channel_id.say(&ctx.http, rand_choise(&lines)).await;
+                Et::Rslt(content).l("_安らかに眠れ", "SEND");
             }
         }
     }
