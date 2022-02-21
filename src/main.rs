@@ -167,9 +167,11 @@ impl EventHandler for Handler {
                                         });
                                         e.title("娯楽系コマンド一覧");
                                         e.description(note_cp);
-                                        e.fields(vec![
-                                            ("kgrs!gtb", "伝統的なオニオンガーリックブリトーランダム", false),
-                                        ]);
+                                        e.fields(vec![(
+                                            "kgrs!gtb",
+                                            "伝統的なオニオンガーリックブリトーランダム",
+                                            false,
+                                        )]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
                                         e.color(Colour(EMBED_LABEL_COL));
@@ -798,7 +800,10 @@ impl EventHandler for Handler {
                 let tamanegi = ["オニオン", "ガーリック", "ブリトー"];
                 let content = msg
                     .channel_id
-                    .say(&ctx.http, format!("{}が当たりました", rand_choise(&tamanegi)))
+                    .say(
+                        &ctx.http,
+                        format!("{}が当たりました", rand_choise(&tamanegi)),
+                    )
                     .await;
 
                 Et::Rslt(content).l(cmd, "SEND");
@@ -833,7 +838,7 @@ impl EventHandler for Handler {
                                 .say(&ctx.http, "ここはサーバーではないようです")
                                 .await;
                             Et::Rslt(content).l(cmd, "SEND");
-                            return
+                            return;
                         }
                     };
                     let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
@@ -848,10 +853,7 @@ impl EventHandler for Handler {
                             m.embed(|e| {
                                 e.author(|a| {
                                     a.icon_url(msg.author.face())
-                                        .name(format!(
-                                            "{} ℹnformation", 
-                                            g_name
-                                        ))
+                                        .name(format!("{} ℹnformation", g_name))
                                 });
                                 if let Some(b) = msg.author.banner_url() {
                                     e.thumbnail(b);
@@ -863,7 +865,11 @@ impl EventHandler for Handler {
                                     ("Channels:", format!("```c\n{}\n```", g_channels), true),
                                     ("Roles:", format!("```c\n{}\n```", g_roles), true),
                                     ("Emojis:", format!("```c\n{}\n```", g_emojis), true),
-                                    ("Created at", format!("<t:{}:R>", guild.created_at().timestamp()), true),
+                                    (
+                                        "Created at",
+                                        format!("<t:{}:R>", guild.created_at().timestamp()),
+                                        true,
+                                    ),
                                 ]);
                                 e.footer(|f| f.text(ftr));
                                 e.timestamp(Utc::now());
