@@ -162,20 +162,32 @@ pub mod fmt {
             }
         }
     }
-    
+
+    /// Want arguments
+    /// arg is missing.
     pub fn want_arg(n: usize) -> String {
         format!("Error: 最低{}つの引数が必要です", n)
     }
 
+    /// Codeblocks
     pub fn cb(content: &str, lang: &str) -> String {
         format!("```{}\n{}\n```", lang, content)
     }
-    
+
+    /// Invalid arguments
     pub fn invalid_arg(false_arg: &str, true_args: &str) -> String {
         format!("無効な引数`{}`を確認\n利用可能な引数: `{}`", false_arg, true_args)
     }
 
+    /// Failed to get X
+    /// fmt to `Failed to get: WHY`.
     pub fn ftg<T: Display>(why: T) -> String {
         format!("Failed to get: {}", why)
+    }
+
+    /// Anti Codeblocks
+    /// replace u+0060(triple) with u+1fef(triple). 
+    pub fn anti_cb(arg: &str) -> String {
+        arg.replace("```", "```")
     }
 }
