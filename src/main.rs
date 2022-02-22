@@ -24,6 +24,7 @@ const DEVELIPER: [u64; 2] = [
     724976600873041940, // Rinrin.rs
     801082943371477022, // Rinrin.hlsl
 ];
+const BOT_ID: u64 = 936116497502318654;
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -33,6 +34,52 @@ impl EventHandler for Handler {
         if msg.author.bot {
             return;
         }
+
+        // spam sine
+        /*
+        if let Some(g) = msg.guild_id {
+            println!("ぎるだいでぃ\nmsg.mention_everyone: {}", msg.content.contains("@everyone")); //#ffffff
+            if msg.content.contains("TestꞆNitro") && g == GuildId(835848236824526868) {
+                println!("めんえびぎるあ"); //#ffffff
+                if let Some(m) = &msg.member {
+                    println!("めｍｍば\n権限: {:?}", m.permissions); //#ffffff
+                    let _ = m.permissions.expect("権限が存在しない");
+                    let mut not_adm = true;
+                    if let Some(p) = m.permissions {
+                        println!("けんげん"); //#ffffff
+                        if p.administrator() {
+                            println!("全部通った あどみん！"); //#ffffff
+                            not_adm = false;
+                        }
+                    }
+                    if not_adm {
+                        println!("のっとあどみん！"); //#ffffff
+                        if let Err(why) = msg.delete(&ctx.http).await {
+                            println!("MSG DELETE: {}", why);
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.title("Nitro詐欺の危険性を検知");
+                                        e.description(&format!(
+                                            "Nitroスパムの危険性を検知```\nMsg: {}\n```MsgId: `{}`\nAuthor: {}",
+                                            anti_cb(&msg.content),
+                                            &msg.id,
+                                            &msg.author
+                                        ));
+                                        e.timestamp(Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l("_", "SEND");
+                        }
+                    }
+                }
+            }
+        }
+        */
 
         // ▼ DB
         let cache = &ctx.cache;
@@ -818,14 +865,17 @@ impl EventHandler for Handler {
                         Err(_) => {
                             let content = msg
                                 .channel_id
-                                .say(&ctx.http, &format!(
-                                    "無効な引数`{}`を確認\n引数にはサーバーIDを入れてください", 
-                                    arg[1].unwrap()
-                                ))
+                                .say(
+                                    &ctx.http,
+                                    &format!(
+                                        "無効な引数`{}`を確認\n引数にはサーバーIDを入れてください",
+                                        arg[1].unwrap()
+                                    ),
+                                )
                                 .await;
                             Et::Rslt(content).l(cmd, "SEND");
                             return;
-                        }        
+                        }
                     };
                     let guild = GuildId(id);
                     let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
@@ -1163,6 +1213,7 @@ async fn main() {
 
     // Create a new instance of the Client, logging in as a bot.
     let mut client = Client::builder(&token)
+    .application_id(BOT_ID)
         .event_handler(Handler)
         .await
         .expect("Err creating client");
