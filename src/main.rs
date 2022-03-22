@@ -1167,7 +1167,7 @@ async fn main() {
 
     // Create a new instance of the Client, logging in as a bot.
     let mut client = Client::builder(&token)
-    .application_id(BOT_ID)
+        .application_id(BOT_ID)
         .event_handler(Handler)
         .await
         .expect("Err creating client");
