@@ -35,52 +35,6 @@ impl EventHandler for Handler {
             return;
         }
 
-        // spam sine
-        /*
-        if let Some(g) = msg.guild_id {
-            println!("ぎるだいでぃ\nmsg.mention_everyone: {}", msg.content.contains("@everyone")); //#ffffff
-            if msg.content.contains("TestꞆNitro") && g == GuildId(835848236824526868) {
-                println!("めんえびぎるあ"); //#ffffff
-                if let Some(m) = &msg.member {
-                    println!("めｍｍば\n権限: {:?}", m.permissions); //#ffffff
-                    let _ = m.permissions.expect("権限が存在しない");
-                    let mut not_adm = true;
-                    if let Some(p) = m.permissions {
-                        println!("けんげん"); //#ffffff
-                        if p.administrator() {
-                            println!("全部通った あどみん！"); //#ffffff
-                            not_adm = false;
-                        }
-                    }
-                    if not_adm {
-                        println!("のっとあどみん！"); //#ffffff
-                        if let Err(why) = msg.delete(&ctx.http).await {
-                            println!("MSG DELETE: {}", why);
-                            let content = msg
-                                .channel_id
-                                .send_message(&ctx.http, |m| {
-                                    m.embed(|e| {
-                                        e.title("Nitro詐欺の危険性を検知");
-                                        e.description(&format!(
-                                            "Nitroスパムの危険性を検知```\nMsg: {}\n```MsgId: `{}`\nAuthor: {}",
-                                            anti_cb(&msg.content),
-                                            &msg.id,
-                                            &msg.author
-                                        ));
-                                        e.timestamp(Utc::now());
-                                        e.color(Colour(EMBED_LABEL_COL));
-                                        e
-                                    })
-                                })
-                                .await;
-                            Et::Rslt(content).l("_", "SEND");
-                        }
-                    }
-                }
-            }
-        }
-        */
-
         // ▼ DB
         let cache = &ctx.cache;
         let client = cache.current_user().await;
