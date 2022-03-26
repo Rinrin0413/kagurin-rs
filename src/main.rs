@@ -14,6 +14,7 @@ use std::{collections::HashMap, env, process, time::Instant};
 
 struct Handler;
 
+const IS_SUMMERTIME: bool = true;
 const VER: &str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
 const TRUSTED: [u64; 2] = [
@@ -747,12 +748,13 @@ impl EventHandler for Handler {
                     .to_string()
                     .parse()
                     .expect("String PARSE TO u8");
-                // Summer time hour
-                let summer_time_h: u8 = 17;
-                // Base update time
-                let ut_str: &str = &now.format("%Y/%m/%d 17:00:00.+0000").to_string();
-                // Update time(unfinished)
-                let ut = match DateTime::parse_from_str(ut_str, "%Y/%m/%d %H:%M:%S.%z") {
+                // Daily Reset Time hours
+                let drt_h: u8 = if IS_SUMMERTIME { 16 } else { 17 };
+                // Base Daily Reset Time
+                let drt_fmt = format!("%Y/%m/%d {}:00:00.+0000", drt_h);
+                let drt_str: &str = &now.format(&drt_fmt).to_string();
+                // Daily Reset Time(unfinished)
+                let drt = match DateTime::parse_from_str(drt_str, "%Y/%m/%d %H:%M:%S.%z") {
                     Ok(dt) => dt - td,
                     Err(why) => {
                         let content = msg
@@ -764,14 +766,14 @@ impl EventHandler for Handler {
                     }
                 };
 
-                // Update time Result
+                // Daily Reset Time Result
                 let ut =
                     // 00:00 ~ (summer time hour - 1min) 
-                    if now_h < summer_time_h {
-                        ut.timestamp()
+                    if now_h < drt_h {
+                        drt.timestamp()
                     // summer time hour ~ 23:59
-                    } else if summer_time_h <= now_h {
-                        let ut_next_day = ut + Duration::days(1);
+                    } else if drt_h <= now_h {
+                        let ut_next_day = drt + Duration::days(1);
                         ut_next_day.timestamp()
                     } else {
                         let content = msg
