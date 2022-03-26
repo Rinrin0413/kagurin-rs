@@ -14,7 +14,6 @@ use std::{collections::HashMap, env, process, time::Instant};
 
 struct Handler;
 
-const IS_SUMMERTIME: bool = true;
 const VER: &str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
 const TRUSTED: [u64; 2] = [
@@ -26,6 +25,9 @@ const DEVELIPER: [u64; 2] = [
     801082943371477022, // Rinrin.hlsl
 ];
 const BOT_ID: u64 = 936116497502318654;
+const IS_SUMMERTIME: bool = true;
+const INVITE_URL: &str =
+    "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -120,6 +122,7 @@ impl EventHandler for Handler {
                                             ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンが表示される", false),
                                             ("kgrs!server_info [ServerID:int]", "対象のサーバーの詳細を表示\n引数がない場合は実行したサーバーの詳細が送られる", false),
                                             ("kgrs!sky", "Sky:CotL の次の更新時刻を表示", false),
+                                            ("kgrs!invite", "このボットの招待URLを取得できる", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
@@ -322,20 +325,31 @@ impl EventHandler for Handler {
                                     .name(format!("{} ℹnformation", client.name))
                             });
                             e.title("Bot name:");
-                            e.description(&format!("```py\n{}#{}\n```", client.name, client.discriminator));
+                            e.description(&format!(
+                                "```py\n{}#{}\n```",
+                                client.name, client.discriminator
+                            ));
                             e.fields(vec![
                                 // If don't make the first type a &String slice, won't be able to use &str behind it
                                 ("ID:", &format!("```c\n{}\n```", client.id)[..], true),
                                 ("Bot version:", &format!("```c\n{}```", VER), true),
-                                ("Created at:", &format!("<t:{}:R>", client.id.created_at().timestamp()), true), // 1643258000
+                                (
+                                    "Created at:",
+                                    &format!("<t:{}:R>", client.id.created_at().timestamp()),
+                                    true,
+                                ), // 1643258000
                                 ("Guilds:", &format!("```c\n{} guilds\n```", guilds), true),
-                                ("Invile link:", "[here](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)", true),
+                                ("Invitation link:", &format!("[here]({})", INVITE_URL), true),
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
                                 ("Language:", "```yaml\nRust: [1.58.1]```", true),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
-                                ("Source code:", &format!("[GitHub]({})", env!("CARGO_PKG_REPOSITORY")), true),
+                                (
+                                    "Source code:",
+                                    &format!("[GitHub]({})", env!("CARGO_PKG_REPOSITORY")),
+                                    true,
+                                ),
                             ]);
-                            e.footer(|f| {f.text(ftr)});
+                            e.footer(|f| f.text(ftr));
                             e.timestamp(Utc::now());
                             e.color(Colour(EMBED_LABEL_COL));
                             e
@@ -923,6 +937,15 @@ impl EventHandler for Handler {
                         .await;
                     Et::Rslt(content).l(cmd, "SEND");
                 }
+            }
+
+            // kgrs!invite | get the invitation URL
+            if cmd == "invite" {
+                let content = msg
+                    .channel_id
+                    .say(&ctx.http, format!("{}", INVITE_URL))
+                    .await;
+                Et::Rslt(content).l(cmd, "SEND");
             }
 
             // FOR TRUSTED USER
