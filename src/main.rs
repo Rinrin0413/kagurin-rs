@@ -25,7 +25,7 @@ const DEVELIPER: [u64; 2] = [
     801082943371477022, // Rinrin.hlsl
 ];
 const BOT_ID: u64 = 936116497502318654;
-const IS_SUMMERTIME: bool = true;
+const IS_DST: bool = true;
 const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 
@@ -763,7 +763,7 @@ impl EventHandler for Handler {
                     .parse()
                     .expect("String PARSE TO u8");
                 // Daily Reset Time hours
-                let drt_h: u8 = if IS_SUMMERTIME { 16 } else { 17 };
+                let drt_h: u8 = if IS_DST { 16 } else { 17 };
                 // Base Daily Reset Time
                 let drt_fmt = format!("%Y/%m/%d {}:00:00.+0000", drt_h);
                 let drt_str: &str = &now.format(&drt_fmt).to_string();
@@ -782,10 +782,10 @@ impl EventHandler for Handler {
 
                 // Daily Reset Time Result
                 let ut =
-                    // 00:00 ~ (summer time hour - 1min) 
+                    // 00:00 ~ (DST hour - 1min) 
                     if now_h < drt_h {
                         drt.timestamp()
-                    // summer time hour ~ 23:59
+                    // DST hour ~ 23:59
                     } else if drt_h <= now_h {
                         let ut_next_day = drt + Duration::days(1);
                         ut_next_day.timestamp()
