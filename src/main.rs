@@ -258,6 +258,11 @@ impl EventHandler for Handler {
                                                 false,
                                             ),
                                             ("kgrs!embed_and_img", "embed & img test", false),
+                                            (
+                                                "kgrs!br",
+                                                "bevy::render のドキュメントの URL を出す",
+                                                false,
+                                            ),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
@@ -1148,6 +1153,15 @@ impl EventHandler for Handler {
                         })
                         .await;
 
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
+
+                // kgrs!br | show bevy::render docs
+                if cmd == "br" {
+                    let content = msg
+                        .channel_id
+                        .say(&ctx.http, "https://docs.rs/bevy/latest/bevy/render")
+                        .await;
                     Et::Rslt(content).l(cmd, "SEND");
                 }
             }
