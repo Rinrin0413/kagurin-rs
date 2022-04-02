@@ -62,7 +62,8 @@ impl EventHandler for Handler {
                 None => return,
             };
             let cmd: &str = &cmd;
-            let arg = set_arg(7, &msg.content);
+            let arg = setup_arg(7, &msg.content);
+            println!("引数: {:?}", arg);
             let ftr = &format!(
                 "kgrs!{} by {}",
                 cmd,
@@ -405,7 +406,7 @@ impl EventHandler for Handler {
                         format!("{:0>4}-{:0>2}-{:0>2} 00:00:00.+0000", yea, mon, day)
                     }
                 } else {
-                    let content = msg.channel_id.say(&ctx.http, &want_arg(3)).await;
+                    let content = msg.channel_id.say(&ctx.http, &missing_arg(3)).await;
                     Et::Rslt(content).l(cmd, "SEND");
                     return;
                 };
@@ -430,7 +431,7 @@ impl EventHandler for Handler {
             // kgrs!profile [userID:int] | get the user desctiption
             if cmd == "profile" {
                 if let Some(id) = arg[1] {
-                    let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
+                    let user = if let Some(u) = get_user_from_id(id, &msg, &ctx).await {
                         u
                     } else {
                         return;
@@ -630,7 +631,7 @@ impl EventHandler for Handler {
             // kgrs!avatar [userID:int] | get the user avatar
             if cmd == "avatar" {
                 if let Some(id) = arg[1] {
-                    let user = if let Some(u) = get_user_from_arg(id, &msg, &ctx).await {
+                    let user = if let Some(u) = get_user_from_id(id, &msg, &ctx).await {
                         u
                     } else {
                         return;
@@ -706,7 +707,7 @@ impl EventHandler for Handler {
                             uuids = format!(
                                 "{}```yaml\n{}\n```",
                                 uuids,
-                                match upper_lower_uuid(arg[2], &msg, &ctx).await {
+                                match get_upper_or_lower_uuid(arg[2], &msg, &ctx).await {
                                     Some(id) => id,
                                     None => return,
                                 }
@@ -734,7 +735,7 @@ impl EventHandler for Handler {
                         Et::Rslt(content).l(cmd, "SEND");
                     }
                 } else {
-                    let uuid = match upper_lower_uuid(arg[2], &msg, &ctx).await {
+                    let uuid = match get_upper_or_lower_uuid(arg[2], &msg, &ctx).await {
                         Some(id) => id,
                         None => return,
                     };
@@ -854,11 +855,11 @@ impl EventHandler for Handler {
                     };
                     let guild = GuildId(id);
                     let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
-                    let g_bans = get_elm_len_vc(guild.bans(&ctx.http).await);
-                    let g_channels = get_elm_len_hm(guild.channels(&ctx.http).await);
-                    let g_roles = get_elm_len_hm(guild.roles(&ctx.http).await);
-                    let g_emojis = get_elm_len_vc(guild.emojis(&ctx.http).await);
-                    //let g_members = get_elm_len_vc(guild.members(&ctx.http, None, None).await);
+                    let g_bans = get_len_of_vec(guild.bans(&ctx.http).await);
+                    let g_channels = get_len_of_hm(guild.channels(&ctx.http).await);
+                    let g_roles = get_len_of_hm(guild.roles(&ctx.http).await);
+                    let g_emojis = get_len_of_vec(guild.emojis(&ctx.http).await);
+                    //let g_members = get_len_from_vec(guild.members(&ctx.http, None, None).await);
                     let content = msg
                         .channel_id
                         .send_message(&ctx.http, |m| {
@@ -904,11 +905,11 @@ impl EventHandler for Handler {
                         }
                     };
                     let g_name = optn_unzip(guild.name(cache).await, "Unknown Server");
-                    let g_bans = get_elm_len_vc(guild.bans(&ctx.http).await);
-                    let g_channels = get_elm_len_hm(guild.channels(&ctx.http).await);
-                    let g_roles = get_elm_len_hm(guild.roles(&ctx.http).await);
-                    let g_emojis = get_elm_len_vc(guild.emojis(&ctx.http).await);
-                    //let g_members = get_elm_len_vc(guild.members(&ctx.http, None, None).await);
+                    let g_bans = get_len_of_vec(guild.bans(&ctx.http).await);
+                    let g_channels = get_len_of_hm(guild.channels(&ctx.http).await);
+                    let g_roles = get_len_of_hm(guild.roles(&ctx.http).await);
+                    let g_emojis = get_len_of_vec(guild.emojis(&ctx.http).await);
+                    //let g_members = get_len_from_vec(guild.members(&ctx.http, None, None).await);
                     let content = msg
                         .channel_id
                         .send_message(&ctx.http, |m| {
@@ -954,7 +955,7 @@ impl EventHandler for Handler {
             }
 
             // FOR TRUSTED USER
-            if restrict_users(msg.author.id, &TRUSTED) {
+            if restricting_users(&TRUSTED, msg.author.id) {
                 // kgrs!set_activity <type:ACTIVITY-TYPE> <content:str> || Change Kagurin.rs activity
                 //  ACTIVITY-TYPE = [playing, listening, watching, competing]
                 if cmd == "set_activity" {
@@ -998,14 +999,14 @@ impl EventHandler for Handler {
                             msg.author.name, r#type, content
                         );
                     } else {
-                        let content = msg.channel_id.say(&ctx.http, &want_arg(2)).await;
+                        let content = msg.channel_id.say(&ctx.http, &missing_arg(2)).await;
                         Et::Rslt(content).l(cmd, "SEND");
                     }
                 }
             }
 
             // DEV
-            if restrict_users(msg.author.id, &DEVELIPER) {
+            if restricting_users(&DEVELIPER, msg.author.id) {
                 // kgrs!exit | process exit
                 if cmd == "exit" {
                     let content = msg
