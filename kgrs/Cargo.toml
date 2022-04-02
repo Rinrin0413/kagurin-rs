@@ -1,6 +1,6 @@
 [package]
 name = "kgrs"
-version = "0.2.7"
+version = "0.3.0"
 edition = "2021"
 authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
 license = "[GPL-3.0] GNU General Public License v3.0"
