@@ -63,7 +63,6 @@ impl EventHandler for Handler {
             };
             let cmd: &str = &cmd;
             let arg = setup_arg(7, &msg.content);
-            println!("引数: {:?}", arg);
             let ftr = &format!(
                 "kgrs!{} by {}",
                 cmd,
