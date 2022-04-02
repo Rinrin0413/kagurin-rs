@@ -1,3 +1,4 @@
 @echo off
 pushd %0\..
-cargo run
+rem cargo run
+.\target\debug\kagurin_rs.exe
