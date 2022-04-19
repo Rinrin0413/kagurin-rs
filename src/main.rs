@@ -25,7 +25,7 @@ const DEVELIPER: [u64; 2] = [
     801082943371477022, // Rinrin.hlsl
 ];
 const BOT_ID: u64 = 936116497502318654;
-const IS_DST: bool = true;
+const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 
@@ -33,16 +33,15 @@ const INVITE_URL: &str =
 impl EventHandler for Handler {
     // MSG event
     async fn message(&self, ctx: Context, msg: Message) {
-        // return if msg author is bot
+        // if msg author is bot, return;
         if msg.author.bot {
             return;
         }
 
-        // ▼ DB
+        // DB
         let cache = &ctx.cache;
         let client = cache.current_user().await;
         let bot_avatar = &client.face();
-        // ▲ DB
 
         // If mentioned to bot, will send about help cmd
         if msg
