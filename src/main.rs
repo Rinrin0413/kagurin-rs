@@ -345,7 +345,7 @@ impl EventHandler for Handler {
                                 ("Guilds:", &format!("```c\n{} guilds\n```", guilds), true),
                                 ("Invitation link:", &format!("[here]({})", INVITE_URL), true),
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
-                                ("Language:", "```yaml\nRust: [1.58.1]```", true),
+                                ("Language:", "```yaml\nRust: [1.60.0]```", true),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
                                 (
                                     "Source code:",
@@ -1188,7 +1188,7 @@ impl EventHandler for Handler {
         // now(JST)
         let now = Utc::now() + Duration::hours(9);
         println!(
-            "{} v{} is connected: {}",
+            "{} v{} is connected: {} (JST)",
             ready.user.name,
             VER,
             now.format("%Y-%m-%d %H:%M:%S.%z")
