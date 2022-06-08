@@ -63,7 +63,7 @@ impl EventHandler for Handler {
             let cmd: &str = &cmd;
             let arg = setup_arg(7, &msg.content);
             let ftr = &format!(
-                "kgrs!{} by {}",
+                "kgrs!{}, Called by {}",
                 cmd,
                 Et::Optn(
                     // If there is no member data(dm...?), return nick, else name
