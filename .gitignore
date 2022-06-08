@@ -1,3 +1,5 @@
 **target/
 **Cargo.lock
 TOKEN
+run_kagurin.cmd
+run_kagurin_release.cmd
