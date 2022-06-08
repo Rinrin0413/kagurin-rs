@@ -699,7 +699,7 @@ impl EventHandler for Handler {
             if cmd == "uuid" {
                 if let Some(n) = arg[1] {
                     let n: u8 = if let Ok(n) = n.parse() { n } else { 0 };
-                    if n != 0 && n <= 16 {
+                    if 1 <= n && n <= 16 {
                         let mut uuids = String::new();
                         for _ in 0..n {
                             uuids = format!(
@@ -728,7 +728,7 @@ impl EventHandler for Handler {
                     } else {
                         let content = msg
                             .channel_id
-                            .say(&ctx.http, "無効な引数を確認\n第1引数には `0` から `16` までの整数値を入れてください")
+                            .say(&ctx.http, "無効な引数を確認\n第1引数には `1` から `16` までの整数値を入れてください")
                             .await;
                         Et::Rslt(content).l(cmd, "SEND");
                     }
