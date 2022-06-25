@@ -14,6 +14,7 @@ use std::{collections::HashMap, env, process, time::Instant};
 
 struct Handler;
 
+const RUST_VERSION: &str = "1.63.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
 const TRUSTED: [u64; 2] = [
@@ -345,7 +346,7 @@ impl EventHandler for Handler {
                                 ("Guilds:", &format!("```c\n{} guilds\n```", guilds), true),
                                 ("Invitation link:", &format!("[here]({})", INVITE_URL), true),
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
-                                ("Language:", "```yaml\nRust: [1.60.0]```", true),
+                                ("Language:", &format!("```yaml\nRust: {}```", RUST_VERSION), true),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
                                 (
                                     "Source code:",
