@@ -429,7 +429,6 @@ pub mod fmt {
 #[cfg(test)]
 mod tests {
     use super::{fmt::*, *};
-    use std::collections::HashMap;
 
     #[test]
     fn user_restriction() {
