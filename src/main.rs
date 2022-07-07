@@ -3,7 +3,6 @@ use kgrs::{
     tetr::*,
     util::{fmt::*, *},
 };
-use rand::{thread_rng, Rng};
 use reqwest;
 use serde_json::{json, Value};
 use serenity::{
@@ -214,6 +213,32 @@ impl EventHandler for Handler {
                                 .await;
                             Et::Rslt(content).l(cmd, "SEND");
                         }
+
+                        "tetr" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(bot_avatar)
+                                                .name("かぐりん.rs's Commands(tetr)")
+                                        });
+                                        e.title("TETR.IO関連コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![(
+                                            "kgrs!tetr-user <user:str>",
+                                            "TETR.IOのユーザー情報を表示",
+                                            false,
+                                        )]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
                         "trusted" => {
                             let content = msg
                             .channel_id
@@ -306,6 +331,7 @@ impl EventHandler for Handler {
                                     ("kgrs!help util", "機能系のコマンド一覧を表示", false),
                                     ("kgrs!help fun", "娯楽系のコマンド一覧を表示", false),
                                     ("kgrs!help mod", "管理者用のコマンド一覧を表示", false),
+                                    ("kgrs!help tetr", "TETR.IO関連のコマンド一覧を表示", false),
                                     (
                                         "kgrs!help trusted",
                                         "開発者に信頼されている人用のコマンド一覧を表示",
@@ -1618,22 +1644,6 @@ impl EventHandler for Handler {
                         .await;
                     Et::Rslt(content).l(cmd, "SEND");
                 }
-            }
-        } else if thread_rng().gen_bool(1.0 / 5.0)
-        // CONVERSATIONS
-        {
-            // こん... | hello
-            if msg.content.starts_with("こん") {
-                let lines = ["こんちゃ", "こんにちは"];
-                let content = msg.channel_id.say(&ctx.http, rand_choise(&lines)).await;
-                Et::Rslt(content).l("_こん", "SEND");
-            }
-
-            // ねる... | 安らかに眠れ
-            if msg.content.starts_with("ねる") {
-                let lines = ["安らかに眠れ", "おやずみ"];
-                let content = msg.channel_id.say(&ctx.http, rand_choise(&lines)).await;
-                Et::Rslt(content).l("_安らかに眠れ", "SEND");
             }
         }
     }
