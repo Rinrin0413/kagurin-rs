@@ -264,6 +264,19 @@ where
     }
 }
 
+/// Rounds the passed `f64` halfway.
+/// Leaves up to the position specified by `decimal_places`argument.
+///
+/// # Examples:
+///
+/// ```
+/// assert_eq!(round_mid(3.1415, 3), 3.142);
+/// ```
+pub fn round_mid(num: f64, decimal_places: u32) -> f64 {
+    let n = 10_u64.pow(decimal_places) as f64;
+    (num * n).round() / n
+}
+
 pub mod fmt {
     //! This is a module for formatting texts.
 
@@ -398,12 +411,25 @@ pub mod fmt {
     pub fn anti_cb(arg: &str) -> String {
         arg.replace("```", "```")
     }
+
+    /// Converts content to inline monospaced text.
+    ///
+    /// # Examples:
+    ///
+    /// ```
+    /// let content = "wolwol";
+    /// assert_eq!(mono(content), "`wolwol`");
+    /// ```
+    pub fn mono(content: &str) -> String {
+        format!("`{}`", content)
+    }
 }
 
 // Tests
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{fmt::*, *};
+    use std::collections::HashMap;
 
     #[test]
     fn user_restriction() {
@@ -525,5 +551,16 @@ mod tests {
     fn fmt_anti_cb() {
         let cb = cb("console.log(\"Hello, World!\")", "js");
         assert_eq!(anti_cb(&cb), "```js\nconsole.log(\"Hello, World!\")\n```");
+    }
+
+    #[test]
+    fn fmt_mono() {
+        let content = "wolwol";
+        assert_eq!(mono(content), "`wolwol`");
+    }
+
+    #[test]
+    fn round_to_the_midpoint() {
+        assert_eq!(round_mid(3.1415, 3), 3.142);
     }
 }
