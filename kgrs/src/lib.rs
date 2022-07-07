@@ -1,7 +1,7 @@
 //! These are library for kagurin-rs
 
-pub use rand::{thread_rng, Rng};
-pub use serenity;
-
 /// # Utilities for kagurin-rs
 pub mod util;
+
+/// # Utilities for [TETRA CHANNEL API](https://tetr.io/about/api/)
+pub mod tetr;
