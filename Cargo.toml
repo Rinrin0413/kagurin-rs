@@ -1,15 +1,18 @@
 [package]
 name = "kagurin_rs"
 description = "速くて安心で効率的な Rust製のかぐりんぼっと"
-version = "0.3.15"
+version = "0.4.0"
 authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
 license = "[GPL-3.0] GNU General Public License v3.0"
 repository = "https://github.com/Rinrin0413/kagurin-rs"
 edition = "2018"
 
 [dependencies]
-#serenity = { version = "0.10.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model"] }
+serenity = { version = "0.10.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "unstable_discord_api"] }
+rand = "0.8.5"
 tokio = { version = "1.6.1", features = ["macros", "rt-multi-thread"] }
 chrono = { version = "0.4.19", default-features = false, features = ["clock"] }
 serde_json = "1.0.78"
 kgrs = { path = "./kgrs/" }
+reqwest = { version = "0.11.11", features = ["json"] }
+thousands = "0.2.0"
