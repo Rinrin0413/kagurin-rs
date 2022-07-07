@@ -1,20 +1,24 @@
 use chrono::{DateTime, Duration, Utc};
-use kgrs::util::{fmt::*, *};
 use kgrs::{
-    serenity::{
-        async_trait,
-        model::{channel::Message, gateway::Ready, prelude::*},
-        prelude::{Client, Context, EventHandler},
-        utils::{Colour, MessageBuilder},
-    },
-    thread_rng, Rng,
+    tetr::*,
+    util::{fmt::*, *},
 };
+use rand::{thread_rng, Rng};
+use reqwest;
 use serde_json::{json, Value};
+use serenity::{
+    async_trait,
+    model::{channel::Message, gateway::Ready, prelude::*},
+    prelude::{Client, Context, EventHandler},
+    utils::{Colour, MessageBuilder},
+};
 use std::{collections::HashMap, env, process, time::Instant};
+
+use thousands::Separable;
 
 struct Handler;
 
-const RUST_VERSION: &str = "1.63.0-nightly";
+const RUST_VERSION: &str = "1.64.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
 const EMBED_LABEL_COL: u32 = 0xB89089;
 const TRUSTED: [u64; 2] = [
@@ -29,6 +33,8 @@ const BOT_ID: u64 = 936116497502318654;
 const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
+
+const TETRA_CHANNEL_API: &str = "https://ch.tetr.io/api/";
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -346,7 +352,11 @@ impl EventHandler for Handler {
                                 ("Guilds:", &format!("```c\n{} guilds\n```", guilds), true),
                                 ("Invitation link:", &format!("[here]({})", INVITE_URL), true),
                                 ("Developer:", "```nim\n@Rinrin.rs#5671```", true),
-                                ("Language:", &format!("```yaml\nRust: {}```", RUST_VERSION), true),
+                                (
+                                    "Language:",
+                                    &format!("```yaml\nRust {}```", RUST_VERSION),
+                                    true,
+                                ),
                                 ("Library:", "```yaml\nserenity-rs: [0.10.10]```", true),
                                 (
                                     "Source code:",
@@ -951,6 +961,450 @@ impl EventHandler for Handler {
                     .say(&ctx.http, format!("{}", INVITE_URL))
                     .await;
                 Et::Rslt(content).l(cmd, "SEND");
+            }
+
+            // kgrs!tetr-user |
+            if cmd == "tetr-user" {
+                if let Some(usr1) = arg[1] {
+                    // If the request to the API contains `/`, the API will returns `Cannot GET Error`.
+                    // So removes `/` before to request.
+                    let mut usr1 = usr1.to_string();
+                    usr1.retain(|c| c != '/');
+                    usr1.retain(|c| c != '%');
+                    usr1.retain(|c| c != '#');
+                    usr1.retain(|c| c != '?');
+                    usr1.retain(|c| c != '\\');
+                    usr1.retain(|c| c != '.');
+                    // Also, if only `/`, '%', '#', '?', '\', '.' is passed, the API gets nothing.
+                    // So warns the user to enter the correct arguments.
+                    // And returns.
+                    if usr1 == "" {
+                        let content = msg
+                            .channel_id
+                            .say(&ctx.http, "Error: ユーザー名又は ID を指定してください")
+                            .await;
+                        Et::Rslt(content).l(cmd, "SEND");
+                        return;
+                    }
+                    usr1 = usr1.to_lowercase();
+                    let mut content = msg
+                        .channel_id
+                        .say(&ctx.http, "Please wait...")
+                        .await
+                        .expect(&Et::Other("").l(cmd, "SEND \"PleaseWait\""));
+                    let before_timestamp = Instant::now();
+                    let user_data_url = format!("{}users/{}", TETRA_CHANNEL_API, usr1);
+                    let reqwest_client = reqwest::Client::new();
+                    content
+                        .edit(&ctx, |m| m.content("Please wait.."))
+                        .await
+                        .expect(&Et::Other("").l(cmd, "MSG EDIT(wait..)"));
+                    let response = reqwest_client.get(&user_data_url).send().await;
+                    let after_timestamp = Instant::now();
+                    let ping = format!(
+                        "ping: {}ms",
+                        (after_timestamp - before_timestamp).as_millis()
+                    );
+                    content
+                        .edit(&ctx, |m| m.content("Please wait."))
+                        .await
+                        .expect(&Et::Other("").l(cmd, "MSG EDIT(wait.)"));
+                    if usr1 == "syabetarou" {
+                        content
+                            .edit(&ctx, |m| m.content("Please wait"))
+                            .await
+                            .expect(&Et::Other("").l(cmd, "MSG EDIT(wait)"));
+                        let after_timestamp2 = Instant::now();
+                        let ping2 = format!(
+                            "ping: {}ms",
+                            (after_timestamp2 - before_timestamp).as_millis()
+                        );
+                        content
+                            .edit(&ctx, |m| {
+                                m.embed(|e| {
+                                    e.title("SYABETAROU ✓ ||77a02950-bde0447f9851fd||");
+                                    e.description("**<SUPPORTER>**");
+                                    e.fields(vec![
+                                        (
+                                            "Badges: <:100player:992097864081735730><:allclear:992096168664383622><:20tsd:992097227260567553><:secretgrade:992079389611278477><:leaderboard1:992095621018308759>| More 18 badges",
+                                            "​",
+                                            false,
+                                        ),
+                                        (
+                                            "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: N°1\n　Local: N°1",
+                                            "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
+                                            false,
+                                        ),
+                                        ("About me:", &cb("まいど。", ""), false),
+                                        ("Role:", "User", true),
+                                        (
+                                            "Play time:",
+                                            "2000 years",
+                                            true,
+                                        ),
+                                        (
+                                            "Friends:",
+                                            "0",
+                                            true,
+                                        ),
+                                        (
+                                            "​",
+                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_77a02950-bde0447f9851fd)",
+                                            false,
+                                        ),
+                                        ("Glicko:", "9999.999±60.00", true),
+                                        (
+                                            "Play count:",
+                                            "999,999",
+                                            true,
+                                        ),
+                                        (
+                                            "Wins:",
+                                            "999,999 (100.000%)",
+                                            true,
+                                        ),
+                                        ("APM:", "1003.84", true),
+                                        ("PPS:", "84.40", true),
+                                        ("VS:", "6301.33", true),
+                                        (
+                                            "​",
+                                            &format!(
+                                                "{} | cached at: <t:{}:R>",
+                                                ping2,
+                                                Utc::now().timestamp()
+                                            ),
+                                            false,
+                                        )
+                                    ]);
+                                    e.footer(|f| f.text(ftr));
+                                    e.timestamp(Utc::now());
+
+                                    e.author(|a| {
+                                        a.icon_url("https://tetr.io/res/flags/jp.png");
+                                        a.name(&format!(
+                                            "Lv.9999 ⬢ 8,401,9463,557xp",
+                                        ))
+                                    });
+
+                                    e.color(Colour(0xeca5ff));
+                                    e.thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp");
+                                    e
+                                });
+                                m.content("")
+                            })
+                            .await
+                            .expect(&Et::Other("").l(cmd, "MSG EDIT(TETR-USER)"));
+                    } else {
+                        match response {
+                            Ok(loot) => {
+                                let tetr_usr = TetraUser::new(loot).await;
+                                if let Err(err) = tetr_usr.get_err() {
+                                    content
+                                        .edit(&ctx, |m| {
+                                            m.embed(|e| {
+                                                e.title(usr1.to_uppercase());
+                                                e.description(format!(
+                                                    "```\n{}\n```\n{}",
+                                                    err, &ping
+                                                ));
+                                                e.footer(|f| f.text(ftr));
+                                                e.timestamp(Utc::now());
+                                                e.color(Colour(EMBED_LABEL_COL))
+                                            })
+                                            .content("")
+                                        })
+                                        .await
+                                        .expect(
+                                            &Et::Other("").l(cmd, "MSG EDIT(FAILED TO RESPONSE)"),
+                                        );
+                                } else if tetr_usr.is_banned() {
+                                    content
+                                        .edit(&ctx, |m| {
+                                            m.embed(|e| {
+                                                e.title(format!(
+                                                    "{}  ||{}||",
+                                                    usr1.to_uppercase(),
+                                                    tetr_usr.get_id()
+                                                ));
+                                                e.description("​");
+                                                e.image("https://ch.tetr.io/res/cute.png");
+                                                e.field("| **BANNED** |", "​", false);
+                                                e.footer(|f| f.text(format!("{}\n{}", ping, ftr)));
+                                                e.timestamp(Utc::now());
+                                                e.color(Colour(0xf81c1c));
+                                                e.thumbnail(
+                                                    "https://tetr.io/res/avatar-banned.png",
+                                                );
+                                                e
+                                            });
+                                            m.content("")
+                                        })
+                                        .await
+                                        .expect(&Et::Other("").l(cmd, "MSG EDIT(TETR-USER)"));
+                                } else {
+                                    let user_records_url = format!("{}/records", user_data_url);
+                                    let reqwest_client2 = reqwest::Client::new();
+                                    let response2 =
+                                        reqwest_client2.get(&user_records_url).send().await;
+                                    let records = match response2 {
+                                        Ok(loot) => TetraRecords::new(loot).await,
+                                        Err(err) => {
+                                            content
+                                                .edit(&ctx, |m| {
+                                                    m.embed(|e| {
+                                                        e.title(usr1.to_uppercase());
+                                                        e.description(format!(
+                                                            "```\n{}\n```\n{}",
+                                                            err, &ping
+                                                        ));
+                                                        e.footer(|f| f.text(ftr));
+                                                        e.timestamp(Utc::now());
+                                                        e.color(Colour(EMBED_LABEL_COL))
+                                                    })
+                                                    .content("")
+                                                })
+                                                .await
+                                                .expect(
+                                                    &Et::Other("")
+                                                        .l(cmd, "MSG EDIT(FAILED TO RESPONSE)"),
+                                                );
+                                            return;
+                                        }
+                                    };
+                                    content
+                                        .edit(&ctx, |m| m.content("Please wait"))
+                                        .await
+                                        .expect(&Et::Other("").l(cmd, "MSG EDIT(wait)"));
+                                    let after_timestamp2 = Instant::now();
+                                    let ping2 = format!(
+                                        "ping: {}ms",
+                                        (after_timestamp2 - before_timestamp).as_millis()
+                                    );
+                                    content
+                                        .edit(&ctx, |m| {
+                                            m.embed(|e| {
+                                                e.title(format!(
+                                                    "{}{}  ||{}||",
+                                                    usr1.to_uppercase(),
+                                                    if tetr_usr.is_verified() { " ✓" } else { "" },
+                                                    tetr_usr.get_id()
+                                                ));
+                                                if tetr_usr.is_supporter() {
+                                                    let supporter_card = format!(
+                                                        "**<{:★>st$}>**",
+                                                        "SUPPORTER",
+                                                        st = tetr_usr.get_supporter_tier() + 9 - 1
+                                                    );
+                                                    if tetr_usr.is_bad_standing() {
+                                                        e.description(format!(
+                                                            "{}\n| **- BAD STANDING -** |",
+                                                            supporter_card
+                                                        ));
+                                                    } else {
+                                                        e.description(supporter_card);
+                                                    }
+                                                } else if tetr_usr.is_bad_standing() {
+                                                    e.description("| **- BAD STANDING -** |");
+                                                }
+                                                if let Some(url) = tetr_usr.get_banner_url() {
+                                                    e.image(url);
+                                                }
+                                                if tetr_usr.has_badges() {
+                                                    e.field(
+                                                        format!("Badges: {}", tetr_usr.get_bages()),
+                                                        "​",
+                                                        false,
+                                                    );
+                                                }
+                                                if tetr_usr.is_rating() {
+                                                    e.field(
+                                                        format!(
+                                                            "〔{} **{:.4}TR** 〕{}",
+                                                            tetr_usr.get_rank_emoji(),
+                                                            tetr_usr.get_rating(),
+                                                            match tetr_usr.get_rank() {
+                                                                "z" => "".to_string(),
+                                                                _ => format!(
+                                                                    "\n　Global: N°{}\n　Local: N°{}",
+                                                                    tetr_usr.get_standing(),
+                                                                    tetr_usr.get_standing_local()
+                                                                ),
+                                                            }
+                                                        ),
+                                                        match tetr_usr.get_rank() {
+                                                            "z" => format!(
+                                                                "Probably around {}",
+                                                                tetr_usr.get_percentile_rank()
+                                                            ),
+                                                            _ => tetr_usr.get_demotion_on_next_loss(),
+                                                        },
+                                                        false,
+                                                    );
+                                                } else {
+                                                    e.field(
+                                                        format!(
+                                                            "**{}/10** rating games played",
+                                                            tetr_usr.get_gamesplayed()
+                                                        ),
+                                                        format!(
+                                                            "{} rating games won",
+                                                            tetr_usr.get_gameswon()
+                                                        ),
+                                                        false,
+                                                    );
+                                                };
+                                                if let Some(bio) = tetr_usr.get_bio() {
+                                                    if 0 < bio.len() {
+                                                        e.field("About me:", cb(bio, ""), false);
+                                                    }
+                                                }
+                                                e.field("Role:", &tetr_usr.get_role_name(), true);
+                                                if !tetr_usr.is_gameplay_hidden() {
+                                                    e.field(
+                                                        "Play time:",
+                                                        &tetr_usr.get_gametime(),
+                                                        true,
+                                                    );
+                                                }
+                                                e.field(
+                                                    "Friends:",
+                                                    &tetr_usr.get_friend_count().to_string(),
+                                                    true,
+                                                );
+                                                if tetr_usr.get_rank() != "z" {
+                                                    e.fields(vec![
+                                                        (
+                                                            "​",
+                                                            format!(
+                                                                "[**== TETRA LEAGUE ==**]({})",
+                                                                tetr_usr.get_recent_league()
+                                                            ),
+                                                            false,
+                                                        ),
+                                                        ("Glicko:", tetr_usr.get_glicko(), true),
+                                                        (
+                                                            "Play count:",
+                                                            tetr_usr
+                                                                .get_gamesplayed_league()
+                                                                .separate_with_commas(),
+                                                            true,
+                                                        ),
+                                                        (
+                                                            "Wins:",
+                                                            format!(
+                                                                "{} ({:.3}%)",
+                                                                tetr_usr.get_gameswon_league().separate_with_commas(),
+                                                                (tetr_usr.get_gameswon_league() as f64
+                                                                    / tetr_usr.get_gamesplayed_league()
+                                                                        as f64
+                                                                    * 100.)
+                                                            ),
+                                                            true,
+                                                        ),
+                                                        ("APM:", tetr_usr.get_apm().to_string(), true),
+                                                        ("PPS:", tetr_usr.get_pps().to_string(), true),
+                                                        ("VS:", tetr_usr.get_vs().to_string(), true),
+                                                    ]);
+                                                }
+                                                if records.has_40l_record() {
+                                                    e.fields(vec![
+                                                        (
+                                                            "​",
+                                                            format!(
+                                                                "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
+                                                                records.get_best_40l_record(),
+                                                                records.get_40l_ts(),
+                                                                if records.is_40l_top1000() {
+                                                                    format!(" | N°{}", records.get_40l_rank())
+                                                                } else {
+                                                                    "".to_string()
+                                                                },
+                                                            ),
+                                                            false,
+                                                        ),
+                                                        ("Time:", records.get_40l_time(), true),
+                                                        ("PPS:", records.get_40l_pps().to_string(), true),
+                                                        ("Finesse:", records.get_40l_finesse(), true),
+                                                    ]);
+                                                }
+                                                if records.has_blitz_record() {
+                                                    e.fields(vec![
+                                                        (
+                                                            "​",
+                                                            format!(
+                                                                "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
+                                                                records.get_best_blitz_record(),
+                                                                records.get_blitz_ts(),
+                                                                if records.is_blitz_top1000() {
+                                                                    format!(" | N°{}", records.get_40l_rank())
+                                                                } else {
+                                                                    "".to_string()
+                                                                },
+                                                            ),
+                                                            false,
+                                                        ),
+                                                        ("Score:", records.get_blitz_score(), true),
+                                                        ("PPS:", records.get_blitz_pps().to_string(), true),
+                                                        ("Finesse:", records.get_blitz_finesse(), true),
+                                                    ]);
+                                                }
+                                                e.field(
+                                                    "​",
+                                                    format!(
+                                                        "{} | {}",
+                                                        ping2,
+                                                        tetr_usr.get_cacherd_at()
+                                                    ),
+                                                    false,
+                                                );
+                                                e.footer(|f| f.text(ftr));
+                                                e.timestamp(Utc::now());
+                                                e.author(|a| {
+                                                    if let Some(flag) = tetr_usr.get_national_flag() {
+                                                        a.icon_url(flag);
+                                                    }
+                                                    a.name(&format!(
+                                                        "Lv.{} {} {}xp",
+                                                        tetr_usr.get_level(),
+                                                        tetr_usr.get_level_mark(),
+                                                        tetr_usr.get_formatted_xp()
+                                                    ))
+                                                });
+                                                e.color(Colour(tetr_usr.get_col()));
+                                                e.thumbnail(tetr_usr.get_face_url());
+                                                e
+                                            });
+                                            m.content("")
+                                        })
+                                        .await
+                                        .expect(&Et::Other("").l(cmd, "MSG EDIT(TETR-USER)"));
+                                }
+                            }
+                            Err(err) => {
+                                content
+                                    .edit(&ctx, |m| {
+                                        m.embed(|e| {
+                                            e.title(usr1.to_uppercase());
+                                            e.description(format!(
+                                                "```\n{}\n```\n{}",
+                                                ftg(err),
+                                                &ping
+                                            ));
+                                            e.footer(|f| f.text(ftr));
+                                            e.timestamp(Utc::now());
+                                            e.color(Colour(EMBED_LABEL_COL))
+                                        })
+                                        .content("")
+                                    })
+                                    .await
+                                    .expect(&Et::Other("").l(cmd, "MSG EDIT(FAILED TO RESPONSE)"));
+                            }
+                        }
+                    }
+                } else {
+                    let content = msg.channel_id.say(&ctx.http, missing_arg(1)).await;
+                    Et::Rslt(content).l(cmd, "SEND");
+                }
             }
 
             // FOR TRUSTED USER
