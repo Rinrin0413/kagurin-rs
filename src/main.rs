@@ -12,10 +12,11 @@ use serenity::{
     utils::{Colour, MessageBuilder},
 };
 use std::{collections::HashMap, env, process, time::Instant};
-
 use thousands::Separable;
 
-struct Handler;
+struct Handler {
+    client: reqwest::Client,
+}
 
 const RUST_VERSION: &str = "1.64.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
@@ -56,7 +57,7 @@ impl EventHandler for Handler {
             .expect("GET MENTIONS TO ME")
         {
             let content = msg.reply(&ctx.http, "ヘルプは `kgrs!help` でどうぞ").await;
-            Et::Rslt(content).l("_こん", "SEND");
+            Et::Rslt(content).l("HLP", "SEND");
         }
 
         // COMMANDS
@@ -1020,12 +1021,11 @@ impl EventHandler for Handler {
                         .expect(&Et::Other("").l(cmd, "SEND \"PleaseWait\""));
                     let before_timestamp = Instant::now();
                     let user_data_url = format!("{}users/{}", TETRA_CHANNEL_API, usr1);
-                    let reqwest_client = reqwest::Client::new();
                     content
                         .edit(&ctx, |m| m.content("Please wait.."))
                         .await
                         .expect(&Et::Other("").l(cmd, "MSG EDIT(wait..)"));
-                    let response = reqwest_client.get(&user_data_url).send().await;
+                    let response = self.client.get(&user_data_url).send().await;
                     let after_timestamp = Instant::now();
                     let ping = format!(
                         "ping: {}ms",
@@ -1169,9 +1169,7 @@ impl EventHandler for Handler {
                                         .expect(&Et::Other("").l(cmd, "MSG EDIT(TETR-USER)"));
                                 } else {
                                     let user_records_url = format!("{}/records", user_data_url);
-                                    let reqwest_client2 = reqwest::Client::new();
-                                    let response2 =
-                                        reqwest_client2.get(&user_records_url).send().await;
+                                    let response2 = self.client.get(&user_records_url).send().await;
                                     let records = match response2 {
                                         Ok(loot) => TetraRecords::new(loot).await,
                                         Err(err) => {
@@ -1362,7 +1360,7 @@ impl EventHandler for Handler {
                                                                 records.get_best_blitz_record(),
                                                                 records.get_blitz_ts(),
                                                                 if records.is_blitz_top1000() {
-                                                                    format!(" | N°{}", records.get_40l_rank())
+                                                                    format!(" | N°{}", records.get_blitz_rank())
                                                                 } else {
                                                                     "".to_string()
                                                                 },
@@ -1671,7 +1669,9 @@ async fn main() {
     // Create a new instance of the Client, logging in as a bot.
     let mut client = Client::builder(&token)
         .application_id(BOT_ID)
-        .event_handler(Handler)
+        .event_handler(Handler {
+            client: reqwest::Client::new(),
+        })
         .await
         .expect("Err creating client");
 
