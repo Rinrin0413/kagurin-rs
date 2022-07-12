@@ -6,6 +6,8 @@ use reqwest::Response;
 use serde::Deserialize;
 use thousands::Separable;
 
+// TODO:testing
+
 /// ### User Info
 /// An struct describing the user in detail.
 #[derive(Deserialize)]
@@ -22,7 +24,7 @@ pub struct TetraUser {
 
 impl TetraUser {
     /// Creates a new `TetraUser`.
-    /// Converts the given `Response` to `TetraUser@ and returns it.
+    /// Converts the given `Response` to `TetraUser` and returns it.
     pub async fn new(response: Response) -> Self {
         response
             .json::<Self>()
@@ -216,6 +218,7 @@ impl TetraUser {
             }
         }
         let xp = self.data.as_ref().expect("WTF SUCCESS?!").user.xp;
+        // (xp/500)^0.6 + (xp / (5000 + max(0, xp-4000000) / 5000)) + 1
         let level = ((xp / 500.).powf(0.6) + (xp / (5000. + max(0., xp - 4000000.) / 5000.)) + 1.)
             .floor() as u32;
         level
