@@ -620,7 +620,7 @@ impl TetraUser {
             .league
             .vs
         {
-            return vs.to_string();
+            vs.to_string()
         } else {
             "unknown".to_string()
         }
