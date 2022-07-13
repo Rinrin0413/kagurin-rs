@@ -1295,7 +1295,7 @@ impl EventHandler for Handler {
                                                     &tetr_usr.get_friend_count().to_string(),
                                                     true,
                                                 );
-                                                if tetr_usr.get_rank() != "z" {
+                                                if tetr_usr.is_rating() {
                                                     e.fields(vec![
                                                         (
                                                             "​",
