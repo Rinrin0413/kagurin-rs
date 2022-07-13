@@ -611,14 +611,17 @@ impl TetraUser {
     }
 
     /// Returns the user's average VS over the last 10 games.
-    pub fn get_vs(&self) -> f64 {
-        self.data
+    pub fn get_vs(&self) -> String {
+        if let Some(vs) = self.data
             .as_ref()
             .expect("WTF SUCCESS¿¿¿¿¿¿¿¿¿¿")
             .user
             .league
-            .vs
-            .unwrap()
+            .vs {
+            return vs.to_string();
+            } else {
+                 "unknown".to_string()
+            }
     }
 
     /// Returns the usert's URL of recent TETRA LEAGUE games.
