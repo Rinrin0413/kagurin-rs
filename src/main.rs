@@ -1057,7 +1057,7 @@ impl EventHandler for Handler {
                                             false,
                                         ),
                                         (
-                                            "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: N°1\n　Local: N°1",
+                                            "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
                                             "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
                                             false,
                                         ),
@@ -1249,7 +1249,7 @@ impl EventHandler for Handler {
                                                             match tetr_usr.get_rank() {
                                                                 "z" => "".to_string(),
                                                                 _ => format!(
-                                                                    "\n　Global: N°{}\n　Local: N°{}",
+                                                                    "\n　Global: №{}\n　Local: №{}",
                                                                     tetr_usr.get_standing(),
                                                                     tetr_usr.get_standing_local()
                                                                 ),
@@ -1339,7 +1339,7 @@ impl EventHandler for Handler {
                                                                 records.get_best_40l_record(),
                                                                 records.get_40l_ts(),
                                                                 if records.is_40l_top1000() {
-                                                                    format!(" | N°{}", records.get_40l_rank())
+                                                                    format!(" | №{}", records.get_40l_rank())
                                                                 } else {
                                                                     "".to_string()
                                                                 },
@@ -1360,7 +1360,7 @@ impl EventHandler for Handler {
                                                                 records.get_best_blitz_record(),
                                                                 records.get_blitz_ts(),
                                                                 if records.is_blitz_top1000() {
-                                                                    format!(" | N°{}", records.get_blitz_rank())
+                                                                    format!(" | №{}", records.get_blitz_rank())
                                                                 } else {
                                                                     "".to_string()
                                                                 },
