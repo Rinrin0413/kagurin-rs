@@ -6,14 +6,29 @@ authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
 license = "[GPL-3.0] GNU General Public License v3.0"
 repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-serenity = { version = "0.10.10", default-features = false, features = ["client", "gateway", "rustls_backend", "model", "cache", "unstable_discord_api"] }
 rand = "0.8.5"
-uuid = { version = "0.8.2", features = ["v4"] }
-chrono = { version = "0.4.19", default-features = false, features = ["clock"] }
-reqwest = { version = "0.11.11", features = ["json"] }
-serde = { version = "1.0.137", features = ["derive"] }
 serde_json = "1.0.78"
 thousands = "0.2.0"
+
+[dependencies.serenity]
+version = "0.10.10"
+default-features = false
+features = ["client", "gateway", "rustls_backend", "model", "cache", "unstable_discord_api"]
+
+[dependencies.uuid]
+version = "0.8.2"
+features = ["v4"]
+
+[dependencies.chrono]
+version = "0.4.19"
+default-features = false
+features = ["clock"]
+
+[dependencies.reqwest]
+version = "0.11.11"
+features = ["json"]
+
+[dependencies.serde]
+version = "1.0.137"
+features = ["derive"]
