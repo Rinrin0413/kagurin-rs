@@ -14,18 +14,18 @@
 ### Display commands
 - `kgrs!info`: display Kagurin.rs's information.
 - `kgrs!ping`: pong!
-- `kgrs!profile [UserID:int]`: display details of the target user.
+- `kgrs!profile [UserID:int]`: display details of the target user.  
 if no arguments are passed, display the those of the user who called the command.
-- `kgrs!avatar [UserID:int]`: display the target user's icon.
+- `kgrs!avatar [UserID:int]`: display the target user's icon.  
 if no arguments are passed, display the those of the user who called the command.
-- `kgrs!server_info [ServerID:int]`: display details of the target server.
+- `kgrs!server_info [ServerID:int]`: display details of the target server.  
 if no arguments are passed,display the those of the server where called the command.
 - `kgrs!sky`: display the next daily reset time of Sky:CotL.
 - `kgrs!invite`: show invitation URL for this bot.
 
 ### Utility commands
 - `kgrs!now`: get the current UNIX timestamp.
-- `kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]`: get the UNIX timestamp for the specified date and time.
+- `kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]`: get the UNIX timestamp for the specified date and time.  
 - `kgrs!uuid [HowMany:int] [IsUppercase:bool]`: generate UUID(s)
 
 ### Entertainment commands
