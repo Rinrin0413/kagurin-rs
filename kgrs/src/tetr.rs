@@ -17,7 +17,7 @@ pub struct TetraUser {
     /// The reason the request failed.
     pub error: Option<String>,
     /// Data about how this request was cached.
-    pub cache: Option<Chache>,
+    pub cache: Option<Cache>,
     /// The requested data.
     pub data: Option<UserData>,
 }
@@ -531,7 +531,7 @@ impl TetraUser {
     }
 
     /// Returns the time of when this resource was cached.
-    pub fn get_cacherd_at(&self) -> String {
+    pub fn get_cached_at(&self) -> String {
         let cacherd_at = self.cache.as_ref().unwrap().cached_at / 1000;
         format!("cached at: <t:{}:R>", cacherd_at)
     }
@@ -633,14 +633,13 @@ impl TetraUser {
 }
 
 /// ### Cache Data Structure
-/// All responses from the TETRA CHANNEL API are cached. With every response, a cache object is made available to view the status of the cache:
-/// - status — Whether the cache was hit. Either "hit", "miss", or "awaited" (resource was already being requested by another client)
-/// - cached_at — When this resource was cached.
-/// - cached_until — When this resource's cache expires.
+/// All responses from the TETRA CHANNEL API are cached. With every response, 
+/// a cache object is made available to view the status of the cache:
 #[derive(Deserialize)]
-pub struct Chache {
+pub struct Cache {
     /// Whether the cache was hit.
-    /// Either "hit", "miss", or "awaited" (resource was already being requested by another client)
+    /// Either `"hit"`, `"miss"`, or `"awaited"`.
+    /// `"awaited"` means resource was already being requested by another client.
     pub status: String,
     /// When this resource was cached.
     pub cached_at: u64,
@@ -798,7 +797,7 @@ pub struct TetraRecords {
     /// The reason the request failed.
     pub error: Option<String>,
     /// Data about how this request was cached.
-    pub cache: Option<Chache>,
+    pub cache: Option<Cache>,
     /// The requested data.
     pub data: Option<RecordsData>,
 }

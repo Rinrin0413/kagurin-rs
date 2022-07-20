@@ -1230,8 +1230,10 @@ impl EventHandler for Handler {
                                                 } else if tetr_usr.is_bad_standing() {
                                                     e.description("| **- BAD STANDING -** |");
                                                 }
-                                                if let Some(url) = tetr_usr.get_banner_url() {
-                                                    e.image(url);
+                                                if tetr_usr.is_supporter() {
+                                                    if let Some(url) = tetr_usr.get_banner_url() {
+                                                        e.image(url);
+                                                    }
                                                 }
                                                 if tetr_usr.has_badges() {
                                                     e.field(
@@ -1278,7 +1280,7 @@ impl EventHandler for Handler {
                                                     );
                                                 };
                                                 if let Some(bio) = tetr_usr.get_bio() {
-                                                    if 0 < bio.len() {
+                                                    if 0 < bio.len() && tetr_usr.is_supporter() {
                                                         e.field("About me:", cb(bio, ""), false);
                                                     }
                                                 }
@@ -1377,7 +1379,7 @@ impl EventHandler for Handler {
                                                     format!(
                                                         "{} | {}",
                                                         ping2,
-                                                        tetr_usr.get_cacherd_at()
+                                                        tetr_usr.get_cached_at()
                                                     ),
                                                     false,
                                                 );
