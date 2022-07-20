@@ -2,9 +2,9 @@
 
     Faster, reliable and efficient rusted Kagurin bot.
 
-[Commands list↩](./commands.md)
+[Commands list](./commands.md)
 
-[Invitation link↩](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)
+[Invitation link](https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot)
 
 *This is complacency  
 *This bot is for Discord
