@@ -124,11 +124,11 @@ impl EventHandler for Handler {
                                             ("kgrs!help", "コマンドのヘルプ(ハブ)を表示", false),
                                             ("kgrs!info", "このボットの詳細を表示", false),
                                             ("kgrs!ping", "pong!", false),
-                                            ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細が送られる", false),
-                                            ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンが表示される", false),
-                                            ("kgrs!server_info [ServerID:int]", "対象のサーバーの詳細を表示\n引数がない場合は実行したサーバーの詳細が送られる", false),
+                                            ("kgrs!profile [UserID:int]", "対象のユーザの詳細を表示\n引数がない場合は実行者の詳細を表示", false),
+                                            ("kgrs!avatar [UserID:int]", "対象のユーザのアイコンを表示\n引数がない場合は実行者のアイコンを表示", false),
+                                            ("kgrs!server_info [ServerID:int]", "対象のサーバーの詳細を表示\n引数がない場合は実行したサーバーの詳細を表示", false),
                                             ("kgrs!sky", "Sky:CotL の次の更新時刻を表示", false),
-                                            ("kgrs!invite", "このボットの招待URLを取得できる", false),
+                                            ("kgrs!invite", "このボットの招待URLを取得", false),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
@@ -151,11 +151,15 @@ impl EventHandler for Handler {
                                         e.title("機能系コマンド一覧");
                                         e.description(note_cp);
                                         e.fields(vec![
-                                            ("kgrs!now", "現在の UNIX時間を取得", false),
-                                            ("kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]", "指定された日時の UNIX時間を取得", false),
+                                            ("kgrs!now", "現時刻の UNIXタイムスタンプを取得", false),
+                                            (
+                                                "kgrs!timestamp <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]", 
+                                                "指定された日時の UNIXタイムスタンプを取得", 
+                                                false
+                                            ),
                                             (
                                                 "kgrs!uuid [How-many:int] [Is-uppercase:bool]",
-                                                "uuidを生成",
+                                                "UUID を生成",
                                                 false,
                                             ),
                                         ]);
@@ -193,6 +197,31 @@ impl EventHandler for Handler {
                                 .await;
                             Et::Rslt(content).l(cmd, "SEND");
                         }
+                        "tetr" => {
+                            let content = msg
+                                .channel_id
+                                .send_message(&ctx.http, |m| {
+                                    m.embed(|e| {
+                                        e.author(|a| {
+                                            a.icon_url(bot_avatar)
+                                                .name("かぐりん.rs's Commands(tetr)")
+                                        });
+                                        e.title("TETR.IO関連コマンド一覧");
+                                        e.description(note_cp);
+                                        e.fields(vec![(
+                                            "kgrs!tetr-user <user:str>",
+                                            "TETR.IOにおけるユーザー情報を表示",
+                                            false,
+                                        )]);
+                                        e.footer(|f| f.text(ftr));
+                                        e.timestamp(Utc::now());
+                                        e.color(Colour(EMBED_LABEL_COL));
+                                        e
+                                    })
+                                })
+                                .await;
+                            Et::Rslt(content).l(cmd, "SEND");
+                        }
                         "mod" => {
                             let content = msg
                                 .channel_id
@@ -214,32 +243,6 @@ impl EventHandler for Handler {
                                 .await;
                             Et::Rslt(content).l(cmd, "SEND");
                         }
-
-                        "tetr" => {
-                            let content = msg
-                                .channel_id
-                                .send_message(&ctx.http, |m| {
-                                    m.embed(|e| {
-                                        e.author(|a| {
-                                            a.icon_url(bot_avatar)
-                                                .name("かぐりん.rs's Commands(tetr)")
-                                        });
-                                        e.title("TETR.IO関連コマンド一覧");
-                                        e.description(note_cp);
-                                        e.fields(vec![(
-                                            "kgrs!tetr-user <user:str>",
-                                            "TETR.IOのユーザー情報を表示",
-                                            false,
-                                        )]);
-                                        e.footer(|f| f.text(ftr));
-                                        e.timestamp(Utc::now());
-                                        e.color(Colour(EMBED_LABEL_COL));
-                                        e
-                                    })
-                                })
-                                .await;
-                            Et::Rslt(content).l(cmd, "SEND");
-                        }
                         "trusted" => {
                             let content = msg
                             .channel_id
@@ -251,7 +254,7 @@ impl EventHandler for Handler {
                                     e.fields(vec![
                                         (
                                             "kgrs!set_activity <type:ACTIVITY-TYPE> <content:str>", 
-                                            "`ACTIVITY-TYPE = [playing, listening, watching, competing]`\nBot のアクティビティを変更する", 
+                                            "`ACTIVITY-TYPE = [playing, listening, watching, competing]`\nBot のアクティビティを変更", 
                                             false
                                         ),
                                     ]);
@@ -276,7 +279,7 @@ impl EventHandler for Handler {
                                         e.title("Rinrin用コマンド一覧");
                                         e.description(note_cp);
                                         e.fields(vec![
-                                            ("kgrs!exit", "プロセスを強制終了", false),
+                                            ("kgrs!exit", "ボットを強制終了", false),
                                             (
                                                 "kgrs!sd",
                                                 "serenity-rs のドキュメントの URL を出す",
@@ -290,11 +293,6 @@ impl EventHandler for Handler {
                                                 false,
                                             ),
                                             ("kgrs!embed_and_img", "embed & img test", false),
-                                            (
-                                                "kgrs!br",
-                                                "bevy::render のドキュメントの URL を出す",
-                                                false,
-                                            ),
                                         ]);
                                         e.footer(|f| f.text(ftr));
                                         e.timestamp(Utc::now());
@@ -331,8 +329,8 @@ impl EventHandler for Handler {
                                     ("kgrs!help display", "表示系のコマンド一覧を表示", false),
                                     ("kgrs!help util", "機能系のコマンド一覧を表示", false),
                                     ("kgrs!help fun", "娯楽系のコマンド一覧を表示", false),
-                                    ("kgrs!help mod", "管理者用のコマンド一覧を表示", false),
                                     ("kgrs!help tetr", "TETR.IO関連のコマンド一覧を表示", false),
+                                    ("kgrs!help mod", "管理者用のコマンド一覧を表示", false),
                                     (
                                         "kgrs!help trusted",
                                         "開発者に信頼されている人用のコマンド一覧を表示",
