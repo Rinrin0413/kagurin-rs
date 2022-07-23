@@ -1,8 +1,9 @@
 [package]
 name = "kgrs"
-version = "0.4.5"
+description = "A library for Kagurin.rs"
+version = "0.4.6"
 edition = "2021"
-authors = ["Rinrin.rs rinrin0413.valley@gmail.com"]
+authors = ["Rinrin.rs <rinrin0413.valley@gmail.com>"]
 license = "[GPL-3.0] GNU General Public License v3.0"
 repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
 

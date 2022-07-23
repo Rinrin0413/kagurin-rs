@@ -346,7 +346,7 @@ impl TetraUser {
         }
     }
 
-    /// Retruns the user's bio.
+    /// Returns the user's bio.
     /// This value will only be present if user has a bio.
     pub fn get_bio(&self) -> &Option<String> {
         &self.data.as_ref().expect("WTF SUCCESS⁉⁉⁉⁉⁉⁉").user.bio
@@ -568,7 +568,7 @@ impl TetraUser {
         )
     }
 
-    /// Retruns the amount of TETRA LEAGUE games played by this user.
+    /// Returns the amount of TETRA LEAGUE games played by this user.
     pub fn get_gamesplayed_league(&self) -> u32 {
         self.data
             .as_ref()
@@ -578,7 +578,7 @@ impl TetraUser {
             .gamesplayed
     }
 
-    /// Retruns the amount of TETRA LEAGUE games won by this user.
+    /// Returns the amount of TETRA LEAGUE games won by this user.
     pub fn get_gameswon_league(&self) -> u32 {
         self.data
             .as_ref()
