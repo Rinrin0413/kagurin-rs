@@ -633,7 +633,7 @@ impl TetraUser {
 }
 
 /// ### Cache Data Structure
-/// All responses from the TETRA CHANNEL API are cached. With every response, 
+/// All responses from the TETRA CHANNEL API are cached. With every response,
 /// a cache object is made available to view the status of the cache:
 #[derive(Deserialize)]
 pub struct Cache {
@@ -848,7 +848,8 @@ impl TetraRecords {
         let time = self.get_40l_rec().endcontext.final_time / 1000.;
         let m = (time / 60.).floor();
         let s = round_mid(time - m * 60., 3);
-        format!("{}:{}", m, s)
+        let fmted_s = format!("{}{}", if s < 10. { "0" } else { "" }, s);
+        format!("{}:{}", m, fmted_s)
     }
 
     /// Returns the user's PPS in 40 LINES best record.
