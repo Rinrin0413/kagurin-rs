@@ -630,6 +630,16 @@ impl TetraUser {
     pub fn get_recent_league(&self) -> String {
         format!("https://ch.tetr.io/s/league_userrecent_{}", self.get_id())
     }
+
+    pub fn is_admin(&self) -> bool {
+        self.data
+            .as_ref()
+            .expect("WTF SUCCESS!¿¿?")
+            .user
+            .role
+            .as_str()
+            == "admin"
+    }
 }
 
 /// ### Cache Data Structure
