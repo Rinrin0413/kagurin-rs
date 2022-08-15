@@ -1228,7 +1228,7 @@ impl EventHandler for Handler {
                                                 } else if tetr_usr.is_bad_standing() {
                                                     e.description("| **- BAD STANDING -** |");
                                                 }
-                                                if tetr_usr.is_supporter() {
+                                                if tetr_usr.is_supporter() || tetr_usr.is_admin() {
                                                     if let Some(url) = tetr_usr.get_banner_url() {
                                                         e.image(url);
                                                     }
@@ -1278,7 +1278,7 @@ impl EventHandler for Handler {
                                                     );
                                                 };
                                                 if let Some(bio) = tetr_usr.get_bio() {
-                                                    if 0 < bio.len() && tetr_usr.is_supporter() {
+                                                    if 0 < bio.len() && (tetr_usr.is_supporter() || tetr_usr.is_admin()) {
                                                         e.field("About me:", cb(bio, ""), false);
                                                     }
                                                 }
