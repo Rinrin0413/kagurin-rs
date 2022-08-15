@@ -38,6 +38,5 @@ if no arguments are passed,display the those of the server where called the comm
 - 
 
 ### Commands for people trusted by developer
-
 - `kgrs!set_activity <ActivityType:ACTIVITY-TYPE> <content:str>`: chenge Kagurin'rs's activity.  
 argument `ACTIVITY-TYPE` is one of `playing`, `listening`, `watching`, `competing`
