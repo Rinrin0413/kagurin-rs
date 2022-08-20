@@ -253,7 +253,7 @@ impl TetraUser {
         }
     }
 
-    /// Retrun a boolean that indicates whether the is user is hiding `gameplay`.
+    /// Return a boolean that indicates whether the is user is hiding `gameplay`.
     pub fn is_gameplay_hidden(&self) -> bool {
         self.data.as_ref().expect("WTF SUCCESS?!?").user.gametime < 0.
     }
@@ -274,7 +274,7 @@ impl TetraUser {
         format!("{:.2} {}", value, unit)
     }
 
-    /// Retrun a boolean that indicates whether the is user is banned.
+    /// Return a boolean that indicates whether the is user is banned.
     pub fn is_banned(&self) -> bool {
         self.data.as_ref().expect("WTF SUCCESS?!?!?").user.role == "banned"
     }

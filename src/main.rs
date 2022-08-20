@@ -462,7 +462,7 @@ impl EventHandler for Handler {
                 Et::Rslt(content).l(cmd, "SEND");
             }
 
-            // kgrs!profile [userID:int] | get the user desctiption
+            // kgrs!profile [userID:int] | get the user description
             if cmd == "profile" {
                 if let Some(id) = arg[1] {
                     let user = if let Some(u) = get_user_from_id(id, &msg, &ctx).await {
@@ -860,7 +860,7 @@ impl EventHandler for Handler {
                     .channel_id
                     .say(
                         &ctx.http,
-                        format!("{}が当たりました", rand_choise(&tamanegi)),
+                        format!("{}が当たりました", rand_choice(&tamanegi)),
                     )
                     .await;
 
