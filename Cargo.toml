@@ -1,10 +1,12 @@
 [package]
 name = "kagurin_rs"
 description = "Faster, reliable and efficient rusted Kagurin bot."
-version = "0.4.6"
+version = "0.4.7"
 authors = ["Rinrin.rs <rinrin0413.valley@gmail.com>"]
-license = "[GPL-3.0] GNU General Public License v3.0"
+license-file = "LICENSE.md"
 repository = "https://github.com/Rinrin0413/kagurin-rs.git"
+readme = "README.md"
+keywords = ["bot", "discord", "discord-bot", "serenity", "serenity-rs" ]
 edition = "2018"
 
 [dependencies]

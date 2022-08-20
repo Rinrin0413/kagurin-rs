@@ -1,11 +1,11 @@
 [package]
 name = "kgrs"
 description = "A library for Kagurin.rs"
-version = "0.4.8"
-edition = "2021"
+version = "0.4.9"
 authors = ["Rinrin.rs <rinrin0413.valley@gmail.com>"]
-license = "[GPL-3.0] GNU General Public License v3.0"
+license-file = "LICENSE.md"
 repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
+edition = "2021"
 
 [dependencies]
 rand = "0.8.5"

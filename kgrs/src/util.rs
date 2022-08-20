@@ -92,11 +92,11 @@ pub async fn get_member_from_user(user: &User, msg: &Message, ctx: &Context) -> 
 /// ```
 /// let list = ["a", "b", "c", "d"];
 ///
-/// assert!(list.contains(rand_choise(&list)));
+/// assert!(list.contains(rand_choice(&list)));
 ///
-/// assert!(!"z".contains(rand_choise(&list)));
+/// assert!(!"z".contains(rand_choice(&list)));
 /// ```
-pub fn rand_choise<T>(list: &[T]) -> &T {
+pub fn rand_choice<T>(list: &[T]) -> &T {
     let max = list.len() - 1;
     &list[rand::thread_rng().gen_range(0..=max)]
 }
@@ -449,9 +449,9 @@ mod tests {
     fn return_based_on_passed_list() {
         let list = ["a", "b", "c", "d"];
 
-        assert!(list.contains(rand_choise(&list)));
+        assert!(list.contains(rand_choice(&list)));
 
-        assert!(!"z".contains(rand_choise(&list)));
+        assert!(!"z".contains(rand_choice(&list)));
     }
 
     #[test]
