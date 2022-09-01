@@ -1,86 +1,84 @@
 //! There are command manager.
 
-use serenity::{
-    model::{application::command::Command, prelude::CommandId},
-    http::client::Http, 
-    builder::CreateApplicationCommand
-};
 use colored::*;
+use serenity::{
+    builder::CreateApplicationCommand,
+    http::client::Http,
+    model::{application::command::Command, prelude::CommandId},
+};
 
 #[derive(Debug)]
 #[non_exhaustive]
 /// The command manager.
-pub struct CmdManager<Fc, Fe>
-where
-    Fc: FnOnce(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-    Fe: FnOnce(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-{
-    cmds_to_create: Option<Vec<Fc>>,
-    cmds_to_edit: Option<Vec<(u64, Fe)>>,
-    cmds_to_delete: Option<Vec<u64>>,
+///
+/// # Example
+///
+/// ```no_run
+/// use kgrs::cmd_mng::{cmd_list, CmdManager};
+/// use serenity::model::application::command::{
+///     // May need these.
+///     //CommandOptionType,
+///     //CommandType,
+/// };
+///
+/// # async run() -> {
+/// // Prints command list.
+/// // You can you this function to check which commands are there.
+/// cmd_list(&ctx.http).await;
+///
+/// // Main manager.
+/// let cmd = serenity::builder::CreateApplicationCommand::default();
+/// CmdManager::new()
+/// 
+///     // Creates command.
+///     .create(cmd.clone()
+///         .name("ping").description("pong!")
+///         .description_localized("ja", "pong!")
+///     })
+/// 
+///     // Edits command.
+///     .edit(1014243185880465557, cmd.clone()
+///         .name("info").description("Show bot information")
+/// 
+///     // Deletes command.
+///     .delete(1014243185880465558)
+/// 
+///     .run(&ctx.http)
+///     .await;
+/// # }
+/// ```
+pub struct CmdManager {
+    cmds_to_create: Vec<CreateApplicationCommand>,
+    cmds_to_edit: Vec<(u64, CreateApplicationCommand)>,
+    cmds_to_delete: Vec<u64>,
 }
 
-impl<Fc, Fe> CmdManager<Fc, Fe>
-where
-    Fc: FnOnce(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-    Fe: FnOnce(&mut CreateApplicationCommand) -> &mut CreateApplicationCommand,
-{
+impl CmdManager {
     /// Creates a new command manager.
     pub fn new() -> Self {
         CmdManager {
-            cmds_to_create: None,
-            cmds_to_edit: None,
-            cmds_to_delete: None,
+            cmds_to_create: Vec::new(),
+            cmds_to_edit: Vec::new(),
+            cmds_to_delete: Vec::new(),
         }
     }
 
     /// Creates a new command.
-    pub fn create(self, f: Fc) -> Self {
-        let cmds_to_create = Some(
-            if let Some(mut v) = self.cmds_to_create {
-                v.push(f);
-                v
-            } else {
-                vec![f]
-            }
-        );
-        Self {
-            cmds_to_create,
-            ..self
-        }
+    pub fn create(mut self, cmd: &CreateApplicationCommand) -> Self {
+        self.cmds_to_create.push(cmd.to_owned());
+        self
     }
 
     /// Edits a command.
-    pub fn edit(self, id: u64, f: Fe) -> Self {
-        let t = (id, f);
-        let cmds_to_edit = Some(
-            if let Some(mut v) = self.cmds_to_edit {
-                v.push(t);
-                v
-            } else {
-                vec![t]
-            }
-        );
-        Self {
-            cmds_to_edit,
-            ..self
-        }
+    pub fn edit(mut self, id: u64, edited_cmd: &CreateApplicationCommand) -> Self {
+        self.cmds_to_edit.push((id, edited_cmd.to_owned()));
+        self
     }
 
     /// Deletes a command.
-    pub fn delete(self, command_id: u64) -> Self {
-        let cmds_to_delete = Some(
-            if let Some(mut v) = self.cmds_to_delete {
-                v.push(command_id);
-                v
-            } else {
-                vec![command_id]
-            }
-        );
-        Self {
-            cmds_to_delete,
-            ..self
-        }
+    pub fn delete(mut self, command_id: u64) -> Self {
+        self.cmds_to_delete.push(command_id);
+        self
     }
 
     /// Actually manages the commands
@@ -88,35 +86,37 @@ where
         println!("[ == Command manager running... == ]");
 
         // Creates commands.
-        if let Some(ctc) = self.cmds_to_create {
-            for f in ctc {
-                let cmd = Command::create_global_application_command(&http, f).await;
-                match cmd {
-                    Ok(cmd) => println!("Command created: {}({})", cmd.name, cmd.id),
-                    Err(why) => println!("Could not create a command: {}", why),
-                }
+        for cmd in self.cmds_to_create {
+            let created_cmd = Command::create_global_application_command(&http, |c| {
+                *c = cmd;
+                c
+            })
+            .await;
+            match created_cmd {
+                Ok(cmd) => println!("{}", format!("Command created: {}({})", cmd.name, cmd.id).green()),
+                Err(why) => println!("{}", format!("Could not create a command: {}", why).red()),
             }
         }
 
         // Edits commands.
-        if let Some(cte) = self.cmds_to_edit {
-            for (id, f) in cte {
-                let cmd = Command::edit_global_application_command(&http, CommandId(id), f).await;
-                match cmd {
-                    Ok(cmd) => println!("Command edited: {}({})", cmd.name, cmd.id),
-                    Err(why) => println!("Could not edit a command: {}", why),
-                }
+        for (id, cmd) in self.cmds_to_edit {
+            let edited_cmd = Command::edit_global_application_command(&http, CommandId(id), |c| {
+                *c = cmd;
+                c
+            })
+            .await;
+            match edited_cmd {
+                Ok(cmd) => println!("{}", format!("Command edited: {}({})", cmd.name, cmd.id).green()),
+                Err(why) => println!("{}", format!("Could not edit a command: {}", why).red()),
             }
         }
 
         // Deletes commands.
-        if let Some(ctd) = self.cmds_to_delete {
-            for id in ctd {
-                let cmd = Command::delete_global_application_command(&http, CommandId(id)).await;
-                match cmd {
-                    Ok(()) => println!("Command deleted: {}", id),
-                    Err(why) => println!("Could not delete a command: {}", why),
-                }
+        for id in self.cmds_to_delete {
+            let cmd = Command::delete_global_application_command(&http, CommandId(id)).await;
+            match cmd {
+                Ok(()) => println!("{}", format!("Command deleted: {}", id).green()),
+                Err(why) => println!("{}", format!("Could not delete a command: {}", why).red()),
             }
         }
 
@@ -125,24 +125,20 @@ where
 }
 
 pub async fn cmd_list(http: impl AsRef<Http>) {
-    let cmds = Command::get_global_application_commands(http).await.expect("Could not get commands");
-    println!(
-        "{}",
-        format!("Current commands({}):", cmds.len()).cyan()
-    );
+    let cmds = Command::get_global_application_commands(http)
+        .await
+        .expect("Could not get commands");
+    println!("{}", format!("Current commands({}):", cmds.len()).cyan());
     let mut i = 1;
     for cmd in cmds {
         println!(
             "{}",
-            format!("{}. {}({}) | desc:{} | kind:{:?} |",
-                i,
-                cmd.name,
-                cmd.id,
-                cmd.description,
-                cmd.kind
-            ).cyan()
+            format!(
+                "{}. {}({}) | desc:{} | kind:{:?} |",
+                i, cmd.name, cmd.id, cmd.description, cmd.kind
+            )
+            .cyan()
         );
-        i +=1;
+        i += 1;
     }
-
 }

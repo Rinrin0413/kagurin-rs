@@ -23,7 +23,7 @@ features = [
     "gateway", 
     "rustls_backend", 
     "model", 
-    #"cache", 
+    "cache", 
     #"unstable_discord_api"
 ]
 
