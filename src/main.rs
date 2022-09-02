@@ -54,7 +54,7 @@ impl EventHandler for Handler {
                     ))
                     .to_owned()
             };
-            let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| -> String {
+            let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
                 let s = dict.get(key).unwrap();
                 if interact.locale == "ja" {
                     s.1.clone()
