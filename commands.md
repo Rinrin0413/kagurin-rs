@@ -7,8 +7,8 @@
 - `kgrs!help fun`: Show help for entertainment commands.
 - `kgrs!help tetrio`: Show help for [TETR.IO](https://tetr.io) related commands.
 - `kgrs!help admin`: Show help for admin commands
-- `kgrs!help trusted`: Show help for commands for users trusted by developer.
 - `kgrs!help dev`: Show help for commands for Rinrin.
+- `kgrs!help trusted`: Show help for commands for users trusted by developer.
 
 
 ### Display commands
