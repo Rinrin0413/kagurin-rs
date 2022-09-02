@@ -91,13 +91,103 @@ impl EventHandler for Handler {
 
                 // Show command help | 1014735729139662898
                 "help" => {
-                    if args.is_empty() {
+                    let general_dict = &dict::help_cmd_general();
+                    if let Some(k) = args.get(0) {
+                        let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
+                        InteractMode::Embed(match arg_val {
+                            "display" => {
+                                let dict = &dict::help_cmd_display();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/ping", "pong!".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "util" => {
+                                let dict = &dict::help_cmd_util();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "fun" => {
+                                let dict = &dict::help_cmd_fun();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "tetrio" => {
+                                let dict = &dict::help_cmd_tetrio();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "admin" => {
+                                let dict = &dict::help_cmd_admin();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "dev" => {
+                                let dict = &dict::help_cmd_dev();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            "trust" => {
+                                let dict = &dict::help_cmd_trust();
+                                CreateEmbed::default()
+                                    .author(|a| a.icon_url(bot_icon).name(" "))
+                                    .title(dict_lookup(dict, "title"))
+                                    .description(dict_lookup(general_dict, "implSlashCmds"))
+                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned()
+                            }
+                            _ => unreachable!("Invalid help command: {}", arg_val),
+                        })
+                    } else {
                         let dict = &dict::help_cmd();
                         InteractMode::Embed(
                             CreateEmbed::default()
                                 .author(|a| a.icon_url(bot_icon).name(" "))
-                                .title("Help commands")
-                                .description(dict_lookup(dict, "implSlashCmds"))
+                                .title(dict_lookup(dict, "title"))
+                                .description(dict_lookup(general_dict, "implSlashCmds"))
                                 .fields(vec![
                                     ("/help", dict_lookup(dict, "help"), false),
                                     ("/help display", dict_lookup(dict, "help.display"), false),
@@ -113,8 +203,6 @@ impl EventHandler for Handler {
                                 .color(MAIN_COL)
                                 .to_owned(),
                         )
-                    } else {
-                        InteractMode::Dev
                     }
                 }
 
@@ -222,13 +310,13 @@ impl EventHandler for Handler {
                         .create_option(|o| {
                             o.name("kind").description("Input kind of help commands.")
                                 .name_localized("ja", "種類").description_localized("ja", "ヘルプコマンドの種類を入れてください。")
-                                .add_string_choice("display", "Display commands")
-                                .add_string_choice("util", "Utility commands")
-                                .add_string_choice("fun", "Entertainment commands")
-                                .add_string_choice("tetrio", "TETR.IO related commands")
-                                .add_string_choice("admin", "Admin commands")
-                                .add_string_choice("trusted", "Commands for user trusted by developer")
-                                .add_string_choice("dev", "Developer commands")
+                                .add_string_choice("display", "display")
+                                .add_string_choice("util", "util")
+                                .add_string_choice("fun", "fun")
+                                .add_string_choice("tetrio", "tetrio")
+                                .add_string_choice("admin", "admin")
+                                .add_string_choice("trust", "trust")
+                                .add_string_choice("dev", "dev")
                                 .kind(CommandOptionType::String)
                         })
                 )
