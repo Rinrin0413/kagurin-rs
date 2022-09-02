@@ -1,6 +1,7 @@
 use chrono::{Duration, Utc};
 use colored::*;
 use kgrs::response_interactions::InteractMode;
+use lang::dict;
 use serenity::{
     async_trait,
     builder::{CreateEmbed, CreateEmbedFooter},
@@ -10,7 +11,7 @@ use serenity::{
     },
     prelude::*,
 };
-use std::{env, time::Instant};
+use std::{collections::HashMap, env, time::Instant};
 
 //const RUST_VERSION: &str = "1.64.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
@@ -53,11 +54,12 @@ impl EventHandler for Handler {
                     ))
                     .to_owned()
             };
-            let jp_or = |other: &str, jp: &str| {
+            let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| -> String {
+                let s = dict.get(key).unwrap();
                 if interact.locale == "ja" {
-                    jp
+                    s.1.clone()
                 } else {
-                    other
+                    s.0.clone()
                 }
             };
 
@@ -90,30 +92,21 @@ impl EventHandler for Handler {
                 // Show command help | 1014735729139662898
                 "help" => {
                     if args.is_empty() {
+                        let dict = &dict::help_cmd();
                         InteractMode::Embed(
                             CreateEmbed::default()
                                 .author(|a| a.icon_url(bot_icon).name(" "))
                                 .title("Help commands")
-                                .description(jp_or(
-                                    "Slash commands is now implemented! (in the middle)",
-                                    "スラッシュコマンドが実装されました! (実装途中)",
-                                ))
+                                .description(dict_lookup(dict, "implSlashCmds"))
                                 .fields(vec![
-                                    (
-                                        "/help",
-                                        jp_or(
-                                            "Show help for help commands.",
-                                            "ヘルプコマンドのヘルプを表示します。",
-                                        ),
-                                        false,
-                                    ),
-                                    // ("/help display", "Show help for display commands", false),
-                                    // ("/help util", "Show help for utility commands", false),
-                                    // ("/help fun", "Show help for entertainment commands", false),
-                                    // ("/help tetrio", "Show help for [TETR.IO](https://tetr.io) related commands", false),
-                                    // ("/help admin", "Show help for admin commands", false),
-                                    // ("/help dev", "Show help for Rinrin", false),
-                                    // ("/help trust", "Show help for trust commands", false),
+                                    ("/help", dict_lookup(dict, "help"), false),
+                                    ("/help display", dict_lookup(dict, "help.display"), false),
+                                    ("/help util", dict_lookup(dict, "help.util"), false),
+                                    ("/help fun", dict_lookup(dict, "help.fun"), false),
+                                    ("/help tetrio", dict_lookup(dict, "help.tetrio"), false),
+                                    ("/help admin", dict_lookup(dict, "help.admin"), false),
+                                    ("/help dev", dict_lookup(dict, "help.dev"), false),
+                                    ("/help trust", dict_lookup(dict, "help.trust"), false),
                                 ])
                                 .set_footer(ftr())
                                 .timestamp(Utc::now().to_rfc3339())
@@ -222,7 +215,7 @@ impl EventHandler for Handler {
             // !          Recommend always cloning to avoid mistakes.
             let cmd = serenity::builder::CreateApplicationCommand::default();
             CmdManager::new()
-                .edit(1014735729139662898, 
+                .edit(1014735729139662898,
                     cmd.clone()
                         .name("help").description("Show command help")
                         .description_localized("ja", "コマンドのヘルプを表示します")
@@ -244,6 +237,8 @@ impl EventHandler for Handler {
         }
     }
 }
+
+mod lang;
 
 #[tokio::main]
 async fn main() {
