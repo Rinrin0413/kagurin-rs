@@ -1,19 +1,34 @@
 # Kagurin.rs's command list
 
 ### Help commands
-- `kgrs!help`: show command help(hub).
-- `kgrs!help display`: show help for display commands.
-- `kgrs!help util`: show help for utility commands.
-- `kgrs!help fun`: show help for entertainment commands.
-- `kgrs!help util`: show help for utility commands.
-- `kgrs!help tetr`: show help for TETR.IO related commands.
-- `kgrs!help mod`: show help for administrator commands
-- `kgrs!help trusted`: show help for commands for people trusted by developer.
-- `kgrs!help dev`: show help for commands for Rinrin.
+- `/help`: Show kind of help commands. 
+- `kgrs!help display`: Show help for display commands.
+- `kgrs!help util`: Show help for utility commands.
+- `kgrs!help fun`: Show help for entertainment commands.
+- `kgrs!help tetrio`: Show help for [TETR.IO](https://tetr.io) related commands.
+- `kgrs!help admin`: Show help for admin commands
+- `kgrs!help dev`: Show help for commands for Rinrin.
+- `kgrs!help trust`: Show help for commands for users trusted by developer.
+
 
 ### Display commands
+- `/ping`: pong!
+
+### Utility commands
+
+### Entertainment commands
+
+### [TETR.IO](https://tetr.io) related commands
+
+### Admin commands
+
+### Developer commands
+
+### Commands for users trusted by developer
+
+<!--
+### Display commands
 - `kgrs!info`: display Kagurin.rs's information.
-- `kgrs!ping`: pong!
 - `kgrs!profile [UserID:int]`: display details of the target user.  
 if no arguments are passed, display the those of the user who called the command.
 - `kgrs!avatar [UserID:int]`: display the target user's icon.  
@@ -39,4 +54,4 @@ if no arguments are passed,display the those of the server where called the comm
 
 ### Commands for people trusted by developer
 - `kgrs!set_activity <ActivityType:ACTIVITY-TYPE> <content:str>`: chenge Kagurin'rs's activity.  
-argument `ACTIVITY-TYPE` is one of `playing`, `listening`, `watching`, `competing`
+argument `ACTIVITY-TYPE` is one of `playing`, `listening`, `watching`, `competing` -->

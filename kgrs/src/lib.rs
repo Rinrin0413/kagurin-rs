@@ -1,7 +1,6 @@
-//! These are library for kagurin-rs
+//! kgrs is a library for kagurin-rs.
 
-/// # Utilities for kagurin-rs
-pub mod util;
-
-/// # Utilities for [TETRA CHANNEL API](https://tetr.io/about/api/)
-pub mod tetr;
+//pub mod util;
+//pub mod tetr;
+pub mod cmd_mng;
+pub mod response_interactions;

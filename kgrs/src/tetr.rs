@@ -1,4 +1,4 @@
-//! Utilities for [TETRA CHANNEL API](https://tetr.io/about/api/)
+/*//! Utilities for [TETRA CHANNEL API](https://tetr.io/about/api/)
 
 use crate::util::round_mid;
 use chrono::DateTime;
@@ -1089,3 +1089,4 @@ pub struct Finesse {
     /// The number of finesse perfects.
     pub perfectpieces: u32,
 }
+*/

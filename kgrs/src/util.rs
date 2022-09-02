@@ -1,4 +1,4 @@
-//! These are utilities for kagurin-rs
+/*//! These are utilities for kagurin-rs
 
 use crate::util::fmt::*;
 use rand::Rng;
@@ -563,3 +563,4 @@ mod tests {
         assert_eq!(round_mid(3.1415, 3), 3.142);
     }
 }
+*/
