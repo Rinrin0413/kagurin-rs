@@ -8,7 +8,7 @@
 - `kgrs!help tetrio`: Show help for [TETR.IO](https://tetr.io) related commands.
 - `kgrs!help admin`: Show help for admin commands
 - `kgrs!help dev`: Show help for commands for Rinrin.
-- `kgrs!help trusted`: Show help for commands for users trusted by developer.
+- `kgrs!help trust`: Show help for commands for users trusted by developer.
 
 
 ### Display commands
@@ -26,17 +26,7 @@
 
 ### Commands for users trusted by developer
 
-<!-- ### Help commands
-- `kgrs!help`: show command help(hub).
-- `kgrs!help display`: show help for display commands.
-- `kgrs!help util`: show help for utility commands.
-- `kgrs!help fun`: show help for entertainment commands.
-- `kgrs!help util`: show help for utility commands.
-- `kgrs!help tetr`: show help for TETR.IO related commands.
-- `kgrs!help mod`: show help for administrator commands
-- `kgrs!help trusted`: show help for commands for people trusted by developer.
-- `kgrs!help dev`: show help for commands for Rinrin.
-
+<!--
 ### Display commands
 - `kgrs!info`: display Kagurin.rs's information.
 - `kgrs!profile [UserID:int]`: display details of the target user.  
