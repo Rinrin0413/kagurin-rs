@@ -27,6 +27,8 @@ use serenity::{
 /// cmd_list(&ctx.http).await;
 ///
 /// // Main manager.
+/// // ! WARNING: If manage multiple commands at once, Clone the variable `cmd`.
+/// // !          Recommend always cloning to avoid mistakes.
 /// let cmd = serenity::builder::CreateApplicationCommand::default();
 /// CmdManager::new()
 /// 
