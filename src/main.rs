@@ -6,12 +6,12 @@ use serenity::{
     async_trait,
     builder::{CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter},
     model::{
-        application::{interaction::{Interaction, InteractionResponseType}, component::ButtonStyle},
+        application::{
+            component::ButtonStyle,
+            interaction::{Interaction, InteractionResponseType},
+        },
         gateway::{Activity, Ready},
-        channel::{
-            //Message,
-            ReactionType, 
-        }
+        //channel::Message,
     },
     prelude::*,
 };
@@ -277,14 +277,14 @@ impl EventHandler for Handler {
                                 .label("Invile me!")
                                 .style(ButtonStyle::Link)
                                 .url(INVITE_URL)
-                                .to_owned()
+                                .to_owned(),
                         ),
                         InteractMode::Button(
                             CreateButton::default()
                                 .label("Source code(GitHub)")
                                 .style(ButtonStyle::Link)
                                 .url(env!("CARGO_PKG_REPOSITORY"))
-                                .to_owned()
+                                .to_owned(),
                         ),
                     ])
                 }
