@@ -58,6 +58,10 @@ pub mod dict {
             "Display commands".to_string(), 
             "表示系コマンド一覧".to_string()
         ));
+        d.insert("info".to_string(), (
+            "Show information about this bot.".to_string(), 
+            "このBotに関する情報を表示します。".to_string()
+        ));
         d
     }
 

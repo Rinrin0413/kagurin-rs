@@ -1,14 +1,17 @@
 use chrono::{Duration, Utc};
 use colored::*;
-use kgrs::response_interactions::InteractMode;
+use kgrs::response_interactions::{InteractMode, Interactions};
 use lang::dict;
 use serenity::{
     async_trait,
-    builder::{CreateEmbed, CreateEmbedFooter},
+    builder::{CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter},
     model::{
-        application::interaction::{Interaction, InteractionResponseType},
+        application::{interaction::{Interaction, InteractionResponseType}, component::ButtonStyle},
         gateway::{Activity, Ready},
-        //channel::Message
+        channel::{
+            //Message,
+            ReactionType, 
+        }
     },
     prelude::*,
 };
@@ -17,6 +20,8 @@ use std::{collections::HashMap, env, time::Instant};
 const RUST_VERSION: &str = "1.64.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
+const INVITE_URL: &str =
+    "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 //const TRUSTED: [u64; 2] = [
 //    724976600873041940, // Rinrin.rs
 //    801082943371477022, // Rinrin.hlsl
@@ -27,8 +32,6 @@ const MAIN_COL: u32 = 0xB89089;
 //];
 //const BOT_ID: u64 = 936116497502318654;
 //const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
-//const INVITE_URL: &str =
-//    "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 
 struct Handler;
 
@@ -89,7 +92,7 @@ impl EventHandler for Handler {
                     {
                         println!("Cannot respond to edit message:: {}", why);
                     };
-                    InteractMode::None
+                    Interactions::None
                 }
 
                 // Show command help | 1014735729139662898
@@ -97,13 +100,14 @@ impl EventHandler for Handler {
                     let general_dict = &dict::help_cmd_general();
                     if let Some(k) = args.get(0) {
                         let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
-                        InteractMode::Embed(match arg_val {
+                        Interactions::Some(vec![InteractMode::Embed(match arg_val {
                             "display" => {
                                 let dict = &dict::help_display();
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/ping", "pong!".to_string(), false)])
+                                    .fields(vec![("/info", dict_lookup(dict, "info"), false)])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
@@ -176,10 +180,10 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             _ => unreachable!("Invalid help command: {}", arg_val),
-                        })
+                        })])
                     } else {
                         let dict = &dict::help();
-                        InteractMode::Embed(
+                        Interactions::Some(vec![InteractMode::Embed(
                             CreateEmbed::default()
                                 .title(dict_lookup(dict, "title"))
                                 .description(dict_lookup(general_dict, "implSlashCmds"))
@@ -197,75 +201,95 @@ impl EventHandler for Handler {
                                 .timestamp(Utc::now().to_rfc3339())
                                 .color(MAIN_COL)
                                 .to_owned(),
-                        )
+                        )])
                     }
                 }
 
                 // Show information about this bot | 1015567292022673449
                 "info" => {
                     let dict = &dict::info();
-                    InteractMode::Embed(
-                        CreateEmbed::default()
-                            .author(|a| a.icon_url(bot_icon).name(dict_lookup(dict, "title")))
-                            .title(dict_lookup(dict, "nameTitle"))
-                            .description(format!(
-                                "```ansi\n[0;37m{}[0;0m#{}\n```",
-                                client.name, client.discriminator
-                            ))
-                            .fields(vec![
-                                ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
-                                (
-                                    &dict_lookup(dict, "botVer"),
-                                    format!("```ansi\n[0;32m{}\n```", VER),
-                                    true,
-                                ),
-                                (
-                                    &dict_lookup(dict, "createdAt"),
-                                    format!("<t:{}:R>", client.id.created_at().unix_timestamp()),
-                                    true,
-                                ),
-                                (
-                                    &dict_lookup(dict, "guildsTitle"),
-                                    format!(
-                                        "```ansi\n[0;36m{}{}\n```",
-                                        if let Ok(g) = client.guilds(&ctx.http).await {
-                                            g.len()
-                                        } else {
-                                            0
-                                        },
-                                        dict_lookup(dict, "guildsTxt")
+                    Interactions::Some(vec![
+                        InteractMode::Embed(
+                            CreateEmbed::default()
+                                .author(|a| a.icon_url(bot_icon).name(dict_lookup(dict, "title")))
+                                .title(dict_lookup(dict, "nameTitle"))
+                                .description(format!(
+                                    "```ansi\n[0;37m{}[0;0m#{}\n```",
+                                    client.name, client.discriminator
+                                ))
+                                .fields(vec![
+                                    ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
+                                    (
+                                        &dict_lookup(dict, "botVer"),
+                                        format!("```ansi\n[0;32m{}\n```", VER),
+                                        true,
                                     ),
-                                    true,
-                                ),
-                                (
-                                    &dict_lookup(dict, "dev"),
-                                    "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
-                                    true,
-                                ),
-                                (
-                                    &dict_lookup(dict, "lang"),
-                                    format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
-                                    true,
-                                ),
-                                (
-                                    &dict_lookup(dict, "lib"),
-                                    "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
-                                    true,
-                                ),
-                                (
-                                    "OS:",
-                                    "```ansi\n[0;31mopenSUSE Leap 15.4 x86_64 \n```".to_string(),
-                                    true,
-                                ),
-                            ])
-                            .set_footer(ftr())
-                            .timestamp(Utc::now().to_rfc3339())
-                            .color(MAIN_COL)
-                            .to_owned(),
-                    )
+                                    (
+                                        &dict_lookup(dict, "createdAt"),
+                                        format!(
+                                            "<t:{}:R>",
+                                            client.id.created_at().unix_timestamp()
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        &dict_lookup(dict, "guildsTitle"),
+                                        format!(
+                                            "```ansi\n[0;36m{}{}\n```",
+                                            if let Ok(g) = client.guilds(&ctx.http).await {
+                                                g.len()
+                                            } else {
+                                                0
+                                            },
+                                            dict_lookup(dict, "guildsTxt")
+                                        ),
+                                        true,
+                                    ),
+                                    (
+                                        &dict_lookup(dict, "dev"),
+                                        "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
+                                        true,
+                                    ),
+                                    (
+                                        &dict_lookup(dict, "lang"),
+                                        format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
+                                        true,
+                                    ),
+                                    (
+                                        &dict_lookup(dict, "lib"),
+                                        "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
+                                        true,
+                                    ),
+                                    (
+                                        "OS:",
+                                        "```ansi\n[0;31mopenSUSE Leap 15.4 x86_64 \n```"
+                                            .to_string(),
+                                        true,
+                                    ),
+                                ])
+                                .set_footer(ftr())
+                                .timestamp(Utc::now().to_rfc3339())
+                                .color(MAIN_COL)
+                                .to_owned(),
+                        ),
+                        InteractMode::Button(
+                            CreateButton::default()
+                                .label("Invile me!")
+                                .style(ButtonStyle::Link)
+                                .url(INVITE_URL)
+                                .to_owned()
+                        ),
+                        InteractMode::Button(
+                            CreateButton::default()
+                                .label("Source code(GitHub)")
+                                .style(ButtonStyle::Link)
+                                .url(env!("CARGO_PKG_REPOSITORY"))
+                                .to_owned()
+                        ),
+                    ])
                 }
 
-                _ => InteractMode::Message(
+                _ => Interactions::Some(vec![InteractMode::Message(
                     "\
                     not implemented yet :<\n\
                     <@!724976600873041940><@!724976600873041940>\
@@ -273,35 +297,47 @@ impl EventHandler for Handler {
                     <@!724976600873041940><@!724976600873041940>\
                     "
                     .to_string(),
-                ),
+                )]),
             };
 
             match content {
-                InteractMode::Message(content) => {
+                Interactions::Some(im) => {
                     if let Err(why) = interact
                         .create_interaction_response(&ctx.http, |response| {
                             response
                                 .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|message| message.content(content))
+                                .interaction_response_data(|m| {
+                                    let mut action_row = CreateActionRow::default();
+                                    for i in im {
+                                        match i {
+                                            InteractMode::Message(c) => {
+                                                m.content(c);
+                                            }
+                                            InteractMode::Embed(e) => {
+                                                m.add_embed(e);
+                                            }
+                                            InteractMode::Button(b) => {
+                                                action_row.add_button(b);
+                                            }
+                                        }
+                                    }
+                                    if action_row.0.is_empty() {
+                                        m
+                                    } else {
+                                        m.set_components(
+                                            CreateComponents::default()
+                                                .set_action_row(action_row)
+                                                .to_owned(),
+                                        )
+                                    }
+                                })
                         })
                         .await
                     {
                         println!("Cannot respond to slash command: {}", why);
                     }
                 }
-                InteractMode::Embed(e) => {
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|message| message.add_embed(e))
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
-                    }
-                }
-                InteractMode::Dev => {
+                Interactions::Dev => {
                     if let Err(why) = interact
                         .create_interaction_response(&ctx.http, |response| {
                             response
@@ -315,7 +351,7 @@ impl EventHandler for Handler {
                         println!("Cannot respond to slash command: {}", why);
                     }
                 }
-                InteractMode::None => {}
+                Interactions::None => {}
             }
         }
     }
