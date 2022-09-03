@@ -11,7 +11,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd() -> HashMap<String, (String, String)> {
+    pub fn help() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Help commands".to_string(), 
@@ -52,7 +52,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_display() -> HashMap<String, (String, String)> {
+    pub fn help_display() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Display commands".to_string(), 
@@ -61,7 +61,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_util() -> HashMap<String, (String, String)> {
+    pub fn help_util() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Utility commands".to_string(), 
@@ -70,7 +70,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_fun() -> HashMap<String, (String, String)> {
+    pub fn help_fun() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Entertainment commands".to_string(), 
@@ -79,7 +79,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_tetrio() -> HashMap<String, (String, String)> {
+    pub fn help_tetrio() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "TETR.IO related commands".to_string(), 
@@ -88,7 +88,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_admin() -> HashMap<String, (String, String)> {
+    pub fn help_admin() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Admin commands".to_string(), 
@@ -97,7 +97,7 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_dev() -> HashMap<String, (String, String)> {
+    pub fn help_dev() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Commands for Rinrin".to_string(), 
@@ -106,11 +106,52 @@ pub mod dict {
         d
     }
 
-    pub fn help_cmd_trust() -> HashMap<String, (String, String)> {
+    pub fn help_trust() -> HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("title".to_string(), (
             "Commands for users trusted by Rinrin".to_string(), 
             "Rinrinに信頼されてるユーザー向けコマンド一覧".to_string()
+        ));
+        d
+    }
+
+    pub fn info() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("title".to_string(), (
+            "Informations de Kagurin.rs".to_string(), 
+            "かぐりん.rs の情報".to_string()
+        ));
+        d.insert("nameTitle".to_string(), (
+            "Name:;".to_string(), 
+            "名前:".to_string()
+        ));
+        d.insert("botVer".to_string(), (
+            "Bot version:".to_string(), 
+            "Botバージョン".to_string()
+        ));
+        d.insert("createdAt".to_string(), (
+            "Created at:".to_string(), 
+            "生誕:".to_string()
+        ));
+        d.insert("guildsTitle".to_string(), (
+            "Guilds:".to_string(), 
+            "導入サーバー数:".to_string()
+        ));
+        d.insert("guildsTxt".to_string(), (
+            " guilds".to_string(), 
+            "個".to_string()
+        ));
+        d.insert("dev".to_string(), (
+            "Developer:".to_string(), 
+            "開発者:".to_string()
+        ));
+        d.insert("lang".to_string(), (
+            "Language:".to_string(), 
+            "言語:".to_string()
+        ));
+        d.insert("lib".to_string(), (
+            "Library:".to_string(), 
+            "ライブラリ:".to_string()
         ));
         d
     }

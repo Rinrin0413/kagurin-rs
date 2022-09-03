@@ -8,12 +8,13 @@ use serenity::{
     model::{
         application::interaction::{Interaction, InteractionResponseType},
         gateway::{Activity, Ready},
+        //channel::Message
     },
     prelude::*,
 };
 use std::{collections::HashMap, env, time::Instant};
 
-//const RUST_VERSION: &str = "1.64.0-nightly";
+const RUST_VERSION: &str = "1.64.0-nightly";
 const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
 //const TRUSTED: [u64; 2] = [
@@ -33,6 +34,8 @@ struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
+    //async fn message(&self, ctx: Context, msg: Message) { dbg!(msg.content); }
+
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(interact) = interaction {
             // DB
@@ -96,9 +99,8 @@ impl EventHandler for Handler {
                         let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
                         InteractMode::Embed(match arg_val {
                             "display" => {
-                                let dict = &dict::help_cmd_display();
+                                let dict = &dict::help_display();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/ping", "pong!".to_string(), false)])
@@ -108,9 +110,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "util" => {
-                                let dict = &dict::help_cmd_util();
+                                let dict = &dict::help_util();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -120,9 +121,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "fun" => {
-                                let dict = &dict::help_cmd_fun();
+                                let dict = &dict::help_fun();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -132,9 +132,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "tetrio" => {
-                                let dict = &dict::help_cmd_tetrio();
+                                let dict = &dict::help_tetrio();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -144,9 +143,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "admin" => {
-                                let dict = &dict::help_cmd_admin();
+                                let dict = &dict::help_admin();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -156,9 +154,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "dev" => {
-                                let dict = &dict::help_cmd_dev();
+                                let dict = &dict::help_dev();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -168,9 +165,8 @@ impl EventHandler for Handler {
                                     .to_owned()
                             }
                             "trust" => {
-                                let dict = &dict::help_cmd_trust();
+                                let dict = &dict::help_trust();
                                 CreateEmbed::default()
-                                    .author(|a| a.icon_url(bot_icon).name(" "))
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
@@ -182,10 +178,9 @@ impl EventHandler for Handler {
                             _ => unreachable!("Invalid help command: {}", arg_val),
                         })
                     } else {
-                        let dict = &dict::help_cmd();
+                        let dict = &dict::help();
                         InteractMode::Embed(
                             CreateEmbed::default()
-                                .author(|a| a.icon_url(bot_icon).name(" "))
                                 .title(dict_lookup(dict, "title"))
                                 .description(dict_lookup(general_dict, "implSlashCmds"))
                                 .fields(vec![
@@ -204,6 +199,70 @@ impl EventHandler for Handler {
                                 .to_owned(),
                         )
                     }
+                }
+
+                // Show information about this bot | 1015567292022673449
+                "info" => {
+                    let dict = &dict::info();
+                    InteractMode::Embed(
+                        CreateEmbed::default()
+                            .author(|a| a.icon_url(bot_icon).name(dict_lookup(dict, "title")))
+                            .title(dict_lookup(dict, "nameTitle"))
+                            .description(format!(
+                                "```ansi\n[0;37m{}[0;0m#{}\n```",
+                                client.name, client.discriminator
+                            ))
+                            .fields(vec![
+                                ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
+                                (
+                                    &dict_lookup(dict, "botVer"),
+                                    format!("```ansi\n[0;32m{}\n```", VER),
+                                    true,
+                                ),
+                                (
+                                    &dict_lookup(dict, "createdAt"),
+                                    format!("<t:{}:R>", client.id.created_at().unix_timestamp()),
+                                    true,
+                                ),
+                                (
+                                    &dict_lookup(dict, "guildsTitle"),
+                                    format!(
+                                        "```ansi\n[0;36m{}{}\n```",
+                                        if let Ok(g) = client.guilds(&ctx.http).await {
+                                            g.len()
+                                        } else {
+                                            0
+                                        },
+                                        dict_lookup(dict, "guildsTxt")
+                                    ),
+                                    true,
+                                ),
+                                (
+                                    &dict_lookup(dict, "dev"),
+                                    "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
+                                    true,
+                                ),
+                                (
+                                    &dict_lookup(dict, "lang"),
+                                    format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
+                                    true,
+                                ),
+                                (
+                                    &dict_lookup(dict, "lib"),
+                                    "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
+                                    true,
+                                ),
+                                (
+                                    "OS:",
+                                    "```ansi\n[0;31mopenSUSE Leap 15.4 x86_64 \n```".to_string(),
+                                    true,
+                                ),
+                            ])
+                            .set_footer(ftr())
+                            .timestamp(Utc::now().to_rfc3339())
+                            .color(MAIN_COL)
+                            .to_owned(),
+                    )
                 }
 
                 _ => InteractMode::Message(
@@ -281,16 +340,14 @@ impl EventHandler for Handler {
         // If you want to run in command management mode,
         // run command line arguments as "cmdmng":
         // $ cargo run cmdmng
+        #[allow(unused)]
         if if let Some(arg1) = env::args().nth(1) {
             arg1 == "cmdmng"
         } else {
             false
         } {
             use kgrs::cmd_mng::{cmd_list, CmdManager};
-            use serenity::{model::application::command::{
-                    CommandOptionType,
-                    //CommandType,
-            }};
+            use serenity::model::application::command::{CommandOptionType, CommandType};
 
             println!(
                 "{}",
@@ -302,26 +359,7 @@ impl EventHandler for Handler {
             // ! WARNING: If manage multiple commands at once, Clone the variable `cmd`.
             // !          Recommend always cloning to avoid mistakes.
             let cmd = serenity::builder::CreateApplicationCommand::default();
-            CmdManager::new()
-                .edit(1014735729139662898,
-                    cmd.clone()
-                        .name("help").description("Show command help")
-                        .description_localized("ja", "コマンドのヘルプを表示します")
-                        .create_option(|o| {
-                            o.name("kind").description("Input kind of help commands.")
-                                .name_localized("ja", "種類").description_localized("ja", "ヘルプコマンドの種類を入れてください。")
-                                .add_string_choice("display", "display")
-                                .add_string_choice("util", "util")
-                                .add_string_choice("fun", "fun")
-                                .add_string_choice("tetrio", "tetrio")
-                                .add_string_choice("admin", "admin")
-                                .add_string_choice("trust", "trust")
-                                .add_string_choice("dev", "dev")
-                                .kind(CommandOptionType::String)
-                        })
-                )
-                .run(&ctx.http)
-                .await;
+            CmdManager::new().run(&ctx.http).await;
         }
     }
 }
@@ -334,7 +372,7 @@ async fn main() {
     let token = env::var("KAGURIN_RS_TOKEN").expect("Expected a token in the environment");
 
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::empty())
+    let mut client = Client::builder(token, GatewayIntents::MESSAGE_CONTENT)
         .event_handler(Handler)
         .await
         .expect("Error creating client");

@@ -13,6 +13,7 @@
 
 ### Display commands
 - `/ping`: pong!
+- `/info`: Show information about this bot.
 
 ### Utility commands
 
