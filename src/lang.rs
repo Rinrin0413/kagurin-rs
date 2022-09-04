@@ -62,6 +62,10 @@ pub mod dict {
             "Show information about this bot.".to_string(), 
             "このボットに関する情報を表示します。".to_string()
         ));
+        d.insert("neofetch".to_string(), (
+            "Display information about this bot in an aesthetic and visually pleasing way.".to_string(), 
+            "このボットに関する情報を美しく視覚的に楽しいカンジで表示します。".to_string()
+        ));
         d
     }
 

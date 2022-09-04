@@ -107,8 +107,11 @@ impl EventHandler for Handler {
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/ping", "pong!".to_string(), false)])
-                                    .fields(vec![("/info", dict_lookup(dict, "info"), false)])
+                                    .fields(vec![
+                                        ("/ping", "pong!".to_string(), false),
+                                        ("/info", dict_lookup(dict, "info"), false),
+                                        ("/neofetch", dict_lookup(dict, "neofetch"), false),
+                                    ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
