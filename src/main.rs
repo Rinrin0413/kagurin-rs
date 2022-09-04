@@ -10,8 +10,8 @@ use serenity::{
             component::ButtonStyle,
             interaction::{Interaction, InteractionResponseType},
         },
+        channel::Message,
         gateway::{Activity, Ready},
-        //channel::Message,
     },
     prelude::*,
 };
@@ -38,7 +38,29 @@ struct Handler;
 
 #[async_trait]
 impl EventHandler for Handler {
-    //async fn message(&self, ctx: Context, msg: Message) { dbg!(msg.content); }
+    async fn message(&self, ctx: Context, msg: Message) {
+        match msg.mentions_me(&ctx.http).await {
+            Ok(b) => {
+                if b {
+                    if let Err(why) = msg
+                        .reply(
+                            &ctx.http,
+                            "\
+English: Do you need help? If so, please use slash command `/help`.\n\
+日本語: ヘルプが必要ですか? もしそうなら、スラッシュコマンド `/help` を使用されたし。\
+                                    ",
+                        )
+                        .await
+                    {
+                        println!("Error sending message: {:?}", why);
+                    }
+                }
+            }
+            Err(why) => {
+                println!("Failed to get mentions: {}", why);
+            }
+        };
+    }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
         if let Interaction::ApplicationCommand(interact) = interaction {
@@ -407,9 +429,14 @@ kgrs@rinrin:~> neofetch
         // Current date and time (JST)
         let now = Utc::now() + Duration::hours(9);
         println!(
-            "Kagurin-rs v{} is connected at {} (JST)",
-            VER,
-            now.format("%Y-%m-%d %H:%M:%S.%z")
+            "{}",
+            format!(
+                "{}{} {} Kagurin-rs v{} is connected.",
+                now.format("%Y-%m-%dT%H:%M:%S").to_string().bright_black(),
+                "(JST)".bright_black(),
+                "INFO".bright_green(),
+                VER,
+            )
         );
 
         // Set activity.
@@ -453,8 +480,13 @@ async fn main() {
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("KAGURIN_RS_TOKEN").expect("Expected a token in the environment");
 
+    // Set gateway intents.
+    let mut intents = GatewayIntents::default();
+    intents.insert(GatewayIntents::MESSAGE_CONTENT);
+    intents.insert(GatewayIntents::GUILD_MESSAGES);
+
     // Build our client.
-    let mut client = Client::builder(token, GatewayIntents::MESSAGE_CONTENT)
+    let mut client = Client::builder(token, intents)
         .event_handler(Handler)
         .await
         .expect("Error creating client");

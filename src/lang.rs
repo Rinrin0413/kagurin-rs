@@ -135,7 +135,7 @@ pub mod dict {
         ));
         d.insert("botVer".to_string(), (
             "Bot version:".to_string(), 
-            "Botバージョン".to_string()
+            "Botバージョン:".to_string()
         ));
         d.insert("createdAt".to_string(), (
             "Created at:".to_string(), 
