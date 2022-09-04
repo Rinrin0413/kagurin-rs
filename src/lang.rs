@@ -60,7 +60,7 @@ pub mod dict {
         ));
         d.insert("info".to_string(), (
             "Show information about this bot.".to_string(), 
-            "このBotに関する情報を表示します。".to_string()
+            "このボットに関する情報を表示します。".to_string()
         ));
         d
     }

@@ -18,6 +18,8 @@ use serenity::{
 use std::{collections::HashMap, env, time::Instant};
 
 const RUST_VERSION: &str = "1.64.0-nightly";
+const OS: &str = "openSUSE Leap 15.4 x86_64";
+
 const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
 const INVITE_URL: &str =
@@ -26,11 +28,10 @@ const INVITE_URL: &str =
 //    724976600873041940, // Rinrin.rs
 //    801082943371477022, // Rinrin.hlsl
 //];
-//const DEVELIPER: [u64; 2] = [
+//const DEVELOPER: [u64; 2] = [
 //    724976600873041940, // Rinrin.rs
 //    801082943371477022, // Rinrin.hlsl
 //];
-//const BOT_ID: u64 = 936116497502318654;
 //const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 
 struct Handler;
@@ -262,8 +263,7 @@ impl EventHandler for Handler {
                                     ),
                                     (
                                         "OS:",
-                                        "```ansi\n[0;31mopenSUSE Leap 15.4 x86_64 \n```"
-                                            .to_string(),
+                                        format!("```ansi\n[0;31m{}\n```", OS),
                                         true,
                                     ),
                                 ])
@@ -284,6 +284,49 @@ impl EventHandler for Handler {
                                 .label("Source code(GitHub)")
                                 .style(ButtonStyle::Link)
                                 .url(env!("CARGO_PKG_REPOSITORY"))
+                                .to_owned(),
+                        ),
+                    ])
+                }
+
+                // Display information about this bot in an aesthetic and visually pleasing way | 1015944810647011328
+                "neofetch" => {
+                    Interactions::Some(vec![
+                        InteractMode::Embed(
+                            CreateEmbed::default()
+                                .description(format!(
+                                    r#"
+```ansi
+kgrs@rinrin:~> neofetch
+     [0;33mRRRRRRRRR         [0;31mKagurin.rs
+ [0;33m.s*R*RRRRRR*===       [0;0m---------- 
+[0;33m:sRRRRRRRRRRR*-:-      [0;31mVersion[0;0m: {}
+ [0;33m*RRRR*RRRRRRR-:sR     [0;31mOS[0;0m: {}
+ [0;33mR***s==ss*****RRR     [0;31mHost[0;0m: Rinrin.rs#5671
+  [0;33ms==s-.::=ss=sRRR     [0;31mLanguage[0;0m: Rust {}
+  [0;33m=::s=   :=s---RR     [0;31mLibrary[0;0m: Serenity-rs v0.11.5
+   [0;33m- ..    ..:-RRR     [0;31mTheme[0;0m: kgrs
+   [0;33mR:      .-=sRRR     [0;31mLocale[0;0m: ja_JP.UTF-8 / en_US.UTF-8
+  [0;33mRRRs-....:==sRRR     [0;31mID[0;0m: {}
+  [0;33m*R RR=-:::--sRRR     [0;31mServers[0;0m: {} guilds
+ [0;33ms**:*s--:::==s***s    [0;31mCreated at[0;0m: {}
+  [0;33ms==s=:-- :====ss=    
+  [0;33m=s=s::*: =s==s**s       [0;0m███[0;30m███[0;31m███[0;32m███[0;33m███[0;34m███[0;35m███[0;36m███[0;37m███
+  [0;33m%R=s:=*::ss=*RRR     
+```
+                                    "#, 
+                                    VER,
+                                    OS,
+                                    RUST_VERSION,
+                                    client.id,
+                                    if let Ok(g) = client.guilds(&ctx.http).await {
+                                        g.len()
+                                    } else {
+                                        0
+                                    },
+                                    client.id.created_at().unix_timestamp()
+                                ))
+                                .color(MAIN_COL)
                                 .to_owned(),
                         ),
                     ])

@@ -14,6 +14,7 @@
 ### Display commands
 - `/ping`: pong!
 - `/info`: Show information about this bot.
+- `/neofetch`: Display information about this bot in an aesthetic and visually pleasing way.
 
 ### Utility commands
 
