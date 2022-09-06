@@ -26,11 +26,11 @@ const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
 //const TRUSTED: [u64; 2] = [
 //    724976600873041940, // Rinrin.rs
-//    801082943371477022, // Rinrin.hlsl
+//    801082943371477022, // Rinrin.wgsl
 //];
 //const DEVELOPER: [u64; 2] = [
 //    724976600873041940, // Rinrin.rs
-//    801082943371477022, // Rinrin.hlsl
+//    801082943371477022, // Rinrin.wgsl
 //];
 //const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 
@@ -46,8 +46,9 @@ impl EventHandler for Handler {
                         .reply(
                             &ctx.http,
                             "\
-English: Do you need help? If so, please use slash command `/help`.\n\
-日本語: ヘルプが必要ですか? もしそうなら、スラッシュコマンド `/help` を使用されたし。\
+English: Do you need help? If so, please use </help:1014735729139662898>.\n\
+\n\
+日本語: ヘルプが必要ですか? もしそうなら、</help:1014735729139662898> でヘルプを参照してください。\
                                     ",
                         )
                         .await
@@ -130,9 +131,9 @@ English: Do you need help? If so, please use slash command `/help`.\n\
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![
-                                        ("/ping", "pong!".to_string(), false),
-                                        ("/info", dict_lookup(dict, "info"), false),
-                                        ("/neofetch", dict_lookup(dict, "neofetch"), false),
+                                        ("</ping:1014243185880465550>", "pong!".to_string(), false),
+                                        ("</info:1015567292022673449>", dict_lookup(dict, "info"), false),
+                                        ("</neofetch:1015944810647011328>", dict_lookup(dict, "neofetch"), false),
                                     ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
@@ -214,14 +215,14 @@ English: Do you need help? If so, please use slash command `/help`.\n\
                                 .title(dict_lookup(dict, "title"))
                                 .description(dict_lookup(general_dict, "implSlashCmds"))
                                 .fields(vec![
-                                    ("/help", dict_lookup(dict, "help"), false),
-                                    ("/help display", dict_lookup(dict, "help.display"), false),
-                                    ("/help util", dict_lookup(dict, "help.util"), false),
-                                    ("/help fun", dict_lookup(dict, "help.fun"), false),
-                                    ("/help tetrio", dict_lookup(dict, "help.tetrio"), false),
-                                    ("/help admin", dict_lookup(dict, "help.admin"), false),
-                                    ("/help dev", dict_lookup(dict, "help.dev"), false),
-                                    ("/help trust", dict_lookup(dict, "help.trust"), false),
+                                    ("</help:1014735729139662898>", dict_lookup(dict, "help"), false),
+                                    ("</help display:1014735729139662898>", dict_lookup(dict, "help.display"), false),
+                                    ("</help util:1014735729139662898>", dict_lookup(dict, "help.util"), false),
+                                    ("</help fun:1014735729139662898>", dict_lookup(dict, "help.fun"), false),
+                                    ("</help tetrio:1014735729139662898>", dict_lookup(dict, "help.tetrio"), false),
+                                    ("</help admin:1014735729139662898>", dict_lookup(dict, "help.admin"), false),
+                                    ("</help dev:1014735729139662898>", dict_lookup(dict, "help.dev"), false),
+                                    ("</help trust:1014735729139662898>", dict_lookup(dict, "help.trust"), false),
                                 ])
                                 .set_footer(ftr())
                                 .timestamp(Utc::now().to_rfc3339())
@@ -323,21 +324,21 @@ English: Do you need help? If so, please use slash command `/help`.\n\
                                     r#"
 ```ansi
 kgrs@rinrin:~> neofetch
-     [0;33mRRRRRRRRR         [0;31mKagurin.rs
- [0;33m.s*R*RRRRRR*===       [0;0m---------- 
-[0;33m:sRRRRRRRRRRR*-:-      [0;31mVersion[0;0m: {}
- [0;33m*RRRR*RRRRRRR-:sR     [0;31mOS[0;0m: {}
- [0;33mR***s==ss*****RRR     [0;31mHost[0;0m: Rinrin.rs#5671
-  [0;33ms==s-.::=ss=sRRR     [0;31mLanguage[0;0m: Rust {}
-  [0;33m=::s=   :=s---RR     [0;31mLibrary[0;0m: Serenity-rs v0.11.5
-   [0;33m- ..    ..:-RRR     [0;31mTheme[0;0m: kgrs
-   [0;33mR:      .-=sRRR     [0;31mLocale[0;0m: ja_JP.UTF-8 / en_US.UTF-8
-  [0;33mRRRs-....:==sRRR     [0;31mID[0;0m: {}
-  [0;33m*R RR=-:::--sRRR     [0;31mServers[0;0m: {} guilds
- [0;33ms**:*s--:::==s***s    [0;31mCreated at[0;0m: {}
-  [0;33ms==s=:-- :====ss=    
-  [0;33m=s=s::*: =s==s**s       [0;0m███[0;30m███[0;31m███[0;32m███[0;33m███[0;34m███[0;35m███[0;36m███[0;37m███
-  [0;33m%R=s:=*::ss=*RRR     
+     [33mRRRRRRRRR         [31mKagurin.rs
+ [33m.s*R*RRRRRR*===       [0m---------- 
+[33m:sRRRRRRRRRRR*-:-      [31mVersion[0m: {}
+ [33m*RRRR*RRRRRRR-:sR     [31mOS[0m: {}
+ [33mR***s==ss*****RRR     [31mHost[0m: Rinrin.rs#5671
+  [33ms==s-.::=ss=sRRR     [31mLanguage[0m: Rust {}
+  [33m=::s=   :=s---RR     [31mLibrary[0m: Serenity-rs v0.11.5
+   [33m- ..    ..:-RRR     [31mTheme[0m: kgrs
+   [33mR:      .-=sRRR     [31mLocale[0m: ja_JP.UTF-8 / en_US.UTF-8
+  [33mRRRs-....:==sRRR     [31mID[0m: {}
+  [33m*R RR=-:::--sRRR     [31mServers[0m: {} guilds
+ [33ms**:*s--:::==s***s    [31mCreated at[0m: {}
+  [33ms==s=:-- :====ss=    
+  [33m=s=s::*: =s==s**s    [0m███[30m███[31m███[32m███[33m███[34m███[35m███[36m███[37m███
+  [33m%R=s:=*::ss=*RRR     [0m   [40m   [41m   [42m   [43m   [44m   [45m   [46m   [47m   
 ```
                                     "#, 
                                     VER,
