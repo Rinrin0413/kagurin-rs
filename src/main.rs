@@ -132,8 +132,16 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![
                                         ("</ping:1014243185880465550>", "pong!".to_string(), false),
-                                        ("</info:1015567292022673449>", dict_lookup(dict, "info"), false),
-                                        ("</neofetch:1015944810647011328>", dict_lookup(dict, "neofetch"), false),
+                                        (
+                                            "</info:1015567292022673449>",
+                                            dict_lookup(dict, "info"),
+                                            false,
+                                        ),
+                                        (
+                                            "</neofetch:1015944810647011328>",
+                                            dict_lookup(dict, "neofetch"),
+                                            false,
+                                        ),
                                     ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
@@ -215,14 +223,46 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 .title(dict_lookup(dict, "title"))
                                 .description(dict_lookup(general_dict, "implSlashCmds"))
                                 .fields(vec![
-                                    ("</help:1014735729139662898>", dict_lookup(dict, "help"), false),
-                                    ("</help display:1014735729139662898>", dict_lookup(dict, "help.display"), false),
-                                    ("</help util:1014735729139662898>", dict_lookup(dict, "help.util"), false),
-                                    ("</help fun:1014735729139662898>", dict_lookup(dict, "help.fun"), false),
-                                    ("</help tetrio:1014735729139662898>", dict_lookup(dict, "help.tetrio"), false),
-                                    ("</help admin:1014735729139662898>", dict_lookup(dict, "help.admin"), false),
-                                    ("</help dev:1014735729139662898>", dict_lookup(dict, "help.dev"), false),
-                                    ("</help trust:1014735729139662898>", dict_lookup(dict, "help.trust"), false),
+                                    (
+                                        "</help:1014735729139662898>",
+                                        dict_lookup(dict, "help"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help display:1014735729139662898>",
+                                        dict_lookup(dict, "help.display"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help util:1014735729139662898>",
+                                        dict_lookup(dict, "help.util"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help fun:1014735729139662898>",
+                                        dict_lookup(dict, "help.fun"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help tetrio:1014735729139662898>",
+                                        dict_lookup(dict, "help.tetrio"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help admin:1014735729139662898>",
+                                        dict_lookup(dict, "help.admin"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help dev:1014735729139662898>",
+                                        dict_lookup(dict, "help.dev"),
+                                        false,
+                                    ),
+                                    (
+                                        "</help trust:1014735729139662898>",
+                                        dict_lookup(dict, "help.trust"),
+                                        false,
+                                    ),
                                 ])
                                 .set_footer(ftr())
                                 .timestamp(Utc::now().to_rfc3339())
@@ -287,11 +327,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
                                         true,
                                     ),
-                                    (
-                                        "OS:",
-                                        format!("```ansi\n[0;31m{}\n```", OS),
-                                        true,
-                                    ),
+                                    ("OS:", format!("```ansi\n[0;31m{}\n```", OS), true),
                                 ])
                                 .set_footer(ftr())
                                 .timestamp(Utc::now().to_rfc3339())
@@ -316,12 +352,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 }
 
                 // Display information about this bot in an aesthetic and visually pleasing way | 1015944810647011328
-                "neofetch" => {
-                    Interactions::Some(vec![
-                        InteractMode::Embed(
-                            CreateEmbed::default()
-                                .description(format!(
-                                    r#"
+                "neofetch" => Interactions::Some(vec![InteractMode::Embed(
+                    CreateEmbed::default()
+                        .description(format!(
+                            r#"
 ```ansi
 kgrs@rinrin:~> neofetch
      [33mRRRRRRRRR         [31mKagurin.rs
@@ -340,23 +374,21 @@ kgrs@rinrin:~> neofetch
   [33m=s=s::*: =s==s**s    [0m███[30m███[31m███[32m███[33m███[34m███[35m███[36m███[37m███
   [33m%R=s:=*::ss=*RRR     [0m   [40m   [41m   [42m   [43m   [44m   [45m   [46m   [47m   
 ```
-                                    "#, 
-                                    VER,
-                                    OS,
-                                    RUST_VERSION,
-                                    client.id,
-                                    if let Ok(g) = client.guilds(&ctx.http).await {
-                                        g.len()
-                                    } else {
-                                        0
-                                    },
-                                    client.id.created_at().unix_timestamp()
-                                ))
-                                .color(MAIN_COL)
-                                .to_owned(),
-                        ),
-                    ])
-                }
+                                    "#,
+                            VER,
+                            OS,
+                            RUST_VERSION,
+                            client.id,
+                            if let Ok(g) = client.guilds(&ctx.http).await {
+                                g.len()
+                            } else {
+                                0
+                            },
+                            client.id.created_at().unix_timestamp()
+                        ))
+                        .color(MAIN_COL)
+                        .to_owned(),
+                )]),
 
                 _ => Interactions::Some(vec![InteractMode::Message(
                     "\
