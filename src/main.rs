@@ -1,6 +1,9 @@
 use chrono::{Duration, Utc};
 use colored::*;
-use kgrs::response_interactions::{InteractMode, Interactions};
+use kgrs::{
+    response_interactions::{InteractMode, Interactions},
+    util::get_memory_usage,
+};
 use lang::dict;
 use serenity::{
     async_trait,
@@ -363,9 +366,9 @@ kgrs@rinrin:~> neofetch
 [33m:sRRRRRRRRRRR*-:-      [31mVersion[0m: {}
  [33m*RRRR*RRRRRRR-:sR     [31mOS[0m: {}
  [33mR***s==ss*****RRR     [31mHost[0m: Rinrin.rs#5671
-  [33ms==s-.::=ss=sRRR     [31mLanguage[0m: Rust {}
-  [33m=::s=   :=s---RR     [31mLibrary[0m: Serenity-rs v0.11.5
-   [33m- ..    ..:-RRR     [31mTheme[0m: kgrs
+  [33ms==s-.::=ss=sRRR     [31mMemory[0m: {:.1}MiB / 31873MiB
+  [33m=::s=   :=s---RR     [31mLanguage[0m: Rust {}
+   [33m- ..    ..:-RRR     [31mLibrary[0m: Serenity-rs v0.11.5
    [33mR:      .-=sRRR     [31mLocale[0m: ja_JP.UTF-8 / en_US.UTF-8
   [33mRRRs-....:==sRRR     [31mID[0m: {}
   [33m*R RR=-:::--sRRR     [31mServers[0m: {} guilds
@@ -377,6 +380,7 @@ kgrs@rinrin:~> neofetch
                                     "#,
                             VER,
                             OS,
+                            get_memory_usage(),
                             RUST_VERSION,
                             client.id,
                             if let Ok(g) = client.guilds(&ctx.http).await {
@@ -462,14 +466,11 @@ kgrs@rinrin:~> neofetch
         // Current date and time (JST)
         let now = Utc::now() + Duration::hours(9);
         println!(
-            "{}",
-            format!(
-                "{}{} {} Kagurin-rs v{} is connected.",
-                now.format("%Y-%m-%dT%H:%M:%S").to_string().bright_black(),
-                "(JST)".bright_black(),
-                "INFO".bright_green(),
-                VER,
-            )
+            "{}{} {} Kagurin-rs v{} is connected.",
+            now.format("%Y-%m-%dT%H:%M:%S").to_string().bright_black(),
+            "(JST)".bright_black(),
+            "INFO".bright_green(),
+            VER,
         );
 
         // Set activity.

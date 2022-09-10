@@ -1,5 +1,21 @@
-/*//! These are utilities for kagurin-rs
+//! These are utilities for kagurin-rs
 
+use std::process;
+
+/// Get the current memory usage by this bot (MiB)
+pub fn get_memory_usage() -> f64 {
+    let stdout = process::Command::new("sh")
+        .args([
+            "./assets/shells/pmap.sh".to_string(),
+            process::id().to_string(),
+        ])
+        .output()
+        .unwrap()
+        .stdout;
+    String::from_utf8_lossy(&stdout).to_string().replace("\n", "").parse::<f64>().unwrap() / 1024.0
+}
+
+/*
 use crate::util::fmt::*;
 use rand::Rng;
 use serenity::{
