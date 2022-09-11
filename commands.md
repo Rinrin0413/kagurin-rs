@@ -17,14 +17,16 @@
 - `/neofetch`: Display information about this bot in an aesthetic and visually pleasing way.
 
 ### Utility commands
+- `/rust`: Run Rust code in Rust playground.
 
 ### Entertainment commands
 
 ### [TETR.IO](https://tetr.io) related commands
+- `/tetr-user <user:name/id>`: Display details of the target TETR.IO user.
 
 ### Admin commands
 
-### Developer commands
+### Commands for Rinrin
 
 ### Commands for users trusted by developer
 
