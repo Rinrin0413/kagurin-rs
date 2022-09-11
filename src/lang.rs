@@ -93,6 +93,10 @@ pub mod dict {
             "TETR.IO related commands".to_string(), 
             "TETR.IO関連のコマンド一覧".to_string()
         ));
+        d.insert("tetr-user".to_string(), (
+            "Display details of the target TETR.IO user.".to_string(), 
+            "対象の TETR.IO のユーザーの詳細を表示します。".to_string()
+        ));
         d
     }
 
@@ -160,6 +164,15 @@ pub mod dict {
         d.insert("lib".to_string(), (
             "Library:".to_string(), 
             "ライブラリ:".to_string()
+        ));
+        d
+    }
+
+    pub fn tetr_user() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("err.plzSendUserNameOrID".to_string(), (
+            "Invalid user. Please specify a username or userID.".to_string(), 
+            "無効なユーザーです。ユーザー名かユーザーIDを指定してください。".to_string()
         ));
         d
     }

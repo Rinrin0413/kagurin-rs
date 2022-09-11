@@ -2,12 +2,15 @@ use chrono::{Duration, Utc};
 use colored::*;
 use kgrs::{
     response_interactions::{InteractMode, Interactions},
-    util::get_memory_usage,
+    tetr::*,
+    //playground
+    util::{fmt::*, *},
 };
 use lang::dict;
 use serenity::{
     async_trait,
     builder::{CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter},
+    http::typing::Typing,
     model::{
         application::{
             component::ButtonStyle,
@@ -19,6 +22,8 @@ use serenity::{
     prelude::*,
 };
 use std::{collections::HashMap, env, time::Instant};
+use tetr_ch::client::Client as TetrClient;
+use thousands::Separable;
 
 const RUST_VERSION: &str = "1.64.0-nightly";
 const OS: &str = "openSUSE Leap 15.4 x86_64";
@@ -178,7 +183,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .fields(vec![(
+                                        "</tetr-user:1018530733314289737> <user:name/id>",
+                                        dict_lookup(&dict, "tetr-user"),
+                                        false,
+                                    )])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
@@ -360,7 +369,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         .description(format!(
                             r#"
 ```ansi
-kgrs@rinrin:~> neofetch
+[0mkgrs@rinrin:~> neofetch
      [33mRRRRRRRRR         [31mKagurin.rs
  [33m.s*R*RRRRRR*===       [0m---------- 
 [33m:sRRRRRRRRRRR*-:-      [31mVersion[0m: {}
@@ -393,6 +402,425 @@ kgrs@rinrin:~> neofetch
                         .color(MAIN_COL)
                         .to_owned(),
                 )]),
+
+                // Run Rust code with Rust playground | 1018021689793196142
+                "rust" => {
+                    /*if let Err(why) = interact
+                        .create_interaction_response(&ctx.http, |response| {
+                            response
+                                .kind(InteractionResponseType::ChannelMessageWithSource)
+                                .interaction_response_data(|m| m.content("Running..."))
+                        })
+                        .await
+                    {
+                        println!("Cannot respond to slash command: {}", why);
+                    }
+                    let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
+                    let post_data = playground::PostData {
+                        code,
+                        crate_type: "bin".to_string(),
+                        mode: "debug".to_string(),
+                        channel: "stable".to_string(),
+                        edition: "2021".to_string(),
+                        backtrace: false,
+                        tests: false,
+                    };
+                    let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
+                        &post_data
+                    );
+                    match client.send().await {
+                        Ok(res) => {
+                            let res = res.json::<playground::Response>().await.unwrap();
+                            if let Err(why) = interact
+                                .edit_original_interaction_response(&ctx.http, |e| {
+                                    e.content(format!(
+                                        "```\n{:?}\n```",
+                                        res.stderr
+                                    ))
+                                })
+                                .await
+                            {
+                                println!("Cannot respond to edit message: {}", why);
+                            }
+                        }
+                        Err(why) => {
+                            println!("Request failed: {}", why);
+                        }
+                    }
+                    Interactions::None*/
+                    Interactions::Dev
+                }
+
+                // Display details of the target TETR.IO user | 1018530733314289737
+                "tetr-user" => {
+                    let mut user = args
+                        .get(0)
+                        .unwrap()
+                        .value
+                        .as_ref()
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_string();
+
+                    // Anti "Cannot GET" error
+                    user.retain(|c| c != '#');
+                    user.retain(|c| c != '\\');
+                    user.retain(|c| c != '.');
+                    user.retain(|c| c != '/');
+                    user.retain(|c| c != '?');
+                    user.retain(|c| c != ' ');
+
+                    // Anti "500 error"
+                    user.retain(|c| c != '%');
+
+                    if user.is_empty() {
+                        let dict = dict::tetr_user();
+                        Interactions::Some(vec![InteractMode::Message(dict_lookup(
+                            &dict,
+                            "err.plzSendUserNameOrID",
+                        ))])
+                    } else if &user.to_lowercase() != "syabetarou" {
+                        let _typing = Typing::start(
+                            ctx.http.clone(),
+                            interact.channel_id.as_u64().to_owned(),
+                        )
+                        .expect("Failed to start typing: ");
+                        let before = Instant::now();
+
+                        let response = TetrClient::new().get_user(&user).await;
+
+                        let after = Instant::now();
+                        let latency = || format!("latency: {}ms", (after - before).as_millis());
+
+                        match response {
+                            Ok(res) => {
+                                if res.success {
+                                    let record = TetrClient::new()
+                                        .get_user_records(&user)
+                                        .await
+                                        .unwrap()
+                                        .data
+                                        .unwrap();
+
+                                    #[allow(unused_variables)]
+                                    let after = Instant::now();
+
+                                    let usr = &res.data.as_ref().unwrap().user;
+                                    if usr.role != "banned" {
+                                        let mut e = CreateEmbed::default();
+                                        e.title(format!(
+                                            "{}{}  ||{}||",
+                                            usr.username.to_uppercase(),
+                                            if usr.verified { " ✓" } else { "" },
+                                            usr._id
+                                        ));
+                                        let is_supporter = is_supporter(usr);
+                                        if is_supporter {
+                                            let supporter_card = format!(
+                                                "**<{:★>st$}>**",
+                                                "SUPPORTER",
+                                                st = (usr.supporter_tier + 9 - 1) as usize
+                                            );
+                                            if is_badstanding(usr) {
+                                                e.description(format!(
+                                                    "{}\n| **- BAD STANDING -** |",
+                                                    supporter_card
+                                                ));
+                                            } else {
+                                                e.description(supporter_card);
+                                            }
+                                        } else if is_badstanding(usr) {
+                                            e.description("| **- BAD STANDING -** |");
+                                        }
+                                        if is_supporter || usr.role == "admin" {
+                                            if let Some(url) = usr.banner() {
+                                                e.image(url);
+                                            }
+                                        }
+                                        if !usr.badges.is_empty() {
+                                            e.field(
+                                                format!("Badges: {}", badge_emojis(usr)),
+                                                "\u{200B}",
+                                                false,
+                                            );
+                                        }
+                                        let is_rating = 0. <= usr.league.rating;
+                                        if is_rating {
+                                            let rank = usr.league.rank.as_ref();
+                                            e.field(
+                                                format!(
+                                                    "〔{} **{:.4}TR** 〕{}",
+                                                    rank_emoji(rank),
+                                                    usr.league.rating,
+                                                    match rank {
+                                                        "z" => "".to_string(),
+                                                        _ => format!(
+                                                            "\n　Global: №{}\n　Local: №{}",
+                                                            usr.league.standing,
+                                                            usr.league.standing_local
+                                                        ),
+                                                    }
+                                                ),
+                                                match rank {
+                                                    "z" => format!(
+                                                        "Probably around {}",
+                                                        rank_emoji(&usr.league.percentile_rank)
+                                                    ),
+                                                    _ => create_progress_bar(usr),
+                                                },
+                                                false,
+                                            );
+                                        } else {
+                                            e.field(
+                                                format!(
+                                                    "**{}/10** rating games played",
+                                                    usr.league.gamesplayed
+                                                ),
+                                                format!("{} rating games won", usr.league.gameswon),
+                                                false,
+                                            );
+                                        }
+                                        if let Some(bio) = &usr.bio {
+                                            if !bio.is_empty()
+                                                && (is_supporter || usr.role == "admin")
+                                            {
+                                                e.field("About me:", cb(bio, ""), false);
+                                            }
+                                        }
+                                        e.field("Role:", &usr.role, true);
+                                        if 0. <= usr.gametime {
+                                            e.field("Play time:", fmt_gametime(usr.gametime), true);
+                                        }
+                                        e.field(
+                                            "Friends:",
+                                            if let Some(fc) = usr.friend_count {
+                                                fc
+                                            } else {
+                                                0
+                                            },
+                                            true,
+                                        );
+                                        if is_rating {
+                                            e.fields(vec![
+                                                (
+                                                    "\u{200B}",
+                                                    format!(
+                                                        "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
+                                                        usr._id,
+                                                    ),
+                                                    false,
+                                                ),
+                                                ("Glicko:", format!("{:.3}±{:.3}", usr.league.glicko.unwrap(), usr.league.rd.unwrap()), true),
+                                                (
+                                                    "Play count:",
+                                                    usr.league.gamesplayed.separate_with_commas(),
+                                                    true,
+                                                ),
+                                                (
+                                                    "Wins:",
+                                                    format!(
+                                                        "{} ({:.3}%)",
+                                                        usr.league.gameswon.separate_with_commas(),
+                                                        (usr.league.gameswon as f64
+                                                            / usr.league.gamesplayed
+                                                                as f64
+                                                            * 100.)
+                                                    ),
+                                                    true,
+                                                ),
+                                                ("APM:", usr.league.apm.unwrap().to_string(), true),
+                                                ("PPS:", usr.league.pps.unwrap().to_string(), true),
+                                                ("VS:", usr.league.vs.unwrap().to_string(), true),
+                                            ]);
+                                        }
+                                        if let Some(fl) = record.records.forty_lines.record {
+                                            e.fields(vec![
+                                                (
+                                                    "\u{200B}",
+                                                    format!(
+                                                        "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
+                                                        fl.record_url(),
+                                                        fl.recorded_at(),
+                                                        if let Some(r) = record.records.forty_lines.rank {
+                                                            format!(" | №{}", r)
+                                                        } else {
+                                                            "".to_string()
+                                                        },
+                                                    ),
+                                                    false,
+                                                ),
+                                                ("Time:", fmt_forty_lines_time(fl.endcontext.final_time.unwrap()), true),
+                                                ("PPS:", round_mid(fl.pps(), 2).to_string(), true),
+                                                ("Finesse:", fmt_finesse(fl), true),
+                                            ]);
+                                        }
+                                        if let Some(bltz) = record.records.blitz.record {
+                                            e.fields(vec![
+                                                (
+                                                    "\u{200B}",
+                                                    format!(
+                                                        "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
+                                                        bltz.record_url(),
+                                                        bltz.recorded_at(),
+                                                        if let Some(r) = record.records.blitz.rank {
+                                                            format!(" | №{}", r)
+                                                        } else {
+                                                            "".to_string()
+                                                        },
+                                                    ),
+                                                    false,
+                                                ),
+                                                ("Score:", bltz.endcontext.score.unwrap().separate_with_commas(), true),
+                                                ("PPS:", round_mid(bltz.pps(), 2).to_string(), true),
+                                                ("Finesse:", fmt_finesse(bltz), true),
+                                            ]);
+                                        }
+                                        e.field(
+                                            "\u{200B}",
+                                            format!("{} | <t:{}:R>", latency(), res.cached_at()),
+                                            false,
+                                        );
+                                        e.timestamp(Utc::now().to_rfc3339());
+                                        e.author(|a| {
+                                            if let Some(f) = usr.national_flag_url() {
+                                                a.icon_url(f);
+                                            }
+                                            a.name(&format!(
+                                                "Lv.{} {} {}xp",
+                                                usr.level(),
+                                                level_symbol(usr.level()),
+                                                usr.xp.separate_with_commas()
+                                            ))
+                                        });
+                                        e.color(rank_col(
+                                            &usr.league.rank,
+                                            &usr.league.percentile_rank,
+                                        ));
+                                        e.thumbnail(usr.face());
+                                        e.set_footer(ftr());
+                                        Interactions::Some(vec![InteractMode::Embed(e)])
+                                    } else {
+                                        Interactions::Some(vec![InteractMode::Embed(
+                                            CreateEmbed::default()
+                                                .title(format!(
+                                                    "{}  ||{}||",
+                                                    usr.username.to_uppercase(),
+                                                    usr._id
+                                                ))
+                                                .description("")
+                                                .thumbnail("https://tetr.io/res/avatar-banned.png")
+                                                .image("https://ch.tetr.io/res/cute.png")
+                                                .field("| **BANNED** |", "\u{200B}", false)
+                                                .footer(|f| {
+                                                    f.text(format!(
+                                                        "{}\n/tetr-user{}",
+                                                        latency(),
+                                                        if let Some(m) = interact.member.as_ref() {
+                                                            format!(", Called by {}", m.user.name)
+                                                        } else {
+                                                            String::new()
+                                                        }
+                                                    ))
+                                                })
+                                                .timestamp(Utc::now().to_rfc3339())
+                                                .color(0xf81c1c)
+                                                .to_owned(),
+                                        )])
+                                    }
+                                } else {
+                                    Interactions::Some(vec![InteractMode::Embed(
+                                        CreateEmbed::default()
+                                            .title(user.to_uppercase())
+                                            .description(format!(
+                                                "```\n{}\n```\n{}",
+                                                res.error.unwrap(),
+                                                latency()
+                                            ))
+                                            .set_footer(ftr())
+                                            .timestamp(Utc::now().to_rfc3339())
+                                            .color(MAIN_COL)
+                                            .to_owned(),
+                                    )])
+                                }
+                            }
+                            Err(why) => Interactions::Some(vec![InteractMode::Message(format!(
+                                "Error: {}",
+                                why.to_string()
+                            ))]),
+                        }
+                    } else {
+                        let before = Instant::now();
+                        let after = Instant::now();
+                        let latency = format!("latency: {}ms", (after - before).as_millis());
+                        Interactions::Some(vec![InteractMode::Embed(
+                            CreateEmbed::default()
+                                .title("SYABETAROU ✓ ||77a02950-bde0447f9851fd||")
+                                .description("**<SUPPORTER>**")
+                                .fields(vec![
+                                    (
+                                        "Badges: <:100player:992097864081735730><:allclear:992096168664383622><:20tsd:992097227260567553><:secretgrade:992079389611278477><:leaderboard1:992095621018308759>| More 18 badges",
+                                        "\u{200B}",
+                                        false,
+                                    ),
+                                    (
+                                        "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
+                                        "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
+                                        false,
+                                    ),
+                                    ("About me:", &cb("まいど。", ""), false),
+                                    ("Role:", "User", true),
+                                    (
+                                        "Play time:",
+                                        "2000 years",
+                                        true,
+                                    ),
+                                    (
+                                        "Friends:",
+                                        "0",
+                                        true,
+                                    ),
+                                    (
+                                        "\u{200B}",
+                                        "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_77a02950-bde0447f9851fd)",
+                                        false,
+                                    ),
+                                    ("Glicko:", "9999.999±60.00", true),
+                                    (
+                                        "Play count:",
+                                        "999,999",
+                                        true,
+                                    ),
+                                    (
+                                        "Wins:",
+                                        "999,999 (100.000%)",
+                                        true,
+                                    ),
+                                    ("APM:", "1003.84", true),
+                                    ("PPS:", "84.40", true),
+                                    ("VS:", "6301.33", true),
+                                    (
+                                        "\u{200B}",
+                                        &format!(
+                                            "{} | cached at: <t:{}:R>",
+                                            latency,
+                                            Utc::now().timestamp()
+                                        ),
+                                        false,
+                                    )
+                                ])
+                                .set_footer(ftr())
+                                .timestamp(Utc::now().to_rfc3339())
+                                .author(|a| {
+                                    a.icon_url("https://tetr.io/res/flags/jp.png");
+                                    a.name("Lv.9999 ⬢ 8,401,9463,557xp")
+                                })
+                                .color(0xeca5ff)
+                                .thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp")
+                                .to_owned()
+                        )])
+                    }
+                }
 
                 _ => Interactions::Some(vec![InteractMode::Message(
                     "\
