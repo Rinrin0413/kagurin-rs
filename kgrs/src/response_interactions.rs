@@ -1,9 +1,9 @@
-use serenity::builder::{CreateEmbed, CreateButton};
+use serenity::builder::{CreateButton, CreateEmbed};
 
 /// Some interactions.
-/// 
+///
 /// # Variables
-/// 
+///
 /// - `Some`: Some interactions.
 /// - `Dev`: Send "Not implemented yet :<".
 /// - `None`: Do nothing.
@@ -17,9 +17,9 @@ pub enum Interactions {
 }
 
 /// The interaction mode.
-/// 
+///
 /// # Variants
-/// 
+///
 /// - `Message`: Add a message.
 /// - `Embed`: Add a embed.
 /// - `Button`: Add a button.

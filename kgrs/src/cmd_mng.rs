@@ -49,6 +49,7 @@ use serenity::{
 ///     .await;
 /// # }
 /// ```
+#[derive(Default)]
 pub struct CmdManager {
     cmds_to_create: Vec<CreateApplicationCommand>,
     cmds_to_edit: Vec<(u64, CreateApplicationCommand)>,
