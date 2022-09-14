@@ -185,7 +185,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![(
                                         "</tetr-user:1018530733314289737> <user:name/id>",
-                                        dict_lookup(&dict, "tetr-user"),
+                                        dict_lookup(dict, "tetr-user"),
                                         false,
                                     )])
                                     .set_footer(ftr())
@@ -340,6 +340,17 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         true,
                                     ),
                                     ("OS:", format!("```ansi\n[0;31m{}\n```", OS), true),
+                                    ("\u{200B}", "\u{200B}".to_string(), true),
+                                    (
+                                        &dict_lookup(dict, "memory"),
+                                        format!("```\n{:.1}MiB / 31873MiB\n```", get_memory_usage()),
+                                        true,
+                                    ),
+                                    (
+                                        &dict_lookup(dict, "uptime"),
+                                        format!("```\n{}\n```", get_uptime()),
+                                        true,
+                                    ),
                                 ])
                                 .set_footer(ftr())
                                 .timestamp(Utc::now().to_rfc3339())
@@ -376,9 +387,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
  [33m*RRRR*RRRRRRR-:sR     [31mOS[0m: {}
  [33mR***s==ss*****RRR     [31mHost[0m: Rinrin.rs#5671
   [33ms==s-.::=ss=sRRR     [31mMemory[0m: {:.1}MiB / 31873MiB
-  [33m=::s=   :=s---RR     [31mLanguage[0m: Rust {}
-   [33m- ..    ..:-RRR     [31mLibrary[0m: Serenity-rs v0.11.5
-   [33mR:      .-=sRRR     [31mLocale[0m: ja_JP.UTF-8 / en_US.UTF-8
+  [33m=::s=   :=s---RR     [31mUptime[0m: {}
+   [33m- ..    ..:-RRR     [31mLanguage[0m: Rust {}
+   [33mR:      .-=sRRR     [31mLibrary[0m: Serenity-rs v0.11.5
   [33mRRRs-....:==sRRR     [31mID[0m: {}
   [33m*R RR=-:::--sRRR     [31mServers[0m: {} guilds
  [33ms**:*s--:::==s***s    [31mCreated at[0m: {}
@@ -386,10 +397,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
   [33m=s=s::*: =s==s**s    [0m███[30m███[31m███[32m███[33m███[34m███[35m███[36m███[37m███
   [33m%R=s:=*::ss=*RRR     [0m   [40m   [41m   [42m   [43m   [44m   [45m   [46m   [47m   [0m
 ```
-                                    "#,
+                            "#,
                             VER,
                             OS,
                             get_memory_usage(),
+                            get_uptime(),
                             RUST_VERSION,
                             client.id,
                             if let Ok(g) = client.guilds(&ctx.http).await {
@@ -939,6 +951,7 @@ mod lang;
 
 #[tokio::main]
 async fn main() {
+
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("KAGURIN_RS_TOKEN").expect("Expected a token in the environment");
 

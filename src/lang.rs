@@ -165,6 +165,14 @@ pub mod dict {
             "Library:".to_string(), 
             "ライブラリ:".to_string()
         ));
+        d.insert("memory".to_string(), (
+            "Memory:".to_string(),
+            "メモリ:".to_string()
+        ));
+        d.insert("uptime".to_string(), (
+            "Uptime:".to_string(),
+            "稼働時間:".to_string()
+        ));
         d
     }
 
