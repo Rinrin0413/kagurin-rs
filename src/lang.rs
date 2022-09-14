@@ -115,6 +115,10 @@ pub mod dict {
             "Commands for Rinrin".to_string(), 
             "Rinrin用コマンド一覧".to_string()
         ));
+        d.insert("exit".to_string(), (
+            "Kill the bot.".to_string(), 
+            "Bot を強制終了します。".to_string()
+        ));
         d
     }
 
@@ -181,6 +185,15 @@ pub mod dict {
         d.insert("err.plzSendUserNameOrID".to_string(), (
             "Invalid user. Please specify a username or userID.".to_string(), 
             "無効なユーザーです。ユーザー名かユーザーIDを指定してください。".to_string()
+        ));
+        d
+    }
+
+    pub fn exit() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("unauthorized".to_string(), (
+            "Sorry, you cannot call this command:(".to_string(), 
+            "すみません、このコマンドはあなたには使用できません ; ;".to_string()
         ));
         d
     }

@@ -21,7 +21,7 @@ use serenity::{
     },
     prelude::*,
 };
-use std::{collections::HashMap, env, time::Instant};
+use std::{collections::HashMap, env, process, time::Instant};
 use tetr_ch::client::Client as TetrClient;
 use thousands::Separable;
 
@@ -36,10 +36,10 @@ const INVITE_URL: &str =
 //    724976600873041940, // Rinrin.rs
 //    801082943371477022, // Rinrin.wgsl
 //];
-//const DEVELOPER: [u64; 2] = [
-//    724976600873041940, // Rinrin.rs
-//    801082943371477022, // Rinrin.wgsl
-//];
+const DEVELOPER: [u64; 2] = [
+    724976600873041940, // Rinrin.rs
+    801082943371477022, // Rinrin.wgsl
+];
 //const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 
 struct Handler;
@@ -102,6 +102,35 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
             };
 
             let content = match interact.data.name.as_str() {
+                // exit | 1019672344643522580
+                "exit" => {
+                    let dict = dict::exit();
+                    let authed = DEVELOPER.contains(interact.user.id.as_u64());
+                    let msg = if authed {
+                        format!("Process exited at <t:{}:F>", Utc::now().timestamp())
+                    } else {
+                        dict_lookup(&dict, "unauthorized")
+                    };
+
+                    if let Err(why) = interact
+                        .create_interaction_response(&ctx.http, |response| {
+                            response
+                                .kind(InteractionResponseType::ChannelMessageWithSource)
+                                .interaction_response_data(|m| m.content(msg))
+                        })
+                        .await
+                    {
+                        println!("Cannot respond to slash command: {}", why);
+                    }
+
+                    if authed {
+                        println!("Process exited at {}", Utc::now());
+                        process::exit(0x00);
+                    }
+
+                    Interactions::None
+                }
+
                 // pong! | 1014243185880465550
                 "ping" => {
                     let before = Instant::now();
@@ -209,7 +238,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .fields(vec![(
+                                        "</exit:1019672344643522580>",
+                                        dict_lookup(dict, "exit"),
+                                        false,
+                                    )])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
@@ -343,7 +376,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     ("\u{200B}", "\u{200B}".to_string(), true),
                                     (
                                         &dict_lookup(dict, "memory"),
-                                        format!("```\n{:.1}MiB / 31873MiB\n```", get_memory_usage()),
+                                        format!(
+                                            "```\n{:.1}MiB / 31873MiB\n```",
+                                            get_memory_usage()
+                                        ),
                                         true,
                                     ),
                                     (
@@ -951,7 +987,6 @@ mod lang;
 
 #[tokio::main]
 async fn main() {
-
     // Configure the client with your Discord bot token in the environment.
     let token = env::var("KAGURIN_RS_TOKEN").expect("Expected a token in the environment");
 

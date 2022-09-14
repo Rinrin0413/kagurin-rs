@@ -26,9 +26,10 @@
 
 ### Admin commands
 
-### Commands for Rinrin
-
 ### Commands for users trusted by developer
+
+### Commands for Rinrin
+- `/exit`: Kill the bot.
 
 <!--
 ### Display commands
