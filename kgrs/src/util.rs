@@ -1,12 +1,12 @@
 //! These are utilities for kagurin-rs
 
-use std::process;
+use std::{process, env};
 
 /// Get the current memory usage by this bot (MiB)
 pub fn get_memory_usage() -> f64 {
     let stdout = process::Command::new("sh")
         .args([
-            "./assets/shells/pmap.sh".to_string(),
+            format!("{}/../assets/shells/pmap.sh", env!("CARGO_MANIFEST_DIR")),
             process::id().to_string(),
         ])
         .output()
