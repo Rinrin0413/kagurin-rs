@@ -1,6 +1,6 @@
 //! These are utilities for kagurin-rs
 
-use std::{process, env};
+use std::{env, process};
 
 /// Get the current memory usage by this bot. (MiB)
 pub fn get_memory_usage() -> f64 {
@@ -43,7 +43,9 @@ pub fn get_uptime() -> String {
         .output()
         .unwrap()
         .stdout;
-    String::from_utf8_lossy(&stdout).to_string().replace('\n', "")
+    String::from_utf8_lossy(&stdout)
+        .to_string()
+        .replace('\n', "")
 }
 
 pub mod fmt {

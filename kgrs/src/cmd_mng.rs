@@ -31,20 +31,20 @@ use serenity::{
 /// // !          Recommend always cloning to avoid mistakes.
 /// let cmd = serenity::builder::CreateApplicationCommand::default();
 /// CmdManager::new()
-/// 
+///
 ///     // Creates command.
 ///     .create(cmd.clone()
 ///         .name("ping").description("pong!")
 ///         .description_localized("ja", "pong!")
 ///     })
-/// 
+///
 ///     // Edits command.
 ///     .edit(1014243185880465557, cmd.clone()
 ///         .name("info").description("Show bot information")
-/// 
+///
 ///     // Deletes command.
 ///     .delete(1014243185880465558)
-/// 
+///
 ///     .run(&ctx.http)
 ///     .await;
 /// # }
@@ -96,7 +96,10 @@ impl CmdManager {
             })
             .await;
             match created_cmd {
-                Ok(cmd) => println!("{}", format!("Command created: {}({})", cmd.name, cmd.id).green()),
+                Ok(cmd) => println!(
+                    "{}",
+                    format!("Command created: {}({})", cmd.name, cmd.id).green()
+                ),
                 Err(why) => println!("{}", format!("Could not create a command: {}", why).red()),
             }
         }
@@ -109,7 +112,10 @@ impl CmdManager {
             })
             .await;
             match edited_cmd {
-                Ok(cmd) => println!("{}", format!("Command edited: {}({})", cmd.name, cmd.id).green()),
+                Ok(cmd) => println!(
+                    "{}",
+                    format!("Command edited: {}({})", cmd.name, cmd.id).green()
+                ),
                 Err(why) => println!("{}", format!("Could not edit a command: {}", why).red()),
             }
         }
