@@ -22,7 +22,7 @@ use serenity::{
     prelude::*,
 };
 use std::{collections::HashMap, env, process, time::Instant};
-use tetr_ch::client::Client as TetrClient;
+use tetr_ch::{client::Client as TetrClient, model::league::Rank};
 use thousands::Separable;
 
 const RUST_VERSION: &str = "1.64.0-nightly";
@@ -543,7 +543,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                         match response {
                             Ok(res) => {
-                                if res.success {
+                                if res.is_success {
                                     let record = TetrClient::new()
                                         .get_user_records(&user)
                                         .await
@@ -555,22 +555,21 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     let after = Instant::now();
 
                                     let usr = &res.data.as_ref().unwrap().user;
-                                    if usr.role != "banned" {
+                                    if !usr.is_banned() {
                                         let mut e = CreateEmbed::default();
                                         e.title(format!(
                                             "{}{}  ||{}||",
-                                            usr.username.to_uppercase(),
-                                            if usr.verified { " ✓" } else { "" },
-                                            usr._id
+                                            usr.name.to_uppercase(),
+                                            if usr.is_verified { " ✓" } else { "" },
+                                            usr.id
                                         ));
-                                        let is_supporter = is_supporter(usr);
-                                        if is_supporter {
+                                        if usr.is_supporter() {
                                             let supporter_card = format!(
                                                 "**<{:★>st$}>**",
                                                 "SUPPORTER",
                                                 st = (usr.supporter_tier + 9 - 1) as usize
                                             );
-                                            if is_badstanding(usr) {
+                                            if usr.is_badstanding() {
                                                 e.description(format!(
                                                     "{}\n| **- BAD STANDING -** |",
                                                     supporter_card
@@ -578,15 +577,15 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             } else {
                                                 e.description(supporter_card);
                                             }
-                                        } else if is_badstanding(usr) {
+                                        } else if usr.is_badstanding() {
                                             e.description("| **- BAD STANDING -** |");
                                         }
-                                        if is_supporter || usr.role == "admin" {
+                                        if usr.is_supporter() || usr.is_admin() {
                                             if let Some(url) = usr.banner() {
                                                 e.image(url);
                                             }
                                         }
-                                        if !usr.badges.is_empty() {
+                                        if !usr.has_badge() {
                                             e.field(
                                                 format!("Badges: {}", badge_emojis(usr)),
                                                 "\u{200B}",
@@ -599,10 +598,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             e.field(
                                                 format!(
                                                     "〔{} **{:.4}TR** 〕{}",
-                                                    rank_emoji(rank),
+                                                    rank_emoji(&rank.to_string()),
                                                     usr.league.rating,
                                                     match rank {
-                                                        "z" => "".to_string(),
+                                                        Rank::Z => "".to_string(),
                                                         _ => format!(
                                                             "\n　Global: №{}\n　Local: №{}",
                                                             usr.league.standing,
@@ -611,9 +610,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     }
                                                 ),
                                                 match rank {
-                                                    "z" => format!(
+                                                    Rank::Z => format!(
                                                         "Probably around {}",
-                                                        rank_emoji(&usr.league.percentile_rank)
+                                                        rank_emoji(
+                                                            &usr.league.percentile_rank.to_string()
+                                                        )
                                                     ),
                                                     _ => create_progress_bar(usr),
                                                 },
@@ -623,22 +624,29 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             e.field(
                                                 format!(
                                                     "**{}/10** rating games played",
-                                                    usr.league.gamesplayed
+                                                    usr.league.play_count
                                                 ),
-                                                format!("{} rating games won", usr.league.gameswon),
+                                                format!(
+                                                    "{} rating games won",
+                                                    usr.league.win_count
+                                                ),
                                                 false,
                                             );
                                         }
                                         if let Some(bio) = &usr.bio {
                                             if !bio.is_empty()
-                                                && (is_supporter || usr.role == "admin")
+                                                && (usr.is_supporter() || usr.is_admin())
                                             {
                                                 e.field("About me:", cb(bio, ""), false);
                                             }
                                         }
-                                        e.field("Role:", &usr.role, true);
-                                        if 0. <= usr.gametime {
-                                            e.field("Play time:", fmt_gametime(usr.gametime), true);
+                                        e.field("Role:", &usr.role.to_string(), true);
+                                        if 0. <= usr.play_time {
+                                            e.field(
+                                                "Play time:",
+                                                fmt_gametime(usr.play_time),
+                                                true,
+                                            );
                                         }
                                         e.field(
                                             "Friends:",
@@ -655,23 +663,23 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     "\u{200B}",
                                                     format!(
                                                         "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
-                                                        usr._id,
+                                                        usr.id,
                                                     ),
                                                     false,
                                                 ),
                                                 ("Glicko:", format!("{:.3}±{:.3}", usr.league.glicko.unwrap(), usr.league.rd.unwrap()), true),
                                                 (
                                                     "Play count:",
-                                                    usr.league.gamesplayed.separate_with_commas(),
+                                                    usr.league.play_count.separate_with_commas(),
                                                     true,
                                                 ),
                                                 (
                                                     "Wins:",
                                                     format!(
                                                         "{} ({:.3}%)",
-                                                        usr.league.gameswon.separate_with_commas(),
-                                                        (usr.league.gameswon as f64
-                                                            / usr.league.gamesplayed
+                                                        usr.league.win_count.separate_with_commas(),
+                                                        (usr.league.win_count as f64
+                                                            / usr.league.play_count
                                                                 as f64
                                                             * 100.)
                                                     ),
@@ -753,8 +761,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             CreateEmbed::default()
                                                 .title(format!(
                                                     "{}  ||{}||",
-                                                    usr.username.to_uppercase(),
-                                                    usr._id
+                                                    usr.name.to_uppercase(),
+                                                    usr.id
                                                 ))
                                                 .description("")
                                                 .thumbnail("https://tetr.io/res/avatar-banned.png")
