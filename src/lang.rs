@@ -200,6 +200,10 @@ pub mod dict {
 
     pub fn cjp() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();
+        d.insert("err.strTooLong".to_string(), (
+            "String too long.".to_string(), 
+            "文字列が長すぎます。".to_string()
+        ));
         d.insert("title".to_string(), (
             "Converted to 怪レい日本语(correct Japanese)".to_string(), 
             "変换 to 怪レい日本语.".to_string()

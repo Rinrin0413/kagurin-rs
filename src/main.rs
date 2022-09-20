@@ -896,18 +896,25 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         .unwrap()
                         .to_string();
                     let correct = <String as AsRef<str>>::as_ref(&original).cjp();
-                    Interactions::Some(vec![InteractMode::Embed(
-                        CreateEmbed::default()
-                            .title(dict_lookup(&dict, "title"))
-                            .fields([
-                                (dict_lookup(&dict, "input"), cb(original, ""), false),
-                                (dict_lookup(&dict, "output"), cb(correct, ""), false),
-                            ])
-                            .set_footer(ftr())
-                            .timestamp(Utc::now().to_rfc3339())
-                            .color(MAIN_COL)
-                            .to_owned(),
-                    )])
+                    if 1016 < original.chars().count() || 1016 < correct.chars().count() {
+                        Interactions::Some(vec![InteractMode::Message(dict_lookup(
+                            &dict,
+                            "err.strTooLong",
+                        ))])
+                    } else {
+                        Interactions::Some(vec![InteractMode::Embed(
+                            CreateEmbed::default()
+                                .title(dict_lookup(&dict, "title"))
+                                .fields([
+                                    (dict_lookup(&dict, "input"), cb(original, ""), false),
+                                    (dict_lookup(&dict, "output"), cb(correct, ""), false),
+                                ])
+                                .set_footer(ftr())
+                                .timestamp(Utc::now().to_rfc3339())
+                                .color(MAIN_COL)
+                                .to_owned(),
+                        )])
+                    }
                 }
 
                 _ => Interactions::Some(vec![InteractMode::Message(
