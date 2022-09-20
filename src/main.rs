@@ -195,7 +195,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .fields(vec![("</cjp:1021847038545100810> <string:sentence>", dict_lookup(&dict, "cjp"), false)])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)

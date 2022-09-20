@@ -75,6 +75,10 @@ pub mod dict {
             "Utility commands".to_string(), 
             "機能系コマンド一覧".to_string()
         ));
+        d.insert("cjp".to_string(), (
+            "Convert the string to 怪レい日本语(correct Japanese).".to_string(), 
+            "渡された文字列を怪レい日本语に変換します。".to_string()
+        ));
         d
     }
 
