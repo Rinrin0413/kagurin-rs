@@ -50,6 +50,8 @@ pub fn get_uptime() -> String {
 
 pub mod fmt {
     //! This is a module for formatting texts.
+    
+    use std::fmt::Display;
 
     /// Formats to codeblocks.
     ///
@@ -63,7 +65,7 @@ pub mod fmt {
     ///     "```py\nprint(Hello, World!)\n```"
     /// );
     /// ```
-    pub fn cb(content: &str, lang: &str) -> String {
+    pub fn cb<T: Display>(content: T, lang: &str) -> String {
         format!("```{}\n{}\n```", lang, content)
     }
 }
