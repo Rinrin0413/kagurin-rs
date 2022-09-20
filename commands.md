@@ -17,7 +17,8 @@
 - `/neofetch`: Display information about this bot in an aesthetic and visually pleasing way.
 
 ### Utility commands
-- `/rust`: Run Rust code in Rust playground.
+- `/cjp <string:sentence>`: Convert the string to 怪レい日本语(correct Japanese).
+<!--- `/rust`: Run Rust code in Rust playground.-->
 
 ### Entertainment commands
 

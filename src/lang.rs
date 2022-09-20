@@ -197,4 +197,21 @@ pub mod dict {
         ));
         d
     }
+
+    pub fn cjp() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("title".to_string(), (
+            "Converted to 怪レい日本语(correct Japanese)".to_string(), 
+            "変换 to 怪レい日本语.".to_string()
+        ));
+        d.insert("input".to_string(), (
+            "Original:".to_string(), 
+            "原文:".to_string()
+        ));
+        d.insert("output".to_string(), (
+            "Correct:".to_string(), 
+            "怪レい:".to_string()
+        ));
+        d
+    }
 }

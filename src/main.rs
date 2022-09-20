@@ -1,4 +1,5 @@
 use chrono::{Duration, Utc};
+use cjp::AsCJp;
 use colored::*;
 use kgrs::{
     response_interactions::{InteractMode, Interactions},
@@ -93,7 +94,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     .to_owned()
             };
             let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
-                let s = dict.get(key).unwrap();
+                let s = if let Some(s) = dict.get(key) {
+                    s
+                } else {
+                    panic!("Invalid dict key: {}", key);
+                };
                 if interact.locale == "ja" {
                     s.1.clone()
                 } else {
@@ -876,6 +881,33 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 .to_owned()
                         )])
                     }
+                }
+
+                // Convert the string to 怪レい日本语(correct Japanese) | (1021847038545100810)
+                "cjp" => {
+                    let dict = dict::cjp();
+                    let original = args
+                        .get(0)
+                        .unwrap()
+                        .value
+                        .as_ref()
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_string();
+                    let correct = <String as AsRef<str>>::as_ref(&original).cjp();
+                    Interactions::Some(vec![InteractMode::Embed(
+                        CreateEmbed::default()
+                            .title(dict_lookup(&dict, "title"))
+                            .fields([
+                                (dict_lookup(&dict, "input"), cb(original, ""), false),
+                                (dict_lookup(&dict, "output"), cb(correct, ""), false),
+                            ])
+                            .set_footer(ftr())
+                            .timestamp(Utc::now().to_rfc3339())
+                            .color(MAIN_COL)
+                            .to_owned(),
+                    )])
                 }
 
                 _ => Interactions::Some(vec![InteractMode::Message(
