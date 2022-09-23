@@ -2,6 +2,7 @@ use chrono::{Duration, Utc};
 use cjp::AsCJp;
 use colored::*;
 use kgrs::{
+    jsd::*,
     response_interactions::{InteractMode, Interactions},
     tetr::*,
     //playground
@@ -17,7 +18,7 @@ use serenity::{
             component::ButtonStyle,
             interaction::{Interaction, InteractionResponseType},
         },
-        channel::Message,
+        channel::{AttachmentType, Message},
         gateway::{Activity, Ready},
     },
     prelude::*,
@@ -156,7 +157,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         })
                         .await
                     {
-                        println!("Cannot respond to edit message:: {}", why);
+                        println!("Cannot respond to edit message: {}", why);
                     };
                     Interactions::None
                 }
@@ -195,7 +196,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("</cjp:1021847038545100810> <string:sentence>", dict_lookup(&dict, "cjp"), false)])
+                                    .fields(vec![(
+                                        "</cjp:1021847038545100810> <string:sentence>",
+                                        dict_lookup(dict, "cjp"),
+                                        false,
+                                    )])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
@@ -206,7 +211,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
+                                    .fields(vec![(
+                                        "</jsd:1021893935204925550>",
+                                        dict_lookup(dict, "jsd"),
+                                        false,
+                                    )])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
@@ -883,7 +892,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     }
                 }
 
-                // Convert the string to 怪レい日本语(correct Japanese) | (1021847038545100810)
+                // Convert the string to 怪レい日本语(correct Japanese) | 1021847038545100810
                 "cjp" => {
                     let dict = dict::cjp();
                     let original = args
@@ -917,6 +926,114 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     }
                 }
 
+                // Create a image with Japanese Stable diffusion | 1021893935204925550
+                "jsd" => {
+                    let dict = dict::jsd();
+
+                    // Say "Please wait..."
+                    if let Err(why) = interact
+                        .create_interaction_response(&ctx.http, |response| {
+                            response.interaction_response_data(|m| {
+                                m.content(dict_lookup(&dict, "plzWait"))
+                            })
+                        })
+                        .await
+                    {
+                        println!("Cannot respond to slash command: {}", why);
+                    }
+                    let _typing =
+                        Typing::start(ctx.http.clone(), interact.channel_id.as_u64().to_owned());
+
+                    let subject = &args
+                        .get(0)
+                        .unwrap()
+                        .value
+                        .as_ref()
+                        .unwrap()
+                        .as_str()
+                        .unwrap()
+                        .to_string();
+                    let resource = JSDRequest {
+                        prompts: subject.to_string(),
+                        scale: 10.,
+                    };
+                    let client = reqwest::Client::new()
+                        .post("https://api.rinna.co.jp/models/tti/v2")
+                        .json(&resource);
+                    match client.send().await {
+                        Ok(res) => {
+                            // Image preparation
+                            if let Ok(body) = res.json::<JSDResponse>().await {
+                                let img = base64::decode(
+                                    body.image.replace("data:image/png;base64,", "").as_bytes(),
+                                )
+                                .expect("Failed to decode");
+
+                                // Delete the message "Please wait..."
+                                if let Err(why) = interact
+                                    .delete_original_interaction_response(&ctx.http)
+                                    .await
+                                {
+                                    println!("Failed to delete the message: {}", why);
+                                };
+
+                                // Send the image
+                                if let Err(why) = interact
+                                    .channel_id
+                                    .send_files(
+                                        &ctx.http,
+                                        vec![AttachmentType::Bytes {
+                                            data: img.into(),
+                                            filename: "jsd.png".into(),
+                                        }],
+                                        |m| {
+                                            m.content(format!(
+                                                "{}: {}{}  |  {}{}{}",
+                                                dict_lookup(&dict, "subject"),
+                                                subject,
+                                                if body.is_sensitive {
+                                                    dict_lookup(&dict, "sensitiveFrag")
+                                                } else {
+                                                    String::new()
+                                                },
+                                                dict_lookup(&dict, "calledBy.before"),
+                                                interact.user.name,
+                                                dict_lookup(&dict, "calledBy.after")
+                                            ))
+                                        },
+                                    )
+                                    .await
+                                {
+                                    println!("Failed to send the image: {}", why);
+                                }
+
+                                Interactions::None
+                            } else {
+                                if let Err(why) = interact
+                                    .edit_original_interaction_response(&ctx.http, |m| {
+                                        m.content(dict_lookup(&dict, "err.plzRetry"))
+                                    })
+                                    .await
+                                {
+                                    println!("Failed to edit message: {}", why);
+                                };
+                                Interactions::None
+                            }
+                        }
+                        Err(why) => {
+                            if let Err(why) = interact
+                                .edit_original_interaction_response(&ctx.http, |m| {
+                                    m.content(cb(format!("Error: {}", why), ""))
+                                })
+                                .await
+                            {
+                                println!("Failed to edit message: {}", why);
+                            };
+                            Interactions::None
+                        }
+                    }
+                }
+
                 _ => Interactions::Some(vec![InteractMode::Message(
                     "\
                     not implemented yet :<\n\
@@ -940,6 +1057,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         match i {
                                             InteractMode::Message(c) => {
                                                 m.content(c);
+                                            }
+                                            InteractMode::Attach(a) => {
+                                                m.add_file(a);
                                             }
                                             InteractMode::Embed(e) => {
                                                 m.add_embed(e);

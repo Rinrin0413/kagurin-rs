@@ -88,6 +88,10 @@ pub mod dict {
             "Entertainment commands".to_string(), 
             "娯楽系コマンド一覧".to_string()
         ));
+        d.insert("jsd".to_string(), (
+            "Create a image with Japanese Stable diffusion.".to_string(), 
+            "Japanese Stable diffusion で画像を作成します。".to_string()
+        ));
         d
     }
 
@@ -219,6 +223,35 @@ pub mod dict {
         d.insert("output".to_string(), (
             "Correct:".to_string(), 
             "怪レい:".to_string()
+        ));
+        d
+    }
+
+    pub fn jsd() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("plzWait".to_string(), (
+            "Please wait...".to_string(), 
+            "お待ち下さい...".to_string()
+        ));
+        d.insert("err.plzRetry".to_string(), (
+            "A problem occurred on the API side.\nSorry, please try again.".to_string(), 
+            "API側で問題が発生しました。\n申し訳ありませんが、もう一度お試しください。".to_string()
+        ));
+        d.insert("subject".to_string(), (
+            "Subject".to_string(), 
+            "主題".to_string()
+        ));
+        d.insert("sensitiveFrag".to_string(), (
+            "* This image has the NSFW content flag set.".to_string(), 
+            "※ 不適切画像フラグが立っています。".to_string()
+        ));
+        d.insert("calledBy.before".to_string(), (
+            "Called by ".to_string(), 
+            String::new()
+        ));
+        d.insert("calledBy.after".to_string(), (
+            String::new(), 
+            " によって実行".to_string()
         ));
         d
     }

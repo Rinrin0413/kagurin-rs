@@ -1,7 +1,7 @@
 [package]
 name = "kagurin_rs"
 description = "Faster, reliable and efficient rusted Kagurin bot."
-version = "1.5.2-unstable"
+version = "1.6.0-unstable"
 authors = ["Rinrin.rs <rinrin0413.valley@gmail.com>"]
 license-file = "LICENSE.md"
 repository = "https://github.com/Rinrin0413/kagurin-rs.git"
@@ -14,6 +14,7 @@ colored = "2"
 tetr_ch = "0.2"
 thousands = "0.2.0"
 cjp = "0.1"
+base64 = "0.13.0"
 
 [dependencies.serenity]
 version = "0.11.5"
