@@ -1,15 +1,9 @@
-use serenity::builder::{CreateButton, CreateEmbed};
+use serenity::{model::channel::AttachmentType, builder::{CreateButton, CreateEmbed}};
 
 /// Some interactions.
-///
-/// # Variables
-///
-/// - `Some`: Some interactions.
-/// - `Dev`: Send "Not implemented yet :<".
-/// - `None`: Do nothing.
-pub enum Interactions {
+pub enum Interactions<'a> {
     /// Do some interaction with the response.
-    Some(Vec<InteractMode>),
+    Some(Vec<InteractMode<'a>>),
     /// Send "Not implemented yet :<".
     Dev,
     /// Do nothing.
@@ -17,15 +11,11 @@ pub enum Interactions {
 }
 
 /// The interaction mode.
-///
-/// # Variants
-///
-/// - `Message`: Add a message.
-/// - `Embed`: Add a embed.
-/// - `Button`: Add a button.
-pub enum InteractMode {
+pub enum InteractMode<'a> {
     /// Add a message.
     Message(String),
+    /// Add a attachment.
+    Attach(AttachmentType<'a>),
     /// Add a embed.
     Embed(CreateEmbed),
     /// Add a button.
