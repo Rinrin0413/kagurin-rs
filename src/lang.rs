@@ -242,8 +242,8 @@ pub mod dict {
             "主題".to_string()
         ));
         d.insert("sensitiveFrag".to_string(), (
-            "* This image has the NSFW content flag set.".to_string(), 
-            "※ 不適切画像フラグが立っています。".to_string()
+            "\n* This image has the NSFW content flag set.".to_string(), 
+            "\n※ 不適切画像フラグが立っています。".to_string()
         ));
         d.insert("calledBy.before".to_string(), (
             "Called by ".to_string(), 

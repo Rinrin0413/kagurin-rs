@@ -988,17 +988,17 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         }],
                                         |m| {
                                             m.content(format!(
-                                                "{}: {}{}  |  {}{}{}",
+                                                "{}: {} |  {}{}{}{}",
                                                 dict_lookup(&dict, "subject"),
                                                 subject,
+                                                dict_lookup(&dict, "calledBy.before"),
+                                                interact.user.name,
+                                                dict_lookup(&dict, "calledBy.after"),
                                                 if body.is_sensitive {
                                                     dict_lookup(&dict, "sensitiveFrag")
                                                 } else {
                                                     String::new()
                                                 },
-                                                dict_lookup(&dict, "calledBy.before"),
-                                                interact.user.name,
-                                                dict_lookup(&dict, "calledBy.after")
                                             ))
                                         },
                                     )
