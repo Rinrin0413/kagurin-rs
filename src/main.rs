@@ -20,6 +20,7 @@ use serenity::{
         },
         channel::{AttachmentType, Message},
         gateway::{Activity, Ready},
+        prelude::MessageType,
     },
     prelude::*,
 };
@@ -51,7 +52,7 @@ impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
         match msg.mentions_me(&ctx.http).await {
             Ok(b) => {
-                if b {
+                if b && msg.kind != MessageType::InlineReply {
                     if let Err(why) = msg
                         .reply(
                             &ctx.http,
