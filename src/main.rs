@@ -9,18 +9,19 @@ use kgrs::{
     util::{fmt::*, *},
 };
 use lang::dict;
+use regex::Regex;
 use serenity::{
     async_trait,
     builder::{CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter},
     http::typing::Typing,
     model::{
         application::{
-            component::ButtonStyle,
+            component::{ButtonStyle, ComponentType},
             interaction::{Interaction, InteractionResponseType},
         },
         channel::{AttachmentType, Message},
         gateway::{Activity, Ready},
-        prelude::MessageType,
+        prelude::{ChannelId, GuildId, MessageType},
     },
     prelude::*,
 };
@@ -50,6 +51,7 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
+        // Shows about the help command if mentioned
         match msg.mentions_me(&ctx.http).await {
             Ok(b) => {
                 if b && msg.kind != MessageType::InlineReply {
@@ -71,365 +73,482 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
             Err(why) => {
                 println!("Failed to get mentions: {}", why);
             }
-        };
+        }
+
+        // Unwraps the message link
+        if msg.content.contains("https://discord.com/channels/") {
+            let re = if let Ok(r) = Regex::new(r"https://discord.com/channels/(\d+)/(\d+)/(\d+)") {
+                r
+            } else {
+                return;
+            };
+            let (guild_id, channel_id, msg_id) = if let Some(c) = re.captures(&msg.content) {
+                let mut vec = Vec::new();
+                for i in 1..=3 {
+                    if let Some(Ok(v)) = c.get(i).map(|m| m.as_str().parse::<u64>()) {
+                        vec.push(v);
+                    } else {
+                        return;
+                    }
+                }
+                (vec[0], vec[1], vec[2])
+            } else {
+                return;
+            };
+            let guild = if let Ok(g) = GuildId(guild_id).to_partial_guild(&ctx.http).await {
+                g
+            } else {
+                return;
+            };
+            let ch = if let Ok(c) = ChannelId(channel_id).to_channel(&ctx.http).await {
+                if let Some(c) = c.guild() {
+                    c
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            };
+            let that_msg = if let Ok(m) = ctx.http.get_message(channel_id, msg_id).await {
+                m
+            } else {
+                return;
+            };
+            if ch.is_nsfw() || (that_msg.embeds.is_empty() && that_msg.content.is_empty()) {
+                return;
+            }
+            msg.channel_id
+                .send_message(&ctx.http, |m| {
+                    m.embed(|e| {
+                        e.author(|a| a.name(
+                            format!("{}#{}", 
+                                that_msg.author.name, that_msg.author.discriminator
+                            )
+                        ).icon_url(&that_msg.author.face()));
+                        e.description(format!(
+                            "**[Jump to the message](https://discord.com/channels/{}/{}/{})**\n\n{}",
+                            guild_id, channel_id, msg_id, if that_msg.content.is_empty() {
+                                "||NO CONTENT, BUT HAS EMBED(S)||"
+                            } else {
+                                &that_msg.content
+                            }
+                        ));
+                        e.field("Sent date:", format!("<t:{}:R>", that_msg.timestamp.unix_timestamp()), true);
+                        if !that_msg.attachments.is_empty() {
+                            e.image(&that_msg.attachments[0].url);
+                            if 2 <= that_msg.attachments.len() {
+                                e.thumbnail(&that_msg.attachments[1].url);
+                                e.field("Files:", format!(
+                                    "{} attachments",
+                                    that_msg.attachments.len()
+                                ), true);
+                            } else {
+                                e.field("Files:", format!(
+                                    "{} attachment",
+                                    that_msg.attachments.len()
+                                ), true);
+                            }
+                        }
+                        if let Some(ts) = that_msg.edited_timestamp {
+                            e.field("Last edited at:", format!(
+                                "<t:{}:R>", 
+                                ts.unix_timestamp()
+                            ), true);
+                        }
+                        e.fields(vec![
+                            ("Message Id:" , mn(msg_id), true)
+                        ]);
+                        e.fields(vec![
+                            ("Guild:", guild.name, true),
+                            ("Channel:", format!("<#{}>", channel_id), true),
+                        ]);
+                        e.color(MAIN_COL);
+                        e
+                    })
+                    .components(|c| c.create_action_row(|a| {
+                        a.create_button(|b| {
+                            b.label("❌")
+                                .style(ButtonStyle::Danger)
+                                .custom_id("deleteUnwrappedMsg")
+                        })
+                    }))
+                })
+                .await
+                .expect("Failed to send message");
+        }
     }
 
     async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
-        if let Interaction::ApplicationCommand(interact) = interaction {
-            // DB
-            let cmd_data = &interact.data;
-            let args = &cmd_data.options;
-            let cache = &ctx.cache;
-            let client = cache.current_user();
-            let bot_icon = &client.face();
-            let ftr = || {
-                CreateEmbedFooter::default()
-                    .text(format!(
-                        "/{}{}",
-                        interact.data.name,
-                        if let Some(m) = interact.member.as_ref() {
-                            format!(", Called by {}", m.user.name)
-                        } else {
-                            String::new()
-                        }
-                    ))
-                    .to_owned()
-            };
-            let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
-                let s = if let Some(s) = dict.get(key) {
-                    s
-                } else {
-                    panic!("Invalid dict key: {}", key);
+        match interaction {
+            Interaction::ApplicationCommand(interact) => {
+                // DB
+                let cmd_data = &interact.data;
+                let args = &cmd_data.options;
+                let cache = &ctx.cache;
+                let client = cache.current_user();
+                let bot_icon = &client.face();
+                let ftr = || {
+                    CreateEmbedFooter::default()
+                        .text(format!(
+                            "/{}{}",
+                            interact.data.name,
+                            if let Some(m) = interact.member.as_ref() {
+                                format!(", Called by {}", m.user.name)
+                            } else {
+                                String::new()
+                            }
+                        ))
+                        .to_owned()
                 };
-                if interact.locale == "ja" {
-                    s.1.clone()
-                } else {
-                    s.0.clone()
-                }
-            };
-
-            let content = match interact.data.name.as_str() {
-                // exit | 1019672344643522580
-                "exit" => {
-                    let dict = dict::exit();
-                    let authed = DEVELOPER.contains(interact.user.id.as_u64());
-                    let msg = if authed {
-                        format!("Process exited at <t:{}:F>", Utc::now().timestamp())
+                let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
+                    let s = if let Some(s) = dict.get(key) {
+                        s
                     } else {
-                        dict_lookup(&dict, "unauthorized")
+                        panic!("Invalid dict key: {}", key);
                     };
+                    if interact.locale == "ja" {
+                        s.1.clone()
+                    } else {
+                        s.0.clone()
+                    }
+                };
 
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|m| m.content(msg))
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
+                let content = match interact.data.name.as_str() {
+                    // exit | 1019672344643522580
+                    "exit" => {
+                        let dict = dict::exit();
+                        let authed = DEVELOPER.contains(interact.user.id.as_u64());
+                        let msg = if authed {
+                            format!("Process exited at <t:{}:F>", Utc::now().timestamp())
+                        } else {
+                            dict_lookup(&dict, "unauthorized")
+                        };
+
+                        if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response
+                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .interaction_response_data(|m| m.content(msg))
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
+
+                        if authed {
+                            println!("Process exited at {}", Utc::now());
+                            process::exit(0x00);
+                        }
+
+                        Interactions::None
                     }
 
-                    if authed {
-                        println!("Process exited at {}", Utc::now());
-                        process::exit(0x00);
+                    // pong! | 1014243185880465550
+                    "ping" => {
+                        let before = Instant::now();
+                        if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response
+                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .interaction_response_data(|m| m.content("pong!"))
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
+                        let after = Instant::now();
+                        if let Err(why) = interact
+                            .edit_original_interaction_response(&ctx.http, |m| {
+                                m.content(format!("pong! ({}ms)", (after - before).as_millis()))
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to edit message: {}", why);
+                        };
+                        Interactions::None
                     }
 
-                    Interactions::None
-                }
-
-                // pong! | 1014243185880465550
-                "ping" => {
-                    let before = Instant::now();
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|m| m.content("pong!"))
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
-                    }
-                    let after = Instant::now();
-                    if let Err(why) = interact
-                        .edit_original_interaction_response(&ctx.http, |m| {
-                            m.content(format!("pong! ({}ms)", (after - before).as_millis()))
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to edit message: {}", why);
-                    };
-                    Interactions::None
-                }
-
-                // Show command help | 1014735729139662898
-                "help" => {
-                    let general_dict = &dict::help_cmd_general();
-                    if let Some(k) = args.get(0) {
-                        let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
-                        Interactions::Some(vec![InteractMode::Embed(match arg_val {
-                            "display" => {
-                                let dict = &dict::help_display();
+                    // Show command help | 1014735729139662898
+                    "help" => {
+                        let general_dict = &dict::help_cmd_general();
+                        if let Some(k) = args.get(0) {
+                            let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
+                            Interactions::Some(vec![InteractMode::Embed(match arg_val {
+                                "display" => {
+                                    let dict = &dict::help_display();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![
+                                            (
+                                                "</ping:1014243185880465550>",
+                                                "pong!".to_string(),
+                                                false,
+                                            ),
+                                            (
+                                                "</info:1015567292022673449>",
+                                                dict_lookup(dict, "info"),
+                                                false,
+                                            ),
+                                            (
+                                                "</neofetch:1015944810647011328>",
+                                                dict_lookup(dict, "neofetch"),
+                                                false,
+                                            ),
+                                        ])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "util" => {
+                                    let dict = &dict::help_util();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "</cjp:1021847038545100810> <string:sentence>",
+                                            dict_lookup(dict, "cjp"),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "fun" => {
+                                    let dict = &dict::help_fun();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "</jsd:1021893935204925550>",
+                                            dict_lookup(dict, "jsd"),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "tetrio" => {
+                                    let dict = &dict::help_tetrio();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "</tetr-user:1018530733314289737> <user:name/id>",
+                                            dict_lookup(dict, "tetr-user"),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "admin" => {
+                                    let dict = &dict::help_admin();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "/",
+                                            "Nothing here yet :(".to_string(),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "dev" => {
+                                    let dict = &dict::help_dev();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "</exit:1019672344643522580>",
+                                            dict_lookup(dict, "exit"),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                "trust" => {
+                                    let dict = &dict::help_trust();
+                                    CreateEmbed::default()
+                                        .title(dict_lookup(dict, "title"))
+                                        .description(dict_lookup(general_dict, "implSlashCmds"))
+                                        .fields(vec![(
+                                            "/",
+                                            "Nothing here yet :(".to_string(),
+                                            false,
+                                        )])
+                                        .set_footer(ftr())
+                                        .timestamp(Utc::now().to_rfc3339())
+                                        .color(MAIN_COL)
+                                        .to_owned()
+                                }
+                                _ => unreachable!("Invalid help command: {}", arg_val),
+                            })])
+                        } else {
+                            let dict = &dict::help();
+                            Interactions::Some(vec![InteractMode::Embed(
                                 CreateEmbed::default()
                                     .title(dict_lookup(dict, "title"))
                                     .description(dict_lookup(general_dict, "implSlashCmds"))
                                     .fields(vec![
-                                        ("</ping:1014243185880465550>", "pong!".to_string(), false),
                                         (
-                                            "</info:1015567292022673449>",
-                                            dict_lookup(dict, "info"),
+                                            "</help:1014735729139662898>",
+                                            dict_lookup(dict, "help"),
                                             false,
                                         ),
                                         (
-                                            "</neofetch:1015944810647011328>",
-                                            dict_lookup(dict, "neofetch"),
+                                            "</help display:1014735729139662898>",
+                                            dict_lookup(dict, "help.display"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help util:1014735729139662898>",
+                                            dict_lookup(dict, "help.util"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help fun:1014735729139662898>",
+                                            dict_lookup(dict, "help.fun"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help tetrio:1014735729139662898>",
+                                            dict_lookup(dict, "help.tetrio"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help admin:1014735729139662898>",
+                                            dict_lookup(dict, "help.admin"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help dev:1014735729139662898>",
+                                            dict_lookup(dict, "help.dev"),
+                                            false,
+                                        ),
+                                        (
+                                            "</help trust:1014735729139662898>",
+                                            dict_lookup(dict, "help.trust"),
                                             false,
                                         ),
                                     ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
                                     .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "util" => {
-                                let dict = &dict::help_util();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![(
-                                        "</cjp:1021847038545100810> <string:sentence>",
-                                        dict_lookup(dict, "cjp"),
-                                        false,
-                                    )])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "fun" => {
-                                let dict = &dict::help_fun();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![(
-                                        "</jsd:1021893935204925550>",
-                                        dict_lookup(dict, "jsd"),
-                                        false,
-                                    )])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "tetrio" => {
-                                let dict = &dict::help_tetrio();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![(
-                                        "</tetr-user:1018530733314289737> <user:name/id>",
-                                        dict_lookup(dict, "tetr-user"),
-                                        false,
-                                    )])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "admin" => {
-                                let dict = &dict::help_admin();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "dev" => {
-                                let dict = &dict::help_dev();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![(
-                                        "</exit:1019672344643522580>",
-                                        dict_lookup(dict, "exit"),
-                                        false,
-                                    )])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            "trust" => {
-                                let dict = &dict::help_trust();
-                                CreateEmbed::default()
-                                    .title(dict_lookup(dict, "title"))
-                                    .description(dict_lookup(general_dict, "implSlashCmds"))
-                                    .fields(vec![("/", "Nothing here yet :(".to_string(), false)])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .color(MAIN_COL)
-                                    .to_owned()
-                            }
-                            _ => unreachable!("Invalid help command: {}", arg_val),
-                        })])
-                    } else {
-                        let dict = &dict::help();
-                        Interactions::Some(vec![InteractMode::Embed(
-                            CreateEmbed::default()
-                                .title(dict_lookup(dict, "title"))
-                                .description(dict_lookup(general_dict, "implSlashCmds"))
-                                .fields(vec![
-                                    (
-                                        "</help:1014735729139662898>",
-                                        dict_lookup(dict, "help"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help display:1014735729139662898>",
-                                        dict_lookup(dict, "help.display"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help util:1014735729139662898>",
-                                        dict_lookup(dict, "help.util"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help fun:1014735729139662898>",
-                                        dict_lookup(dict, "help.fun"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help tetrio:1014735729139662898>",
-                                        dict_lookup(dict, "help.tetrio"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help admin:1014735729139662898>",
-                                        dict_lookup(dict, "help.admin"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help dev:1014735729139662898>",
-                                        dict_lookup(dict, "help.dev"),
-                                        false,
-                                    ),
-                                    (
-                                        "</help trust:1014735729139662898>",
-                                        dict_lookup(dict, "help.trust"),
-                                        false,
-                                    ),
-                                ])
-                                .set_footer(ftr())
-                                .timestamp(Utc::now().to_rfc3339())
-                                .color(MAIN_COL)
-                                .to_owned(),
-                        )])
+                                    .to_owned(),
+                            )])
+                        }
                     }
-                }
 
-                // Show information about this bot | 1015567292022673449
-                "info" => {
-                    let dict = &dict::info();
-                    Interactions::Some(vec![
-                        InteractMode::Embed(
-                            CreateEmbed::default()
-                                .author(|a| a.icon_url(bot_icon).name(dict_lookup(dict, "title")))
-                                .title(dict_lookup(dict, "nameTitle"))
-                                .description(format!(
-                                    "```ansi\n[0;37m{}[0;0m#{}\n```",
-                                    client.name, client.discriminator
-                                ))
-                                .fields(vec![
-                                    ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
-                                    (
-                                        &dict_lookup(dict, "botVer"),
-                                        format!("```ansi\n[0;32m{}\n```", VER),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "createdAt"),
-                                        format!(
-                                            "<t:{}:R>",
-                                            client.id.created_at().unix_timestamp()
+                    // Show information about this bot | 1015567292022673449
+                    "info" => {
+                        let dict = &dict::info();
+                        Interactions::Some(vec![
+                            InteractMode::Embed(
+                                CreateEmbed::default()
+                                    .author(|a| {
+                                        a.icon_url(bot_icon).name(dict_lookup(dict, "title"))
+                                    })
+                                    .title(dict_lookup(dict, "nameTitle"))
+                                    .description(format!(
+                                        "```ansi\n[0;37m{}[0;0m#{}\n```",
+                                        client.name, client.discriminator
+                                    ))
+                                    .fields(vec![
+                                        ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
+                                        (
+                                            &dict_lookup(dict, "botVer"),
+                                            format!("```ansi\n[0;32m{}\n```", VER),
+                                            true,
                                         ),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "guildsTitle"),
-                                        format!(
-                                            "```ansi\n[0;36m{}{}\n```",
-                                            if let Ok(g) = client.guilds(&ctx.http).await {
-                                                g.len()
-                                            } else {
-                                                0
-                                            },
-                                            dict_lookup(dict, "guildsTxt")
+                                        (
+                                            &dict_lookup(dict, "createdAt"),
+                                            format!(
+                                                "<t:{}:R>",
+                                                client.id.created_at().unix_timestamp()
+                                            ),
+                                            true,
                                         ),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "dev"),
-                                        "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "lang"),
-                                        format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "lib"),
-                                        "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
-                                        true,
-                                    ),
-                                    ("OS:", format!("```ansi\n[0;31m{}\n```", OS), true),
-                                    ("\u{200B}", "\u{200B}".to_string(), true),
-                                    (
-                                        &dict_lookup(dict, "memory"),
-                                        format!(
-                                            "```\n{:.1}MiB / 31873MiB\n```",
-                                            get_memory_usage()
+                                        (
+                                            &dict_lookup(dict, "guildsTitle"),
+                                            format!(
+                                                "```ansi\n[0;36m{}{}\n```",
+                                                if let Ok(g) = client.guilds(&ctx.http).await {
+                                                    g.len()
+                                                } else {
+                                                    0
+                                                },
+                                                dict_lookup(dict, "guildsTxt")
+                                            ),
+                                            true,
                                         ),
-                                        true,
-                                    ),
-                                    (
-                                        &dict_lookup(dict, "uptime"),
-                                        format!("```\n{}\n```", get_uptime()),
-                                        true,
-                                    ),
-                                ])
-                                .set_footer(ftr())
-                                .timestamp(Utc::now().to_rfc3339())
-                                .color(MAIN_COL)
-                                .to_owned(),
-                        ),
-                        InteractMode::Button(
-                            CreateButton::default()
-                                .label("Invile me!")
-                                .style(ButtonStyle::Link)
-                                .url(INVITE_URL)
-                                .to_owned(),
-                        ),
-                        InteractMode::Button(
-                            CreateButton::default()
-                                .label("Source code(GitHub)")
-                                .style(ButtonStyle::Link)
-                                .url(env!("CARGO_PKG_REPOSITORY"))
-                                .to_owned(),
-                        ),
-                    ])
-                }
+                                        (
+                                            &dict_lookup(dict, "dev"),
+                                            "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
+                                            true,
+                                        ),
+                                        (
+                                            &dict_lookup(dict, "lang"),
+                                            format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
+                                            true,
+                                        ),
+                                        (
+                                            &dict_lookup(dict, "lib"),
+                                            "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
+                                            true,
+                                        ),
+                                        ("OS:", format!("```ansi\n[0;31m{}\n```", OS), true),
+                                        ("\u{200B}", "\u{200B}".to_string(), true),
+                                        (
+                                            &dict_lookup(dict, "memory"),
+                                            format!(
+                                                "```\n{:.1}MiB / 31873MiB\n```",
+                                                get_memory_usage()
+                                            ),
+                                            true,
+                                        ),
+                                        (
+                                            &dict_lookup(dict, "uptime"),
+                                            format!("```\n{}\n```", get_uptime()),
+                                            true,
+                                        ),
+                                    ])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned(),
+                            ),
+                            InteractMode::Button(
+                                CreateButton::default()
+                                    .label("Invile me!")
+                                    .style(ButtonStyle::Link)
+                                    .url(INVITE_URL)
+                                    .to_owned(),
+                            ),
+                            InteractMode::Button(
+                                CreateButton::default()
+                                    .label("Source code(GitHub)")
+                                    .style(ButtonStyle::Link)
+                                    .url(env!("CARGO_PKG_REPOSITORY"))
+                                    .to_owned(),
+                            ),
+                        ])
+                    }
 
-                // Display information about this bot in an aesthetic and visually pleasing way | 1015944810647011328
-                "neofetch" => Interactions::Some(vec![InteractMode::Embed(
-                    CreateEmbed::default()
-                        .description(format!(
-                            r#"
+                    // Display information about this bot in an aesthetic and visually pleasing way | 1015944810647011328
+                    "neofetch" => Interactions::Some(vec![InteractMode::Embed(
+                        CreateEmbed::default()
+                            .description(format!(
+                                r#"
 ```ansi
 [0mkgrs@rinrin:~> neofetch
      [33mRRRRRRRRR         [31mKagurin.rs
@@ -449,570 +568,596 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
   [33m%R=s:=*::ss=*RRR     [0m   [40m   [41m   [42m   [43m   [44m   [45m   [46m   [47m   [0m
 ```
                             "#,
-                            VER,
-                            OS,
-                            get_memory_usage(),
-                            get_uptime(),
-                            RUST_VERSION,
-                            client.id,
-                            if let Ok(g) = client.guilds(&ctx.http).await {
-                                g.len()
-                            } else {
-                                0
-                            },
-                            client.id.created_at().unix_timestamp()
-                        ))
-                        .color(MAIN_COL)
-                        .to_owned(),
-                )]),
+                                VER,
+                                OS,
+                                get_memory_usage(),
+                                get_uptime(),
+                                RUST_VERSION,
+                                client.id,
+                                if let Ok(g) = client.guilds(&ctx.http).await {
+                                    g.len()
+                                } else {
+                                    0
+                                },
+                                client.id.created_at().unix_timestamp()
+                            ))
+                            .color(MAIN_COL)
+                            .to_owned(),
+                    )]),
 
-                // Run Rust code with Rust playground | 1018021689793196142
-                "rust" => {
-                    /*if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|m| m.content("Running..."))
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
-                    }
-                    let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
-                    let post_data = playground::PostData {
-                        code,
-                        crate_type: "bin".to_string(),
-                        mode: "debug".to_string(),
-                        channel: "stable".to_string(),
-                        edition: "2021".to_string(),
-                        backtrace: false,
-                        tests: false,
-                    };
-                    let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
-                        &post_data
-                    );
-                    match client.send().await {
-                        Ok(res) => {
-                            let res = res.json::<playground::Response>().await.unwrap();
-                            if let Err(why) = interact
-                                .edit_original_interaction_response(&ctx.http, |e| {
-                                    e.content(format!(
-                                        "```\n{:?}\n```",
-                                        res.stderr
-                                    ))
-                                })
-                                .await
-                            {
-                                println!("Cannot respond to edit message: {}", why);
+                    // Run Rust code with Rust playground | 1018021689793196142
+                    "rust" => {
+                        /*if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response
+                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .interaction_response_data(|m| m.content("Running..."))
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
+                        let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
+                        let post_data = playground::PostData {
+                            code,
+                            crate_type: "bin".to_string(),
+                            mode: "debug".to_string(),
+                            channel: "stable".to_string(),
+                            edition: "2021".to_string(),
+                            backtrace: false,
+                            tests: false,
+                        };
+                        let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
+                            &post_data
+                        );
+                        match client.send().await {
+                            Ok(res) => {
+                                let res = res.json::<playground::Response>().await.unwrap();
+                                if let Err(why) = interact
+                                    .edit_original_interaction_response(&ctx.http, |e| {
+                                        e.content(format!(
+                                            "```\n{:?}\n```",
+                                            res.stderr
+                                        ))
+                                    })
+                                    .await
+                                {
+                                    println!("Cannot respond to edit message: {}", why);
+                                }
+                            }
+                            Err(why) => {
+                                println!("Request failed: {}", why);
                             }
                         }
-                        Err(why) => {
-                            println!("Request failed: {}", why);
-                        }
+                        Interactions::None*/
+                        Interactions::Dev
                     }
-                    Interactions::None*/
-                    Interactions::Dev
-                }
 
-                // Display details of the target TETR.IO user | 1018530733314289737
-                "tetr-user" => {
-                    let mut user = args
-                        .get(0)
-                        .unwrap()
-                        .value
-                        .as_ref()
-                        .unwrap()
-                        .as_str()
-                        .unwrap()
-                        .to_string();
+                    // Display details of the target TETR.IO user | 1018530733314289737
+                    "tetr-user" => {
+                        let mut user = args
+                            .get(0)
+                            .unwrap()
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_str()
+                            .unwrap()
+                            .to_string();
 
-                    // Anti "Cannot GET" error
-                    user.retain(|c| c != '#');
-                    user.retain(|c| c != '\\');
-                    user.retain(|c| c != '.');
-                    user.retain(|c| c != '/');
-                    user.retain(|c| c != '?');
-                    user.retain(|c| c != ' ');
+                        // Anti "Cannot GET" error
+                        user.retain(|c| c != '#');
+                        user.retain(|c| c != '\\');
+                        user.retain(|c| c != '.');
+                        user.retain(|c| c != '/');
+                        user.retain(|c| c != '?');
+                        user.retain(|c| c != ' ');
 
-                    // Anti "500 error"
-                    user.retain(|c| c != '%');
+                        // Anti "500 error"
+                        user.retain(|c| c != '%');
 
-                    if user.is_empty() {
-                        let dict = dict::tetr_user();
-                        Interactions::Some(vec![InteractMode::Message(dict_lookup(
-                            &dict,
-                            "err.plzSendUserNameOrID",
-                        ))])
-                    } else if &user.to_lowercase() != "syabetarou" {
-                        let _typing = Typing::start(
-                            ctx.http.clone(),
-                            interact.channel_id.as_u64().to_owned(),
-                        )
-                        .expect("Failed to start typing: ");
-                        let before = Instant::now();
+                        if user.is_empty() {
+                            let dict = dict::tetr_user();
+                            Interactions::Some(vec![InteractMode::Message(dict_lookup(
+                                &dict,
+                                "err.plzSendUserNameOrID",
+                            ))])
+                        } else if &user.to_lowercase() != "syabetarou" {
+                            let _typing = Typing::start(
+                                ctx.http.clone(),
+                                interact.channel_id.as_u64().to_owned(),
+                            )
+                            .expect("Failed to start typing: ");
+                            let before = Instant::now();
 
-                        let response = TetrClient::new().get_user(&user).await;
+                            let response = TetrClient::new().get_user(&user).await;
 
-                        let after = Instant::now();
-                        let latency = || format!("latency: {}ms", (after - before).as_millis());
+                            let after = Instant::now();
+                            let latency = || format!("latency: {}ms", (after - before).as_millis());
 
-                        match response {
-                            Ok(res) => {
-                                if res.is_success {
-                                    let record = TetrClient::new()
-                                        .get_user_records(&user)
-                                        .await
-                                        .unwrap()
-                                        .data
-                                        .unwrap();
+                            match response {
+                                Ok(res) => {
+                                    if res.is_success {
+                                        let record = TetrClient::new()
+                                            .get_user_records(&user)
+                                            .await
+                                            .unwrap()
+                                            .data
+                                            .unwrap();
 
-                                    #[allow(unused_variables)]
-                                    let after = Instant::now();
+                                        #[allow(unused_variables)]
+                                        let after = Instant::now();
 
-                                    let usr = &res.data.as_ref().unwrap().user;
-                                    if !usr.is_banned() {
-                                        let mut e = CreateEmbed::default();
-                                        e.title(format!(
-                                            "{}{}  ||{}||",
-                                            usr.name.to_uppercase(),
-                                            if usr.is_verified { " ✓" } else { "" },
-                                            usr.id
-                                        ));
-                                        if usr.is_supporter() {
-                                            let supporter_card = format!(
-                                                "**<{:★>st$}>**",
-                                                "SUPPORTER",
-                                                st = (usr.supporter_tier + 9 - 1) as usize
-                                            );
-                                            if usr.is_badstanding() {
-                                                e.description(format!(
-                                                    "{}\n| **- BAD STANDING -** |",
-                                                    supporter_card
-                                                ));
-                                            } else {
-                                                e.description(supporter_card);
+                                        let usr = &res.data.as_ref().unwrap().user;
+                                        if !usr.is_banned() {
+                                            let mut e = CreateEmbed::default();
+                                            e.title(format!(
+                                                "{}{}  ||{}||",
+                                                usr.name.to_uppercase(),
+                                                if usr.is_verified { " ✓" } else { "" },
+                                                usr.id
+                                            ));
+                                            if usr.is_supporter() {
+                                                let supporter_card = format!(
+                                                    "**<{:★>st$}>**",
+                                                    "SUPPORTER",
+                                                    st = (usr.supporter_tier + 9 - 1) as usize
+                                                );
+                                                if usr.is_badstanding() {
+                                                    e.description(format!(
+                                                        "{}\n| **- BAD STANDING -** |",
+                                                        supporter_card
+                                                    ));
+                                                } else {
+                                                    e.description(supporter_card);
+                                                }
+                                            } else if usr.is_badstanding() {
+                                                e.description("| **- BAD STANDING -** |");
                                             }
-                                        } else if usr.is_badstanding() {
-                                            e.description("| **- BAD STANDING -** |");
-                                        }
-                                        if usr.is_supporter() || usr.is_admin() {
-                                            if let Some(url) = usr.banner() {
-                                                e.image(url);
+                                            if usr.is_supporter() || usr.is_admin() {
+                                                if let Some(url) = usr.banner() {
+                                                    e.image(url);
+                                                }
                                             }
-                                        }
-                                        if !usr.has_badge() {
-                                            e.field(
-                                                format!("Badges: {}", badge_emojis(usr)),
-                                                "\u{200B}",
-                                                false,
-                                            );
-                                        }
-                                        let is_rating = 0. <= usr.league.rating;
-                                        if is_rating {
-                                            let rank = usr.league.rank.as_ref();
-                                            e.field(
-                                                format!(
-                                                    "〔{} **{:.4}TR** 〕{}",
-                                                    rank_emoji(&rank.to_string()),
-                                                    usr.league.rating,
-                                                    match rank {
-                                                        Rank::Z => "".to_string(),
-                                                        _ => format!(
-                                                            "\n　Global: №{}\n　Local: №{}",
-                                                            usr.league.standing,
-                                                            usr.league.standing_local
-                                                        ),
-                                                    }
-                                                ),
-                                                match rank {
-                                                    Rank::Z => format!(
-                                                        "Probably around {}",
-                                                        rank_emoji(
-                                                            &usr.league.percentile_rank.to_string()
-                                                        )
+                                            if !usr.has_badge() {
+                                                e.field(
+                                                    format!("Badges: {}", badge_emojis(usr)),
+                                                    "\u{200B}",
+                                                    false,
+                                                );
+                                            }
+                                            let is_rating = 0. <= usr.league.rating;
+                                            if is_rating {
+                                                let rank = usr.league.rank.as_ref();
+                                                e.field(
+                                                    format!(
+                                                        "〔{} **{:.4}TR** 〕{}",
+                                                        rank_emoji(&rank.to_string()),
+                                                        usr.league.rating,
+                                                        match rank {
+                                                            Rank::Z => "".to_string(),
+                                                            _ => format!(
+                                                                "\n　Global: №{}\n　Local: №{}",
+                                                                usr.league.standing,
+                                                                usr.league.standing_local
+                                                            ),
+                                                        }
                                                     ),
-                                                    _ => create_progress_bar(usr),
-                                                },
-                                                false,
-                                            );
-                                        } else {
-                                            e.field(
-                                                format!(
-                                                    "**{}/10** rating games played",
-                                                    usr.league.play_count
-                                                ),
-                                                format!(
-                                                    "{} rating games won",
-                                                    usr.league.win_count
-                                                ),
-                                                false,
-                                            );
-                                        }
-                                        if let Some(bio) = &usr.bio {
-                                            if !bio.is_empty()
-                                                && (usr.is_supporter() || usr.is_admin())
-                                            {
-                                                e.field("About me:", cb(bio, ""), false);
+                                                    match rank {
+                                                        Rank::Z => format!(
+                                                            "Probably around {}",
+                                                            rank_emoji(
+                                                                &usr.league
+                                                                    .percentile_rank
+                                                                    .to_string()
+                                                            )
+                                                        ),
+                                                        _ => create_progress_bar(usr),
+                                                    },
+                                                    false,
+                                                );
+                                            } else {
+                                                e.field(
+                                                    format!(
+                                                        "**{}/10** rating games played",
+                                                        usr.league.play_count
+                                                    ),
+                                                    format!(
+                                                        "{} rating games won",
+                                                        usr.league.win_count
+                                                    ),
+                                                    false,
+                                                );
                                             }
-                                        }
-                                        e.field("Role:", &usr.role.to_string(), true);
-                                        if 0. <= usr.play_time {
+                                            if let Some(bio) = &usr.bio {
+                                                if !bio.is_empty()
+                                                    && (usr.is_supporter() || usr.is_admin())
+                                                {
+                                                    e.field("About me:", cb(bio, ""), false);
+                                                }
+                                            }
+                                            e.field("Role:", &usr.role.to_string(), true);
+                                            if 0. <= usr.play_time {
+                                                e.field(
+                                                    "Play time:",
+                                                    fmt_gametime(usr.play_time),
+                                                    true,
+                                                );
+                                            }
                                             e.field(
-                                                "Play time:",
-                                                fmt_gametime(usr.play_time),
+                                                "Friends:",
+                                                if let Some(fc) = usr.friend_count {
+                                                    fc
+                                                } else {
+                                                    0
+                                                },
                                                 true,
                                             );
-                                        }
-                                        e.field(
-                                            "Friends:",
-                                            if let Some(fc) = usr.friend_count {
-                                                fc
-                                            } else {
-                                                0
-                                            },
-                                            true,
-                                        );
-                                        if is_rating {
-                                            e.fields(vec![
-                                                (
-                                                    "\u{200B}",
-                                                    format!(
-                                                        "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
-                                                        usr.id,
+                                            if is_rating {
+                                                e.fields(vec![
+                                                    (
+                                                        "\u{200B}",
+                                                        format!(
+                                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
+                                                            usr.id,
+                                                        ),
+                                                        false,
                                                     ),
-                                                    false,
-                                                ),
-                                                ("Glicko:", format!("{:.3}±{:.3}", usr.league.glicko.unwrap(), usr.league.rd.unwrap()), true),
-                                                (
-                                                    "Play count:",
-                                                    usr.league.play_count.separate_with_commas(),
-                                                    true,
-                                                ),
-                                                (
-                                                    "Wins:",
-                                                    format!(
-                                                        "{} ({:.3}%)",
-                                                        usr.league.win_count.separate_with_commas(),
-                                                        (usr.league.win_count as f64
-                                                            / usr.league.play_count
-                                                                as f64
-                                                            * 100.)
+                                                    ("Glicko:", format!("{:.3}±{:.3}", usr.league.glicko.unwrap(), usr.league.rd.unwrap()), true),
+                                                    (
+                                                        "Play count:",
+                                                        usr.league.play_count.separate_with_commas(),
+                                                        true,
                                                     ),
-                                                    true,
-                                                ),
-                                                ("APM:", usr.league.apm.unwrap().to_string(), true),
-                                                ("PPS:", usr.league.pps.unwrap().to_string(), true),
-                                                ("VS:", usr.league.vs.unwrap().to_string(), true),
-                                            ]);
-                                        }
-                                        if let Some(fl) = record.records.forty_lines.record {
-                                            e.fields(vec![
-                                                (
-                                                    "\u{200B}",
-                                                    format!(
-                                                        "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
-                                                        fl.record_url(),
-                                                        fl.recorded_at(),
-                                                        if let Some(r) = record.records.forty_lines.rank {
-                                                            format!(" | №{}", r)
-                                                        } else {
-                                                            "".to_string()
-                                                        },
+                                                    (
+                                                        "Wins:",
+                                                        format!(
+                                                            "{} ({:.3}%)",
+                                                            usr.league.win_count.separate_with_commas(),
+                                                            (usr.league.win_count as f64
+                                                                / usr.league.play_count
+                                                                    as f64
+                                                                * 100.)
+                                                        ),
+                                                        true,
                                                     ),
-                                                    false,
-                                                ),
-                                                ("Time:", fmt_forty_lines_time(fl.endcontext.final_time.unwrap()), true),
-                                                ("PPS:", round_mid(fl.pps(), 2).to_string(), true),
-                                                ("Finesse:", fmt_finesse(fl), true),
-                                            ]);
-                                        }
-                                        if let Some(bltz) = record.records.blitz.record {
-                                            e.fields(vec![
-                                                (
-                                                    "\u{200B}",
-                                                    format!(
-                                                        "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
-                                                        bltz.record_url(),
-                                                        bltz.recorded_at(),
-                                                        if let Some(r) = record.records.blitz.rank {
-                                                            format!(" | №{}", r)
-                                                        } else {
-                                                            "".to_string()
-                                                        },
-                                                    ),
-                                                    false,
-                                                ),
-                                                ("Score:", bltz.endcontext.score.unwrap().separate_with_commas(), true),
-                                                ("PPS:", round_mid(bltz.pps(), 2).to_string(), true),
-                                                ("Finesse:", fmt_finesse(bltz), true),
-                                            ]);
-                                        }
-                                        e.field(
-                                            "\u{200B}",
-                                            format!("{} | <t:{}:R>", latency(), res.cached_at()),
-                                            false,
-                                        );
-                                        e.timestamp(Utc::now().to_rfc3339());
-                                        e.author(|a| {
-                                            if let Some(f) = usr.national_flag_url() {
-                                                a.icon_url(f);
+                                                    ("APM:", usr.league.apm.unwrap().to_string(), true),
+                                                    ("PPS:", usr.league.pps.unwrap().to_string(), true),
+                                                    ("VS:", usr.league.vs.unwrap().to_string(), true),
+                                                ]);
                                             }
-                                            a.name(&format!(
-                                                "Lv.{} {} {}xp",
-                                                usr.level(),
-                                                level_symbol(usr.level()),
-                                                usr.xp.separate_with_commas()
-                                            ))
-                                        });
-                                        e.color(rank_col(
-                                            &usr.league.rank,
-                                            &usr.league.percentile_rank,
-                                        ));
-                                        e.thumbnail(usr.face());
-                                        e.set_footer(ftr());
-                                        Interactions::Some(vec![InteractMode::Embed(e)])
+                                            if let Some(fl) = record.records.forty_lines.record {
+                                                e.fields(vec![
+                                                    (
+                                                        "\u{200B}",
+                                                        format!(
+                                                            "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
+                                                            fl.record_url(),
+                                                            fl.recorded_at(),
+                                                            if let Some(r) = record.records.forty_lines.rank {
+                                                                format!(" | №{}", r)
+                                                            } else {
+                                                                "".to_string()
+                                                            },
+                                                        ),
+                                                        false,
+                                                    ),
+                                                    ("Time:", fmt_forty_lines_time(fl.endcontext.final_time.unwrap()), true),
+                                                    ("PPS:", round_mid(fl.pps(), 2).to_string(), true),
+                                                    ("Finesse:", fmt_finesse(fl), true),
+                                                ]);
+                                            }
+                                            if let Some(bltz) = record.records.blitz.record {
+                                                e.fields(vec![
+                                                    (
+                                                        "\u{200B}",
+                                                        format!(
+                                                            "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
+                                                            bltz.record_url(),
+                                                            bltz.recorded_at(),
+                                                            if let Some(r) = record.records.blitz.rank {
+                                                                format!(" | №{}", r)
+                                                            } else {
+                                                                "".to_string()
+                                                            },
+                                                        ),
+                                                        false,
+                                                    ),
+                                                    ("Score:", bltz.endcontext.score.unwrap().separate_with_commas(), true),
+                                                    ("PPS:", round_mid(bltz.pps(), 2).to_string(), true),
+                                                    ("Finesse:", fmt_finesse(bltz), true),
+                                                ]);
+                                            }
+                                            e.field(
+                                                "\u{200B}",
+                                                format!(
+                                                    "{} | <t:{}:R>",
+                                                    latency(),
+                                                    res.cached_at()
+                                                ),
+                                                false,
+                                            );
+                                            e.timestamp(Utc::now().to_rfc3339());
+                                            e.author(|a| {
+                                                if let Some(f) = usr.national_flag_url() {
+                                                    a.icon_url(f);
+                                                }
+                                                a.name(&format!(
+                                                    "Lv.{} {} {}xp",
+                                                    usr.level(),
+                                                    level_symbol(usr.level()),
+                                                    usr.xp.separate_with_commas()
+                                                ))
+                                            });
+                                            e.color(rank_col(
+                                                &usr.league.rank,
+                                                &usr.league.percentile_rank,
+                                            ));
+                                            e.thumbnail(usr.face());
+                                            e.set_footer(ftr());
+                                            Interactions::Some(vec![InteractMode::Embed(e)])
+                                        } else {
+                                            Interactions::Some(vec![InteractMode::Embed(
+                                                CreateEmbed::default()
+                                                    .title(format!(
+                                                        "{}  ||{}||",
+                                                        usr.name.to_uppercase(),
+                                                        usr.id
+                                                    ))
+                                                    .description("")
+                                                    .thumbnail(
+                                                        "https://tetr.io/res/avatar-banned.png",
+                                                    )
+                                                    .image("https://ch.tetr.io/res/cute.png")
+                                                    .field("| **BANNED** |", "\u{200B}", false)
+                                                    .footer(|f| {
+                                                        f.text(format!(
+                                                            "{}\n/tetr-user{}",
+                                                            latency(),
+                                                            if let Some(m) =
+                                                                interact.member.as_ref()
+                                                            {
+                                                                format!(
+                                                                    ", Called by {}",
+                                                                    m.user.name
+                                                                )
+                                                            } else {
+                                                                String::new()
+                                                            }
+                                                        ))
+                                                    })
+                                                    .timestamp(Utc::now().to_rfc3339())
+                                                    .color(0xf81c1c)
+                                                    .to_owned(),
+                                            )])
+                                        }
                                     } else {
                                         Interactions::Some(vec![InteractMode::Embed(
                                             CreateEmbed::default()
-                                                .title(format!(
-                                                    "{}  ||{}||",
-                                                    usr.name.to_uppercase(),
-                                                    usr.id
+                                                .title(user.to_uppercase())
+                                                .description(format!(
+                                                    "```\n{}\n```\n{}",
+                                                    res.error.unwrap(),
+                                                    latency()
                                                 ))
-                                                .description("")
-                                                .thumbnail("https://tetr.io/res/avatar-banned.png")
-                                                .image("https://ch.tetr.io/res/cute.png")
-                                                .field("| **BANNED** |", "\u{200B}", false)
-                                                .footer(|f| {
-                                                    f.text(format!(
-                                                        "{}\n/tetr-user{}",
-                                                        latency(),
-                                                        if let Some(m) = interact.member.as_ref() {
-                                                            format!(", Called by {}", m.user.name)
-                                                        } else {
-                                                            String::new()
-                                                        }
-                                                    ))
-                                                })
+                                                .set_footer(ftr())
                                                 .timestamp(Utc::now().to_rfc3339())
-                                                .color(0xf81c1c)
+                                                .color(MAIN_COL)
                                                 .to_owned(),
                                         )])
                                     }
+                                }
+                                Err(why) => Interactions::Some(vec![InteractMode::Message(
+                                    format!("Error: {}", why.to_string()),
+                                )]),
+                            }
+                        } else {
+                            let before = Instant::now();
+                            let after = Instant::now();
+                            let latency = format!("latency: {}ms", (after - before).as_millis());
+                            Interactions::Some(vec![InteractMode::Embed(
+                                CreateEmbed::default()
+                                    .title("SYABETAROU ✓ ||77a02950-bde0447f9851fd||")
+                                    .description("**<SUPPORTER>**")
+                                    .fields(vec![
+                                        (
+                                            "Badges: <:100player:992097864081735730><:allclear:992096168664383622><:20tsd:992097227260567553><:secretgrade:992079389611278477><:leaderboard1:992095621018308759>| More 18 badges",
+                                            "\u{200B}",
+                                            false,
+                                        ),
+                                        (
+                                            "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
+                                            "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
+                                            false,
+                                        ),
+                                        ("About me:", &cb("まいど。", ""), false),
+                                        ("Role:", "User", true),
+                                        (
+                                            "Play time:",
+                                            "2000 years",
+                                            true,
+                                        ),
+                                        (
+                                            "Friends:",
+                                            "0",
+                                            true,
+                                        ),
+                                        (
+                                            "\u{200B}",
+                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_77a02950-bde0447f9851fd)",
+                                            false,
+                                        ),
+                                        ("Glicko:", "9999.999±60.00", true),
+                                        (
+                                            "Play count:",
+                                            "999,999",
+                                            true,
+                                        ),
+                                        (
+                                            "Wins:",
+                                            "999,999 (100.000%)",
+                                            true,
+                                        ),
+                                        ("APM:", "1003.84", true),
+                                        ("PPS:", "84.40", true),
+                                        ("VS:", "6301.33", true),
+                                        (
+                                            "\u{200B}",
+                                            &format!(
+                                                "{} | cached at: <t:{}:R>",
+                                                latency,
+                                                Utc::now().timestamp()
+                                            ),
+                                            false,
+                                        )
+                                    ])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .author(|a| {
+                                        a.icon_url("https://tetr.io/res/flags/jp.png");
+                                        a.name("Lv.9999 ⬢ 8,401,9463,557xp")
+                                    })
+                                    .color(0xeca5ff)
+                                    .thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp")
+                                    .to_owned()
+                            )])
+                        }
+                    }
+
+                    // Convert the string to 怪レい日本语(correct Japanese) | 1021847038545100810
+                    "cjp" => {
+                        let dict = dict::cjp();
+                        let original = args
+                            .get(0)
+                            .unwrap()
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_str()
+                            .unwrap()
+                            .to_string();
+                        let correct = <String as AsRef<str>>::as_ref(&original).cjp();
+                        if 1016 < original.chars().count() || 1016 < correct.chars().count() {
+                            Interactions::Some(vec![InteractMode::Message(dict_lookup(
+                                &dict,
+                                "err.strTooLong",
+                            ))])
+                        } else {
+                            Interactions::Some(vec![InteractMode::Embed(
+                                CreateEmbed::default()
+                                    .title(dict_lookup(&dict, "title"))
+                                    .fields([
+                                        (dict_lookup(&dict, "input"), cb(original, ""), false),
+                                        (dict_lookup(&dict, "output"), cb(correct, ""), false),
+                                    ])
+                                    .set_footer(ftr())
+                                    .timestamp(Utc::now().to_rfc3339())
+                                    .color(MAIN_COL)
+                                    .to_owned(),
+                            )])
+                        }
+                    }
+
+                    // Create a image with Japanese Stable diffusion | 1021893935204925550
+                    "jsd" => {
+                        let dict = dict::jsd();
+
+                        // Say "Please wait..."
+                        if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response.interaction_response_data(|m| {
+                                    m.content(dict_lookup(&dict, "plzWait"))
+                                })
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
+                        let _typing = Typing::start(
+                            ctx.http.clone(),
+                            interact.channel_id.as_u64().to_owned(),
+                        );
+
+                        let subject = &args
+                            .get(0)
+                            .unwrap()
+                            .value
+                            .as_ref()
+                            .unwrap()
+                            .as_str()
+                            .unwrap()
+                            .to_string();
+                        let resource = JSDRequest {
+                            prompts: subject.to_string(),
+                            scale: 10.,
+                        };
+                        let client = reqwest::Client::new()
+                            .post("https://api.rinna.co.jp/models/tti/v2")
+                            .json(&resource);
+                        match client.send().await {
+                            Ok(res) => {
+                                // Image preparation
+                                if let Ok(body) = res.json::<JSDResponse>().await {
+                                    let img = base64::decode(
+                                        body.image.replace("data:image/png;base64,", "").as_bytes(),
+                                    )
+                                    .expect("Failed to decode");
+
+                                    // Delete the message "Please wait..."
+                                    if let Err(why) = interact
+                                        .delete_original_interaction_response(&ctx.http)
+                                        .await
+                                    {
+                                        println!("Failed to delete the message: {}", why);
+                                    };
+
+                                    // Send the image
+                                    if let Err(why) = interact
+                                        .channel_id
+                                        .send_files(
+                                            &ctx.http,
+                                            vec![AttachmentType::Bytes {
+                                                data: img.into(),
+                                                filename: "jsd.png".into(),
+                                            }],
+                                            |m| {
+                                                m.content(format!(
+                                                    "{}: {} |  {}{}{}{}",
+                                                    dict_lookup(&dict, "subject"),
+                                                    subject,
+                                                    dict_lookup(&dict, "calledBy.before"),
+                                                    interact.user.name,
+                                                    dict_lookup(&dict, "calledBy.after"),
+                                                    if body.is_sensitive {
+                                                        dict_lookup(&dict, "sensitiveFrag")
+                                                    } else {
+                                                        String::new()
+                                                    },
+                                                ))
+                                            },
+                                        )
+                                        .await
+                                    {
+                                        println!("Failed to send the image: {}", why);
+                                    }
+
+                                    Interactions::None
                                 } else {
-                                    Interactions::Some(vec![InteractMode::Embed(
-                                        CreateEmbed::default()
-                                            .title(user.to_uppercase())
-                                            .description(format!(
-                                                "```\n{}\n```\n{}",
-                                                res.error.unwrap(),
-                                                latency()
-                                            ))
-                                            .set_footer(ftr())
-                                            .timestamp(Utc::now().to_rfc3339())
-                                            .color(MAIN_COL)
-                                            .to_owned(),
-                                    )])
+                                    if let Err(why) = interact
+                                        .edit_original_interaction_response(&ctx.http, |m| {
+                                            m.content(dict_lookup(&dict, "err.plzRetry"))
+                                        })
+                                        .await
+                                    {
+                                        println!("Failed to edit message: {}", why);
+                                    };
+                                    Interactions::None
                                 }
                             }
-                            Err(why) => Interactions::Some(vec![InteractMode::Message(format!(
-                                "Error: {}",
-                                why.to_string()
-                            ))]),
-                        }
-                    } else {
-                        let before = Instant::now();
-                        let after = Instant::now();
-                        let latency = format!("latency: {}ms", (after - before).as_millis());
-                        Interactions::Some(vec![InteractMode::Embed(
-                            CreateEmbed::default()
-                                .title("SYABETAROU ✓ ||77a02950-bde0447f9851fd||")
-                                .description("**<SUPPORTER>**")
-                                .fields(vec![
-                                    (
-                                        "Badges: <:100player:992097864081735730><:allclear:992096168664383622><:20tsd:992097227260567553><:secretgrade:992079389611278477><:leaderboard1:992095621018308759>| More 18 badges",
-                                        "\u{200B}",
-                                        false,
-                                    ),
-                                    (
-                                        "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
-                                        "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
-                                        false,
-                                    ),
-                                    ("About me:", &cb("まいど。", ""), false),
-                                    ("Role:", "User", true),
-                                    (
-                                        "Play time:",
-                                        "2000 years",
-                                        true,
-                                    ),
-                                    (
-                                        "Friends:",
-                                        "0",
-                                        true,
-                                    ),
-                                    (
-                                        "\u{200B}",
-                                        "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_77a02950-bde0447f9851fd)",
-                                        false,
-                                    ),
-                                    ("Glicko:", "9999.999±60.00", true),
-                                    (
-                                        "Play count:",
-                                        "999,999",
-                                        true,
-                                    ),
-                                    (
-                                        "Wins:",
-                                        "999,999 (100.000%)",
-                                        true,
-                                    ),
-                                    ("APM:", "1003.84", true),
-                                    ("PPS:", "84.40", true),
-                                    ("VS:", "6301.33", true),
-                                    (
-                                        "\u{200B}",
-                                        &format!(
-                                            "{} | cached at: <t:{}:R>",
-                                            latency,
-                                            Utc::now().timestamp()
-                                        ),
-                                        false,
-                                    )
-                                ])
-                                .set_footer(ftr())
-                                .timestamp(Utc::now().to_rfc3339())
-                                .author(|a| {
-                                    a.icon_url("https://tetr.io/res/flags/jp.png");
-                                    a.name("Lv.9999 ⬢ 8,401,9463,557xp")
-                                })
-                                .color(0xeca5ff)
-                                .thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp")
-                                .to_owned()
-                        )])
-                    }
-                }
-
-                // Convert the string to 怪レい日本语(correct Japanese) | 1021847038545100810
-                "cjp" => {
-                    let dict = dict::cjp();
-                    let original = args
-                        .get(0)
-                        .unwrap()
-                        .value
-                        .as_ref()
-                        .unwrap()
-                        .as_str()
-                        .unwrap()
-                        .to_string();
-                    let correct = <String as AsRef<str>>::as_ref(&original).cjp();
-                    if 1016 < original.chars().count() || 1016 < correct.chars().count() {
-                        Interactions::Some(vec![InteractMode::Message(dict_lookup(
-                            &dict,
-                            "err.strTooLong",
-                        ))])
-                    } else {
-                        Interactions::Some(vec![InteractMode::Embed(
-                            CreateEmbed::default()
-                                .title(dict_lookup(&dict, "title"))
-                                .fields([
-                                    (dict_lookup(&dict, "input"), cb(original, ""), false),
-                                    (dict_lookup(&dict, "output"), cb(correct, ""), false),
-                                ])
-                                .set_footer(ftr())
-                                .timestamp(Utc::now().to_rfc3339())
-                                .color(MAIN_COL)
-                                .to_owned(),
-                        )])
-                    }
-                }
-
-                // Create a image with Japanese Stable diffusion | 1021893935204925550
-                "jsd" => {
-                    let dict = dict::jsd();
-
-                    // Say "Please wait..."
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response.interaction_response_data(|m| {
-                                m.content(dict_lookup(&dict, "plzWait"))
-                            })
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
-                    }
-                    let _typing =
-                        Typing::start(ctx.http.clone(), interact.channel_id.as_u64().to_owned());
-
-                    let subject = &args
-                        .get(0)
-                        .unwrap()
-                        .value
-                        .as_ref()
-                        .unwrap()
-                        .as_str()
-                        .unwrap()
-                        .to_string();
-                    let resource = JSDRequest {
-                        prompts: subject.to_string(),
-                        scale: 10.,
-                    };
-                    let client = reqwest::Client::new()
-                        .post("https://api.rinna.co.jp/models/tti/v2")
-                        .json(&resource);
-                    match client.send().await {
-                        Ok(res) => {
-                            // Image preparation
-                            if let Ok(body) = res.json::<JSDResponse>().await {
-                                let img = base64::decode(
-                                    body.image.replace("data:image/png;base64,", "").as_bytes(),
-                                )
-                                .expect("Failed to decode");
-
-                                // Delete the message "Please wait..."
-                                if let Err(why) = interact
-                                    .delete_original_interaction_response(&ctx.http)
-                                    .await
-                                {
-                                    println!("Failed to delete the message: {}", why);
-                                };
-
-                                // Send the image
-                                if let Err(why) = interact
-                                    .channel_id
-                                    .send_files(
-                                        &ctx.http,
-                                        vec![AttachmentType::Bytes {
-                                            data: img.into(),
-                                            filename: "jsd.png".into(),
-                                        }],
-                                        |m| {
-                                            m.content(format!(
-                                                "{}: {} |  {}{}{}{}",
-                                                dict_lookup(&dict, "subject"),
-                                                subject,
-                                                dict_lookup(&dict, "calledBy.before"),
-                                                interact.user.name,
-                                                dict_lookup(&dict, "calledBy.after"),
-                                                if body.is_sensitive {
-                                                    dict_lookup(&dict, "sensitiveFrag")
-                                                } else {
-                                                    String::new()
-                                                },
-                                            ))
-                                        },
-                                    )
-                                    .await
-                                {
-                                    println!("Failed to send the image: {}", why);
-                                }
-
-                                Interactions::None
-                            } else {
+                            Err(why) => {
                                 if let Err(why) = interact
                                     .edit_original_interaction_response(&ctx.http, |m| {
-                                        m.content(dict_lookup(&dict, "err.plzRetry"))
+                                        m.content(cb(format!("Error: {}", why), ""))
                                     })
                                     .await
                                 {
@@ -1021,87 +1166,89 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 Interactions::None
                             }
                         }
-                        Err(why) => {
-                            if let Err(why) = interact
-                                .edit_original_interaction_response(&ctx.http, |m| {
-                                    m.content(cb(format!("Error: {}", why), ""))
-                                })
-                                .await
-                            {
-                                println!("Failed to edit message: {}", why);
-                            };
-                            Interactions::None
-                        }
                     }
-                }
 
-                _ => Interactions::Some(vec![InteractMode::Message(
-                    "\
+                    _ => Interactions::Some(vec![InteractMode::Message(
+                        "\
                     not implemented yet :<\n\
                     <@!724976600873041940><@!724976600873041940>\
                     <@!724976600873041940><@!724976600873041940>\
                     <@!724976600873041940><@!724976600873041940>\
                     "
-                    .to_string(),
-                )]),
-            };
+                        .to_string(),
+                    )]),
+                };
 
-            match content {
-                Interactions::Some(im) => {
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|m| {
-                                    let mut action_row = CreateActionRow::default();
-                                    for i in im {
-                                        match i {
-                                            InteractMode::Message(c) => {
-                                                m.content(c);
-                                            }
-                                            InteractMode::Attach(a) => {
-                                                m.add_file(a);
-                                            }
-                                            InteractMode::Embed(e) => {
-                                                m.add_embed(e);
-                                            }
-                                            InteractMode::Button(b) => {
-                                                action_row.add_button(b);
+                match content {
+                    Interactions::Some(im) => {
+                        if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response
+                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .interaction_response_data(|m| {
+                                        let mut action_row = CreateActionRow::default();
+                                        for i in im {
+                                            match i {
+                                                InteractMode::Message(c) => {
+                                                    m.content(c);
+                                                }
+                                                InteractMode::Attach(a) => {
+                                                    m.add_file(a);
+                                                }
+                                                InteractMode::Embed(e) => {
+                                                    m.add_embed(e);
+                                                }
+                                                InteractMode::Button(b) => {
+                                                    action_row.add_button(b);
+                                                }
                                             }
                                         }
-                                    }
-                                    if action_row.0.is_empty() {
-                                        m
-                                    } else {
-                                        m.set_components(
-                                            CreateComponents::default()
-                                                .set_action_row(action_row)
-                                                .to_owned(),
-                                        )
-                                    }
-                                })
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
+                                        if action_row.0.is_empty() {
+                                            m
+                                        } else {
+                                            m.set_components(
+                                                CreateComponents::default()
+                                                    .set_action_row(action_row)
+                                                    .to_owned(),
+                                            )
+                                        }
+                                    })
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
                     }
-                }
-                Interactions::Dev => {
-                    if let Err(why) = interact
-                        .create_interaction_response(&ctx.http, |response| {
-                            response
-                                .kind(InteractionResponseType::ChannelMessageWithSource)
-                                .interaction_response_data(|message| {
-                                    message.content("Not implemented yet :<")
-                                })
-                        })
-                        .await
-                    {
-                        println!("Cannot respond to slash command: {}", why);
+                    Interactions::Dev => {
+                        if let Err(why) = interact
+                            .create_interaction_response(&ctx.http, |response| {
+                                response
+                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                    .interaction_response_data(|message| {
+                                        message.content("Not implemented yet :<")
+                                    })
+                            })
+                            .await
+                        {
+                            println!("Cannot respond to slash command: {}", why);
+                        }
                     }
+                    Interactions::None => {}
                 }
-                Interactions::None => {}
             }
+            #[allow(clippy::single_match)]
+            Interaction::MessageComponent(msg_cmp) => match msg_cmp.data.component_type {
+                ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
+                    "deleteUnwrappedMsg" => {
+                        if let Err(why) = msg_cmp.message.delete(&ctx.http).await {
+                            println!("Failed to delete the message: {}", why);
+                        }
+                    }
+                    _ => (),
+                },
+                _ => (),
+            },
+            _ => (),
         }
     }
 
