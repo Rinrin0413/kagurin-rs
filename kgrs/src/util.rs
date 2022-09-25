@@ -53,7 +53,7 @@ pub mod fmt {
     
     use std::fmt::Display;
 
-    /// Formats to codeblocks.
+    /// Formats to a codeblock.
     ///
     /// We can also specify language.
     ///
@@ -67,5 +67,16 @@ pub mod fmt {
     /// ```
     pub fn cb<T: Display>(content: T, lang: &str) -> String {
         format!("```{}\n{}\n```", lang, content)
+    }
+    
+    /// Formats to inlined monospaced text.
+    /// 
+    /// # Examples:
+    /// 
+    /// ```
+    /// assert_eq!(mn("Hello, World!"), "`Hello, World!`");
+    /// ```
+    pub fn mn<T: Display>(content: T) -> String {
+        format!("`{}`", content)
     }
 }
