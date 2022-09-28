@@ -253,6 +253,27 @@ pub mod dict {
             String::new(), 
             " によって実行".to_string()
         ));
+        d.insert("btn.retry".to_string(), (
+            "Retry".to_string(), 
+            "再試行".to_string()
+        ));
+        d.insert("retrying".to_string(), (
+            "Retrying now...".to_string(), 
+            "再試行中...".to_string()
+        ));
+        d.insert("imageBrokenFrag".to_string(), (
+            "\n* This image may be corrupted.".to_string(), 
+            "\n※ この画像は破損している可能性があります。".to_string()
+        ));
+        d
+    }
+
+    pub fn jsd_retry() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("retrying".to_string(), (
+            "Retrying...\n* You will be said this interaction failed, but no problem".to_string(), 
+            "お待ち下さい...\n※「インタラクションに失敗しました」と表示されますが 問題はありません".to_string()
+        ));
         d
     }
 }

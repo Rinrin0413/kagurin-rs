@@ -2,7 +2,7 @@ use chrono::{Duration, Utc};
 use cjp::AsCJp;
 use colored::*;
 use kgrs::{
-    jsd::*,
+    jsd::{self, jsd_interact_to_discord},
     response_interactions::{InteractMode, Interactions},
     tetr::*,
     //playground
@@ -19,7 +19,7 @@ use serenity::{
             component::{ButtonStyle, ComponentType},
             interaction::{Interaction, InteractionResponseType},
         },
-        channel::{AttachmentType, Message},
+        channel::Message,
         gateway::{Activity, Ready},
         prelude::{ChannelId, GuildId, MessageType},
     },
@@ -1073,12 +1073,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         {
                             println!("Cannot respond to slash command: {}", why);
                         }
-                        let _typing = Typing::start(
-                            ctx.http.clone(),
-                            interact.channel_id.as_u64().to_owned(),
-                        );
 
-                        let subject = &args
+                        let subject = args
                             .get(0)
                             .unwrap()
                             .value
@@ -1087,85 +1083,16 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .as_str()
                             .unwrap()
                             .to_string();
-                        let resource = JSDRequest {
-                            prompts: subject.to_string(),
-                            scale: 10.,
-                        };
-                        let client = reqwest::Client::new()
-                            .post("https://api.rinna.co.jp/models/tti/v2")
-                            .json(&resource);
-                        match client.send().await {
-                            Ok(res) => {
-                                // Image preparation
-                                if let Ok(body) = res.json::<JSDResponse>().await {
-                                    let img = base64::decode(
-                                        body.image.replace("data:image/png;base64,", "").as_bytes(),
-                                    )
-                                    .expect("Failed to decode");
 
-                                    // Delete the message "Please wait..."
-                                    if let Err(why) = interact
-                                        .delete_original_interaction_response(&ctx.http)
-                                        .await
-                                    {
-                                        println!("Failed to delete the message: {}", why);
-                                    };
+                        jsd_interact_to_discord(
+                            &ctx,
+                            &jsd::Interaction::AppCmd(&interact),
+                            subject,
+                            dict,
+                        )
+                        .await;
 
-                                    // Send the image
-                                    if let Err(why) = interact
-                                        .channel_id
-                                        .send_files(
-                                            &ctx.http,
-                                            vec![AttachmentType::Bytes {
-                                                data: img.into(),
-                                                filename: "jsd.png".into(),
-                                            }],
-                                            |m| {
-                                                m.content(format!(
-                                                    "{}: {} |  {}{}{}{}",
-                                                    dict_lookup(&dict, "subject"),
-                                                    subject,
-                                                    dict_lookup(&dict, "calledBy.before"),
-                                                    interact.user.name,
-                                                    dict_lookup(&dict, "calledBy.after"),
-                                                    if body.is_sensitive {
-                                                        dict_lookup(&dict, "sensitiveFrag")
-                                                    } else {
-                                                        String::new()
-                                                    },
-                                                ))
-                                            },
-                                        )
-                                        .await
-                                    {
-                                        println!("Failed to send the image: {}", why);
-                                    }
-
-                                    Interactions::None
-                                } else {
-                                    if let Err(why) = interact
-                                        .edit_original_interaction_response(&ctx.http, |m| {
-                                            m.content(dict_lookup(&dict, "err.plzRetry"))
-                                        })
-                                        .await
-                                    {
-                                        println!("Failed to edit message: {}", why);
-                                    };
-                                    Interactions::None
-                                }
-                            }
-                            Err(why) => {
-                                if let Err(why) = interact
-                                    .edit_original_interaction_response(&ctx.http, |m| {
-                                        m.content(cb(format!("Error: {}", why), ""))
-                                    })
-                                    .await
-                                {
-                                    println!("Failed to edit message: {}", why);
-                                };
-                                Interactions::None
-                            }
-                        }
+                        Interactions::None
                     }
 
                     _ => Interactions::Some(vec![InteractMode::Message(
@@ -1237,17 +1164,72 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 }
             }
             #[allow(clippy::single_match)]
-            Interaction::MessageComponent(msg_cmp) => match msg_cmp.data.component_type {
-                ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
-                    "deleteUnwrappedMsg" => {
-                        if let Err(why) = msg_cmp.message.delete(&ctx.http).await {
-                            println!("Failed to delete the message: {}", why);
-                        }
+            Interaction::MessageComponent(msg_cmp) => {
+                let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
+                    let s = if let Some(s) = dict.get(key) {
+                        s
+                    } else {
+                        panic!("Invalid dict key: {}", key);
+                    };
+                    if msg_cmp.locale == "ja" {
+                        s.1.clone()
+                    } else {
+                        s.0.clone()
                     }
+                };
+                match msg_cmp.data.component_type {
+                    ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
+                        "deleteUnwrappedMsg" => {
+                            if let Err(why) = msg_cmp.message.delete(&ctx.http).await {
+                                println!("Failed to delete the message: {}", why);
+                            }
+                        }
+                        "jsdRetry" => {
+                            let dict = dict::jsd_retry();
+                            let cmd_dict = dict::jsd();
+
+                            if let Err(why) = msg_cmp
+                                .clone()
+                                .message
+                                .edit(&ctx.http, |m| {
+                                    m.content(dict_lookup(&dict, "retrying")).components(|c| {
+                                        c.create_action_row(|a| {
+                                            a.create_button(|b| {
+                                                b.label(dict_lookup(&cmd_dict, "btn.retry"))
+                                                    .style(ButtonStyle::Primary)
+                                                    .custom_id("DISABLED")
+                                                    .disabled(true)
+                                            })
+                                        })
+                                    })
+                                })
+                                .await
+                            {
+                                println!("Failed to delete the message: {}", why);
+                            }
+
+                            let subject = regex::Regex::new(r": (.*) \|")
+                                .unwrap()
+                                .captures(&msg_cmp.message.content.replace('\n', "\\n"))
+                                .unwrap()
+                                .get(1)
+                                .unwrap()
+                                .as_str()
+                                .to_string();
+
+                            jsd_interact_to_discord(
+                                &ctx,
+                                &jsd::Interaction::MsgCmp(msg_cmp),
+                                subject,
+                                cmd_dict,
+                            )
+                            .await;
+                        }
+                        _ => (),
+                    },
                     _ => (),
-                },
-                _ => (),
-            },
+                }
+            }
             _ => (),
         }
     }
