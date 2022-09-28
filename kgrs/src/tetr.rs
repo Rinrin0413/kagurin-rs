@@ -1,9 +1,7 @@
 //! Utilities for [TETRA CHANNEL API](https://tetr.io/about/api/)
 
 use crate::util::round_mid;
-use tetr_ch::{
-    model::{record::SinglePlayRecord, user::User, league::Rank},
-};
+use tetr_ch::model::{league::Rank, record::SinglePlayRecord, user::User};
 
 pub fn badge_emojis(user: &User) -> String {
     let mut result = String::new();
@@ -149,7 +147,8 @@ pub fn fmt_finesse(record: SinglePlayRecord) -> String {
         "{}F ({:.2}%)",
         finesse.faults.unwrap(),
         round_mid(
-            finesse.perfect_pieces.unwrap() as f64 / record.endcontext.pieces_placed.unwrap() as f64,
+            finesse.perfect_pieces.unwrap() as f64
+                / record.endcontext.pieces_placed.unwrap() as f64,
             4
         ) * 100.
     )

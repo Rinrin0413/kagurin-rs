@@ -1,4 +1,7 @@
-use serenity::{model::channel::AttachmentType, builder::{CreateButton, CreateEmbed}};
+use serenity::{
+    builder::{CreateButton, CreateEmbed},
+    model::channel::AttachmentType,
+};
 
 /// Some interactions.
 pub enum Interactions<'a> {

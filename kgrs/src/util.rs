@@ -50,7 +50,7 @@ pub fn get_uptime() -> String {
 
 pub mod fmt {
     //! This is a module for formatting texts.
-    
+
     use std::fmt::Display;
 
     /// Formats to a codeblock.
@@ -68,11 +68,11 @@ pub mod fmt {
     pub fn cb<T: Display>(content: T, lang: &str) -> String {
         format!("```{}\n{}\n```", lang, content)
     }
-    
+
     /// Formats to inlined monospaced text.
-    /// 
+    ///
     /// # Examples:
-    /// 
+    ///
     /// ```
     /// assert_eq!(mn("Hello, World!"), "`Hello, World!`");
     /// ```
