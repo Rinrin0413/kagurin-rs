@@ -89,8 +89,8 @@ pub mod dict {
             "娯楽系コマンド一覧".to_string()
         ));
         d.insert("jsd".to_string(), (
-            "Create a image with Japanese Stable diffusion.".to_string(), 
-            "Japanese Stable diffusion で画像を作成します。".to_string()
+            "Create a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion).".to_string(), 
+            "[Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion) で画像を作成します。".to_string()
         ));
         d
     }

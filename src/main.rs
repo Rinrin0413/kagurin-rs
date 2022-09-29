@@ -719,7 +719,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     e.image(url);
                                                 }
                                             }
-                                            if !usr.has_badge() {
+                                            if usr.has_badge() {
+                                                dbg!(&usr.badges); // DEBUG
                                                 e.field(
                                                     format!("Badges: {}", badge_emojis(usr)),
                                                     "\u{200B}",
