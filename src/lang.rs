@@ -199,10 +199,7 @@ pub mod dict {
 
     pub fn exit() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();
-        d.insert("unauthorized".to_string(), (
-            "Sorry, you cannot call this command:(".to_string(), 
-            "すみません、このコマンドはあなたには使用できません ; ;".to_string()
-        ));
+        d.insert("unauthorized".to_string(), unauth());
         d
     }
 
@@ -275,5 +272,27 @@ pub mod dict {
             "お待ち下さい...\n※「インタラクションに失敗しました」と表示されますが 問題はありません".to_string()
         ));
         d
+    }
+
+    pub fn shutdown() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("unauthorized".to_string(), unauth());
+        d
+    }
+
+    pub fn btml() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("msg".to_string(), (
+            "The message could not be sent due to the character limit.".to_string(), 
+            "文字数制限によりメッセージを送信できませんでした。".to_string()
+        ));
+        d
+    }
+
+    fn unauth() -> (String, String) {
+        (
+            "Sorry, you cannot call this command:(".to_string(), 
+            "申し訳Onenote, このコマンドはあなたには使用できません(´・ω・`)".to_string()
+        )
     }
 }

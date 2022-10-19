@@ -66,12 +66,12 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         )
                         .await
                     {
-                        println!("Error sending message: {:?}", why);
+                        eprintln!("Error sending message: {:?}", why);
                     }
                 }
             }
             Err(why) => {
-                println!("Failed to get mentions: {}", why);
+                eprintln!("Failed to get mentions: {}", why);
             }
         }
 
@@ -213,26 +213,84 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     }
                 };
 
+                let mut is_ephemeral = false;
+                let locale = &interact.locale;
+
                 let content = match interact.data.name.as_str() {
-                    // exit | 1019672344643522580
+                    // Shutdown Rinrin's computer | 1025594392720965702
+                    "shutdown" => {
+                        let _dict = dict::shutdown();
+                        // let authed = DEVELOPER.contains(interact.user.id.as_u64());
+                        // let msg = if authed {
+                        //     format!(
+                        //         "Shut down Rinrin's computer at <t:{}:F>",
+                        //         Utc::now().timestamp()
+                        //     )
+                        // } else {
+                        //     dict_lookup(&dict, "unauthorized")
+                        // };
+
+                        // if let Err(why) = interact
+                        //     .create_interaction_response(&ctx.http, |response| {
+                        //         response
+                        //             .kind(InteractionResponseType::ChannelMessageWithSource)
+                        //             .interaction_response_data(|m| m.content(msg))
+                        //     })
+                        //     .await
+                        // {
+                        //     eprintln!("Cannot respond to slash command: {}", why);
+                        // }
+
+                        // if authed {
+                        //     let process = process::Command::new("sudo")
+                        //         .args(["shutdown", "-h", "now"])
+                        //         .spawn()
+                        //         .unwrap();
+
+                        //     // if !stderr.is_empty() {
+                        //     //     if let Err(why) = interact
+                        //     //         .edit_original_interaction_response(&ctx.http, |response| {
+                        //     //             response.content(format!(
+                        //     //                 "Error: {}",
+                        //     //                 String::from_utf8_lossy(&stderr)
+                        //     //             ))
+                        //     //         })
+                        //     //         .await
+                        //     //     {
+                        //     //         println!("Cannot respond to edit command: {}", why);
+                        //     //     }
+                        //     // }
+                        // }
+
+                        // Interactions::None
+
+                        Interactions::Dev
+                    }
+
+                    // Kill the bot | 1019672344643522580
                     "exit" => {
                         let dict = dict::exit();
                         let authed = DEVELOPER.contains(interact.user.id.as_u64());
-                        let msg = if authed {
-                            format!("Process exited at <t:{}:F>", Utc::now().timestamp())
-                        } else {
-                            dict_lookup(&dict, "unauthorized")
-                        };
 
                         if let Err(why) = interact
                             .create_interaction_response(&ctx.http, |response| {
                                 response
                                     .kind(InteractionResponseType::ChannelMessageWithSource)
-                                    .interaction_response_data(|m| m.content(msg))
+                                    .interaction_response_data(|m| {
+                                        if authed {
+                                            m.content(format!(
+                                                "Process exited at <t:{}:F>",
+                                                Utc::now().timestamp()
+                                            ))
+                                        } else {
+                                            m.content(dict_lookup(&dict, "unauthorized"))
+                                                .ephemeral(true)
+                                        }
+                                    })
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            eprintln!("Cannot respond to slash command: {}", why);
                         }
 
                         if authed {
@@ -254,7 +312,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            eprintln!("Cannot respond to slash command: {}", why);
                         }
                         let after = Instant::now();
                         if let Err(why) = interact
@@ -263,7 +321,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to edit message: {}", why);
+                            eprintln!("Cannot respond to edit message: {}", why);
                         };
                         Interactions::None
                     }
@@ -595,7 +653,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            eprintln!("Cannot respond to slash command: {}", why);
                         }
                         let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
                         let post_data = playground::PostData {
@@ -622,11 +680,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     })
                                     .await
                                 {
-                                    println!("Cannot respond to edit message: {}", why);
+                                    eprintln!("Cannot respond to edit message: {}", why);
                                 }
                             }
                             Err(why) => {
-                                println!("Request failed: {}", why);
+                                eprintln!("Request failed: {}", why);
                             }
                         }
                         Interactions::None*/
@@ -658,6 +716,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                         if user.is_empty() {
                             let dict = dict::tetr_user();
+                            is_ephemeral = true;
                             Interactions::Some(vec![InteractMode::Message(dict_lookup(
                                 &dict,
                                 "err.plzSendUserNameOrID",
@@ -1071,7 +1130,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            eprintln!("Cannot respond to slash command: {}", why);
                         }
 
                         let subject = args
@@ -1108,7 +1167,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                 match content {
                     Interactions::Some(im) => {
-                        if let Err(why) = interact
+                        // TODO: refactor this.
+                        if let Err(err) = interact
                             .create_interaction_response(&ctx.http, |response| {
                                 response
                                     .kind(InteractionResponseType::ChannelMessageWithSource)
@@ -1130,6 +1190,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 }
                                             }
                                         }
+                                        if is_ephemeral {
+                                            m.ephemeral(true);
+                                            is_ephemeral = false;
+                                        }
                                         if action_row.0.is_empty() {
                                             m
                                         } else {
@@ -1143,7 +1207,50 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            let err_msg = err.to_string();
+                            if let serenity::Error::Http(http_err) = err {
+                                if let serenity::http::error::Error::UnsuccessfulRequest(res) =
+                                    *http_err
+                                {
+                                    let mut is_btml_error = false;
+                                    for e in res.error.errors {
+                                        if e.code == "BASE_TYPE_MAX_LENGTH" {
+                                            is_btml_error = true;
+                                        }
+                                    }
+                                    if is_btml_error {
+                                        let dict = dict::btml();
+                                        let msg = dict.get("msg").unwrap();
+                                        interact
+                                            .create_interaction_response(&ctx.http, |response| {
+                                                response
+                                                    .kind(InteractionResponseType::ChannelMessageWithSource)
+                                                    .interaction_response_data(|m| {
+                                                        m.content(if locale == "ja" {
+                                                            &msg.1
+                                                        } else {&msg.0}).ephemeral(true)
+                                                    })
+                                            })
+                                            .await
+                                            .expect("Failed to send a `BASE_TYPE_MAX_LENGTH` message");
+                                        let now = Utc::now() + Duration::hours(9);
+                                        println!(
+                                            "{}{} {} Could not respond to `{}` command due to character limit. Args: {:?}",
+                                            now.format("%Y-%m-%dT%H:%M:%S").to_string().bright_black(),
+                                            "(JST)".bright_black(),
+                                            "WARN".bright_yellow(),
+                                            interact.data.name.as_str(),
+                                            interact.data.options
+                                        );
+                                    } else {
+                                        eprintln!("Cannot respond to slash command: {}", err_msg);
+                                    }
+                                } else {
+                                    eprintln!("Cannot respond to slash command: {}", err_msg);
+                                }
+                            } else {
+                                eprintln!("Cannot respond to slash command: {}", err_msg);
+                            }
                         }
                     }
                     Interactions::Dev => {
@@ -1157,7 +1264,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            println!("Cannot respond to slash command: {}", why);
+                            eprintln!("Cannot respond to slash command: {}", why);
                         }
                     }
                     Interactions::None => {}
@@ -1181,7 +1288,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
                         "deleteUnwrappedMsg" => {
                             if let Err(why) = msg_cmp.message.delete(&ctx.http).await {
-                                println!("Failed to delete the message: {}", why);
+                                eprintln!("Failed to delete the message: {}", why);
                             }
                         }
                         "jsdRetry" => {
@@ -1205,7 +1312,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 })
                                 .await
                             {
-                                println!("Failed to delete the message: {}", why);
+                                eprintln!("Failed to delete the message: {}", why);
                             }
 
                             let subject = regex::Regex::new(r": (.*) \|")
@@ -1303,6 +1410,6 @@ async fn main() {
     // Shards will automatically attempt to reconnect, and will perform
     // exponential backoff until it reconnects.
     if let Err(why) = client.start().await {
-        println!("Client error: {:?}", why);
+        eprintln!("Client error: {:?}", why);
     }
 }
