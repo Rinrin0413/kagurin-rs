@@ -123,12 +123,12 @@ pub async fn jsd_interact_to_discord(
             match interact {
                 Interaction::AppCmd(i) => {
                     if let Err(why) = i.delete_original_interaction_response(&ctx.http).await {
-                        println!("{}{}", ftdtm, why);
+                        eprintln!("{}{}", ftdtm, why);
                     };
                 }
                 Interaction::MsgCmp(i) => {
                     if let Err(why) = i.message.delete(&ctx.http).await {
-                        println!("{}{}", ftdtm, why);
+                        eprintln!("{}{}", ftdtm, why);
                     };
                 }
             }
@@ -180,7 +180,7 @@ pub async fn jsd_interact_to_discord(
                 )
                 .await
             {
-                println!("Failed to send the image: {}", why);
+                eprintln!("Failed to send the image: {}", why);
             }
         }
         Err(err) => match err {
@@ -192,7 +192,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        println!("Failed to edit the message: {}", why);
+                        eprintln!("Failed to edit the message: {}", why);
                     };
                 }
             }
@@ -218,7 +218,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        println!("Failed to edit message: {}", why);
+                        eprintln!("Failed to edit message: {}", why);
                     };
                 }
                 Interaction::MsgCmp(i) => {
@@ -244,7 +244,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        println!("Failed to edit message: {}", why);
+                        eprintln!("Failed to edit message: {}", why);
                     };
                 }
             },

@@ -100,7 +100,7 @@ impl CmdManager {
                     "{}",
                     format!("Command created: {}({})", cmd.name, cmd.id).green()
                 ),
-                Err(why) => println!("{}", format!("Could not create a command: {}", why).red()),
+                Err(why) => eprintln!("{}", format!("Could not create a command: {}", why).red()),
             }
         }
 
@@ -116,7 +116,7 @@ impl CmdManager {
                     "{}",
                     format!("Command edited: {}({})", cmd.name, cmd.id).green()
                 ),
-                Err(why) => println!("{}", format!("Could not edit a command: {}", why).red()),
+                Err(why) => eprintln!("{}", format!("Could not edit a command: {}", why).red()),
             }
         }
 
@@ -125,7 +125,7 @@ impl CmdManager {
             let cmd = Command::delete_global_application_command(&http, CommandId(id)).await;
             match cmd {
                 Ok(()) => println!("{}", format!("Command deleted: {}", id).green()),
-                Err(why) => println!("{}", format!("Could not delete a command: {}", why).red()),
+                Err(why) => eprintln!("{}", format!("Could not delete a command: {}", why).red()),
             }
         }
 
