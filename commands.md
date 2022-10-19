@@ -27,11 +27,14 @@
 - `/tetr-user <user:name/id>`: Display details of the target TETR.IO user.
 
 ### Admin commands
+- 
 
 ### Commands for users trusted by developer
+- 
 
 ### Commands for Rinrin
 - `/exit`: Kill the bot.
+- `/shutdown`: Shutdown Rinrin's computer.
 
 <!--
 ### Display commands
