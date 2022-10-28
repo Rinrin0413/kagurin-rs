@@ -105,6 +105,10 @@ pub mod dict {
             "Display details of the target TETR.IO user.".to_string(), 
             "対象の TETR.IO のユーザーの詳細を表示します。".to_string()
         ));
+        d.insert("tetr-user-search".to_string(), (
+            "Search for a TETR.IO account by Discord account.".to_string(), 
+            "Discordアカウントから TETR.IOアカウントを調べます。".to_string()
+        ));
         d
     }
 
@@ -285,6 +289,27 @@ pub mod dict {
         d.insert("msg".to_string(), (
             "The message could not be sent due to the character limit.".to_string(), 
             "文字数制限によりメッセージを送信できませんでした。".to_string()
+        ));
+        d
+    }
+
+    pub fn tetr_user_search() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("err.notFound.0".to_string(), (
+            "There is no TETR.IO account with".to_string(), 
+            String::new()
+        ));
+        d.insert("err.notFound.1".to_string(), (
+            "linked.".to_string(), 
+            "がリンクされている TETR.IOアカウントはありません。".to_string()
+        ));
+        d.insert("accountOf".to_string(), (
+            "'s TETR.IO account".to_string(), 
+            "の TETR.IOアカウント".to_string()
+        ));
+        d.insert("btn.label".to_string(), (
+            "View full profile".to_string(), 
+            "全プロフィールを見る".to_string()
         ));
         d
     }

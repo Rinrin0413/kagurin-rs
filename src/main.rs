@@ -2,10 +2,12 @@ use chrono::{Duration, Utc};
 use cjp::AsCJp;
 use colored::*;
 use kgrs::{
-    jsd::{self, jsd_interact_to_discord},
+    cmds::{
+        jsd::{self, jsd_interact_to_discord},
+        tetr::*,
+        //playground
+    },
     response_interactions::{InteractMode, Interactions},
-    tetr::*,
-    //playground
     util::{fmt::*, *},
 };
 use lang::dict;
@@ -21,7 +23,10 @@ use serenity::{
         },
         channel::Message,
         gateway::{Activity, Ready},
-        prelude::{ChannelId, GuildId, MessageType},
+        prelude::{
+            interaction::application_command::CommandDataOptionValue, ChannelId, GuildId,
+            MessageType,
+        },
     },
     prelude::*,
 };
@@ -394,11 +399,18 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     CreateEmbed::default()
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
-                                        .fields(vec![(
-                                            "</tetr-user:1018530733314289737> <user:name/id>",
-                                            dict_lookup(dict, "tetr-user"),
-                                            false,
-                                        )])
+                                        .fields(vec![
+                                            (
+                                                "</tetr-user:1018530733314289737> <user:name/id>",
+                                                dict_lookup(dict, "tetr-user"),
+                                                false,
+                                            ),
+                                            (
+                                                "</tetr-user-search:1035478275910275093> <user>",
+                                                dict_lookup(dict, "tetr-user-search"),
+                                                false,
+                                            ),
+                                        ])
                                         .set_footer(ftr())
                                         .timestamp(Utc::now().to_rfc3339())
                                         .color(MAIN_COL)
@@ -852,6 +864,13 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 },
                                                 true,
                                             );
+                                            if let Some(br) = &usr.league.best_rank {
+                                                e.field(
+                                                    "Top rank:",
+                                                    rank_emoji(&br.to_string()),
+                                                    true,
+                                                );
+                                            }
                                             if is_rating {
                                                 e.fields(vec![
                                                     (
@@ -894,9 +913,16 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                             fl.record_url(),
                                                             fl.recorded_at(),
                                                             if let Some(r) = record.records.forty_lines.rank {
-                                                                format!(" | №{}", r)
+                                                                format!(
+                                                                    " | №{}", 
+                                                                    if r == 1 {
+                                                                        "\n| 𝟜𝟘 𝐋𝐈𝐍𝐄𝐒 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
+                                                                    } else {
+                                                                        ""
+                                                                    }
+                                                                )
                                                             } else {
-                                                                "".to_string()
+                                                                String::new()
                                                             },
                                                         ),
                                                         false,
@@ -915,7 +941,15 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                             bltz.record_url(),
                                                             bltz.recorded_at(),
                                                             if let Some(r) = record.records.blitz.rank {
-                                                                format!(" | №{}", r)
+                                                                format!(
+                                                                    " | №{}{}", 
+                                                                    r,
+                                                                    if r == 1 {
+                                                                        "\n| 𝐁𝐋𝐈𝐓𝐙 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
+                                                                    } else {
+                                                                        ""
+                                                                    }
+                                                                )
                                                             } else {
                                                                 "".to_string()
                                                             },
@@ -1026,7 +1060,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         ),
                                         (
                                             "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
-                                            "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n　　　　　ℕ°𝟙",
+                                            "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n**𝐓𝐄𝐓𝐑𝐀 𝐋𝐄𝐀𝐆𝐔𝐄 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍**",
                                             false,
                                         ),
                                         ("About me:", &cb("まいど。", ""), false),
@@ -1152,6 +1186,97 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         .await;
 
                         Interactions::None
+                    }
+
+                    // Search for a TETR.IO account by Discord account | 1035478275910275093
+                    "tetr-user-search" => {
+                        if let CommandDataOptionValue::User(u, _) =
+                            args.get(0).unwrap().resolved.as_ref().unwrap()
+                        {
+                            let dict = dict::tetr_user_search();
+
+                            let _typing = Typing::start(
+                                ctx.http.clone(),
+                                interact.channel_id.as_u64().to_owned(),
+                            )
+                            .expect("Failed to start typing: ");
+                            let before = Instant::now();
+
+                            let response = TetrClient::new().search_user(&u.id.to_string()).await;
+
+                            let after = Instant::now();
+
+                            match response {
+                                Ok(res) => {
+                                    if let Some(ud) = res.data {
+                                        let usr_if = ud.user;
+                                        let latency = || {
+                                            format!("latency: {}ms", (after - before).as_millis())
+                                        };
+                                        Interactions::Some(vec![
+                                            InteractMode::Embed(
+                                                CreateEmbed::default()
+                                                    .description(format!(
+                                                        "**{}{}**",
+                                                        u.mention(),
+                                                        dict_lookup(&dict, "accountOf"),
+                                                    ))
+                                                    .fields(vec![
+                                                        (
+                                                            "\u{200B}",
+                                                            format!(
+                                                                "**Name**: {}\n**ID**: `{}`",
+                                                                usr_if.name.to_uppercase(),
+                                                                usr_if.id
+                                                            ),
+                                                            false,
+                                                        ),
+                                                        (
+                                                            "\u{200B}",
+                                                            format!(
+                                                                "cached at: <t:{}:R>",
+                                                                res.cache.unwrap().cached_at()
+                                                            ),
+                                                            false,
+                                                        ),
+                                                    ])
+                                                    .footer(|f| {
+                                                        f.text(latency());
+                                                        f
+                                                    })
+                                                    .timestamp(Utc::now().to_rfc3339())
+                                                    .color(MAIN_COL)
+                                                    .to_owned(),
+                                            ),
+                                            InteractMode::Button(
+                                                CreateButton::default()
+                                                    .label(dict_lookup(&dict, "btn.label"))
+                                                    .style(ButtonStyle::Link)
+                                                    .url(format!(
+                                                        "https://ch.tetr.io/u/{}",
+                                                        usr_if.name
+                                                    ))
+                                                    .to_owned(),
+                                            ),
+                                        ])
+                                    } else {
+                                        Interactions::Some(vec![InteractMode::Message(format!(
+                                            "{} `{}#{}`({}) {}",
+                                            dict_lookup(&dict, "err.notFound.0"),
+                                            u.name,
+                                            u.discriminator,
+                                            u.id,
+                                            dict_lookup(&dict, "err.notFound.1"),
+                                        ))])
+                                    }
+                                }
+                                Err(why) => Interactions::Some(vec![InteractMode::Message(
+                                    format!("Error: {}", why.to_string()),
+                                )]),
+                            }
+                        } else {
+                            unreachable!();
+                        }
                     }
 
                     _ => Interactions::Some(vec![InteractMode::Message(
