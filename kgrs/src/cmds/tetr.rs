@@ -78,7 +78,7 @@ pub fn create_progress_bar(user: &User) -> String {
         next_rank = rank_emoji(&r.to_string());
     } else if current_standing == 1. {
         return format!(
-            "{}`|━━━━━━━━━━━━━━━━━`👑\n　　　　　**ℕ°𝟙**",
+            "{}`|━━━━━━━━━━━━━━━━━`👑\n**𝐓𝐄𝐓𝐑𝐀 𝐋𝐄𝐀𝐆𝐔𝐄 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍**",
             rank_emoji("u"),
         );
     }
