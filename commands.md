@@ -2,14 +2,13 @@
 
 ### Help commands
 - `/help`: Show kind of help commands. 
-- `kgrs!help display`: Show help for display commands.
-- `kgrs!help util`: Show help for utility commands.
-- `kgrs!help fun`: Show help for entertainment commands.
-- `kgrs!help tetrio`: Show help for [TETR.IO](https://tetr.io) related commands.
-- `kgrs!help admin`: Show help for admin commands
-- `kgrs!help dev`: Show help for commands for Rinrin.
-- `kgrs!help trust`: Show help for commands for users trusted by developer.
-
+- `/help display`: Show help for display commands.
+- `/help util`: Show help for utility commands.
+- `/help fun`: Show help for entertainment commands.
+- `/help tetrio`: Show help for [TETR.IO](https://tetr.io) related commands.
+- `/help admin`: Show help for admin commands
+- `/help dev`: Show help for commands for Rinrin.
+- `/help trust`: Show help for commands for users trusted by developer.
 
 ### Display commands
 - `/ping`: pong!
@@ -25,6 +24,7 @@
 
 ### [TETR.IO](https://tetr.io) related commands
 - `/tetr-user <user:name/id>`: Display details of the target TETR.IO user.
+- `/tetr-user <user>`: Search for a TETR.IO account by Discord account.
 
 ### Admin commands
 - 
