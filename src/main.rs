@@ -871,6 +871,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     true,
                                                 );
                                             }
+                                            if let Some(du) = &usr.connections.discord {
+                                                e.field("Discord:", format!("<@!{}>", du.id), true);
+                                            }
                                             if is_rating {
                                                 e.fields(vec![
                                                     (
@@ -914,7 +917,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                             fl.recorded_at(),
                                                             if let Some(r) = record.records.forty_lines.rank {
                                                                 format!(
-                                                                    " | №{}", 
+                                                                    " | №{}{}",
+                                                                    r,
                                                                     if r == 1 {
                                                                         "\n| 𝟜𝟘 𝐋𝐈𝐍𝐄𝐒 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
                                                                     } else {
