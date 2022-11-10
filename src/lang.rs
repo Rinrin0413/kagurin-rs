@@ -79,6 +79,14 @@ pub mod dict {
             "Convert the string to 怪レい日本语(correct Japanese).".to_string(), 
             "渡された文字列を怪レい日本语に変換します。".to_string()
         ));
+        d.insert("now".to_string(), (
+            "Get the current UNIX timestamp.".to_string(), 
+            "現在の UNIXタイムスタンプを取得します。".to_string()
+        ));
+        d.insert("ts".to_string(), (
+            "Get UNIX timestamp of the specified datetime(UTC).".to_string(), 
+            "指定した日時(UTC)の UNIXタイムスタンプを取得します。".to_string()
+        ));
         d
     }
 
@@ -310,6 +318,31 @@ pub mod dict {
         d.insert("btn.label".to_string(), (
             "View full profile".to_string(), 
             "全プロフィールを見る".to_string()
+        ));
+        d
+    }
+
+    pub fn ts() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("err.hou".to_string(), (
+            "Missing argument `hour`".to_string(), 
+            "引数 `時` が欠落しています。".to_string()
+        ));
+        d.insert("err.min".to_string(), (
+            "Missing argument `minute`".to_string(), 
+            "引数 `分` が欠落しています。".to_string()
+        ));
+        d.insert("err.sec".to_string(), (
+            "Missing argument `second`".to_string(), 
+            "引数 `秒` が欠落しています。".to_string()
+        ));
+        d.insert("err.ms".to_string(), (
+            "Missing argument `millisecond`".to_string(), 
+            "引数 `ミリ秒` が欠落しています。".to_string()
+        ));
+        d.insert("err.invalid".to_string(), (
+            "Invalid datetime.".to_string(),
+            "無効な日時です。".to_string()
         ));
         d
     }

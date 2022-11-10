@@ -1,4 +1,4 @@
-use chrono::{Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use cjp::AsCJp;
 use colored::*;
 use kgrs::{
@@ -369,11 +369,23 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     CreateEmbed::default()
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
-                                        .fields(vec![(
-                                            "</cjp:1021847038545100810> <string:sentence>",
-                                            dict_lookup(dict, "cjp"),
-                                            false,
-                                        )])
+                                        .fields(vec![
+                                            (
+                                                "</cjp:1021847038545100810> <string:sentence>",
+                                                dict_lookup(dict, "cjp"),
+                                                false,
+                                            ),
+                                            (
+                                                "</now:1040285205874888787>",
+                                                dict_lookup(dict, "now"),
+                                                false,
+                                            ),
+                                            (
+                                                "</ts:1040293233839845396> <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]",
+                                                dict_lookup(dict, "ts"),
+                                                false,
+                                            ),
+                                        ])
                                         .set_footer(ftr())
                                         .timestamp(Utc::now().to_rfc3339())
                                         .color(MAIN_COL)
@@ -1281,6 +1293,76 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         } else {
                             unreachable!();
                         }
+                    }
+
+                    // Get current UNIX timestamp | 1040285205874888787
+                    "now" => Interactions::Some(vec![InteractMode::Message(
+                        Utc::now().timestamp().to_string(),
+                    )]),
+
+                    // Get UNIX timestamp of the specified datetime(UTC) | 1040293233839845396
+                    "ts" => {
+                        let dict = dict::ts();
+
+                        let yea = args[0].value.as_ref().unwrap().to_string();
+                        let mon = args[1].value.as_ref().unwrap().to_string();
+                        let day = args[2].value.as_ref().unwrap().to_string();
+
+                        let dt = if let Some(hour) = args.get(3) {
+                            let hou = hour.value.as_ref().unwrap();
+                            if let Some(minute) = args.get(4) {
+                                let min = minute.value.as_ref().unwrap();
+                                if let Some(second) = args.get(5) {
+                                    let sec = second.value.as_ref().unwrap();
+                                    if let Some(millisecond) = args.get(6) {
+                                        let ms = millisecond.value.as_ref().unwrap();
+                                        Ok(format!(
+                                            "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.+{:0>4}",
+                                            yea, mon, day, hou, min, sec, ms
+                                        ))
+                                    } else if second.name == "second" {
+                                        Ok(format!(
+                                            "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:{:0>2}.+0000",
+                                            yea, mon, day, hou, min, sec
+                                        ))
+                                    } else {
+                                        Err("sec")
+                                    }
+                                } else if hour.name == "minute" {
+                                    Ok(format!(
+                                        "{:0>4}-{:0>2}-{:0>2} {:0>2}:{:0>2}:00.+0000",
+                                        yea, mon, day, hou, min
+                                    ))
+                                } else {
+                                    Err("min")
+                                }
+                            } else if hour.name == "hour" {
+                                Ok(format!(
+                                    "{:0>4}-{:0>2}-{:0>2} {:0>2}:00:00.+0000",
+                                    yea, mon, day, hou
+                                ))
+                            } else {
+                                Err("hou")
+                            }
+                        } else {
+                            Ok(format!(
+                                "{:0>4}-{:0>2}-{:0>2} 00:00:00.+0000",
+                                yea, mon, day
+                            ))
+                        };
+
+                        Interactions::Some(vec![InteractMode::Message(match dt {
+                            Ok(dt) => {
+                                if let Ok(dt) =
+                                    DateTime::parse_from_str(&dt, "%Y-%m-%d %H:%M:%S.%z")
+                                {
+                                    dt.timestamp().to_string()
+                                } else {
+                                    dict_lookup(&dict, "err.invalid")
+                                }
+                            }
+                            Err(err) => dict_lookup(&dict, &format!("err.{}", err)),
+                        })])
                     }
 
                     _ => Interactions::Some(vec![InteractMode::Message(
