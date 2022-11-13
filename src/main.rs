@@ -1070,7 +1070,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .description("**<SUPPORTER>**")
                                     .fields(vec![
                                         (
-                                            "Badges: <:100player:992097864081735730><:allclear:992096168664383622><:20tsd:992097227260567553><:secretgrade:992079389611278477><:leaderboard1:992095621018308759>| More 18 badges",
+                                            "Badges: <:indev:992100717726810214><:bugbounty:992104885531197511><:secretgrade:992079389611278477><:20tsd:992097227260567553><:allclear:992096168664383622><:100player:992097864081735730><:kod_founder:992096688653209610>| More 18 badges",
                                             "\u{200B}",
                                             false,
                                         ),
@@ -1079,7 +1079,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n**𝐓𝐄𝐓𝐑𝐀 𝐋𝐄𝐀𝐆𝐔𝐄 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍**",
                                             false,
                                         ),
-                                        ("About me:", &cb("まいど。", ""), false),
+                                        ("About me:", &cb("まいど。😉", ""), false),
                                         ("Role:", "User", true),
                                         (
                                             "Play time:",
@@ -1092,8 +1092,18 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             true,
                                         ),
                                         (
+                                            "Top rank:",
+                                            "<:xx:994631831460790272>",
+                                            true,
+                                        ),
+                                        (
+                                            "Discord:",
+                                            "<@!518899666637553667>",
+                                            true,
+                                        ),
+                                        (
                                             "\u{200B}",
-                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_77a02950-bde0447f9851fd)",
+                                            "[**== TETRA LEAGUE ==**]()",
                                             false,
                                         ),
                                         ("Glicko:", "9999.999±60.00", true),
@@ -1107,9 +1117,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             "999,999 (100.000%)",
                                             true,
                                         ),
-                                        ("APM:", "1003.84", true),
-                                        ("PPS:", "84.40", true),
-                                        ("VS:", "6301.33", true),
+                                        ("APM:", "15504.96", true),
+                                        ("PPS:", "108.09", true),
+                                        ("VS:", "45238.5", true),
                                         (
                                             "\u{200B}",
                                             &format!(
@@ -1124,7 +1134,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .timestamp(Utc::now().to_rfc3339())
                                     .author(|a| {
                                         a.icon_url("https://tetr.io/res/flags/jp.png");
-                                        a.name("Lv.9999 ⬢ 8,401,9463,557xp")
+                                        a.name("Lv.9999 ⬢ 763,539,360xp")
                                     })
                                     .color(0xeca5ff)
                                     .thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp")
