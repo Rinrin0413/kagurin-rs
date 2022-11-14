@@ -25,6 +25,7 @@ features = [
     "rustls_backend", 
     "model", 
     "cache", 
+    #"cache", 
 ]
 
 [dependencies.tokio]
