@@ -1,11 +1,11 @@
 [package]
 name = "kgrs"
 description = "A library for Kagurin.rs"
-version = "1.9.0"
-authors = ["Rinrin.rs <rinrin0413.valley@gmail.com>"]
-license-file = "LICENSE.md"
+version = "1.9.1"
+authors.workspace = true
+license-file.workspace = true
 repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
-edition = "2021"
+edition.workspace = true
 
 [dependencies]
 colored = "2"

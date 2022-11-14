@@ -34,7 +34,7 @@ use std::{collections::HashMap, env, process, time::Instant};
 use tetr_ch::{client::Client as TetrClient, model::league::Rank};
 use thousands::Separable;
 
-const RUST_VERSION: &str = "1.64.0-nightly";
+const RUST_VERSION: &str = "1.67.0-nightly";
 const OS: &str = "openSUSE Leap 15.4 x86_64";
 
 const VER: &str = env!("CARGO_PKG_VERSION");
