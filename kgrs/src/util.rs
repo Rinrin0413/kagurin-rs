@@ -26,6 +26,7 @@ pub fn get_memory_usage() -> f64 {
 /// # Examples:
 ///
 /// ```
+/// # use kgrs::util::round_mid;
 /// assert_eq!(round_mid(3.1415, 3), 3.142);
 /// ```
 pub fn round_mid(num: f64, decimal_places: u32) -> f64 {
@@ -60,6 +61,7 @@ pub mod fmt {
     /// # Examples:
     ///
     /// ```
+    /// # use kgrs::util::fmt::cb;
     /// assert_eq!(
     ///     cb("print(Hello, World!)", "py"),
     ///     "```py\nprint(Hello, World!)\n```"
@@ -74,6 +76,7 @@ pub mod fmt {
     /// # Examples:
     ///
     /// ```
+    /// # use kgrs::util::fmt::mn;
     /// assert_eq!(mn("Hello, World!"), "`Hello, World!`");
     /// ```
     pub fn mn<T: Display>(content: T) -> String {

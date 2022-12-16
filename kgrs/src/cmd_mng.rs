@@ -13,7 +13,7 @@ use serenity::{
 ///
 /// # Example
 ///
-/// ```no_run
+/// ```no_run ignore
 /// use kgrs::cmd_mng::{cmd_list, CmdManager};
 /// use serenity::model::application::command::{
 ///     // May need these.

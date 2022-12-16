@@ -611,7 +611,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             ),
                             InteractMode::Button(
                                 CreateButton::default()
-                                    .label("Invile me!")
+                                    .label("Invite me!")
                                     .style(ButtonStyle::Link)
                                     .url(INVITE_URL)
                                     .to_owned(),

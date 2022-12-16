@@ -16,7 +16,7 @@ use serenity::{
 };
 use std::{collections::HashMap, env};
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, PartialEq)]
 pub struct JSDRequest {
     /// The subject of the image.
     pub prompts: String,
