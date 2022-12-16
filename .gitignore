@@ -1,10 +1,11 @@
+# By Cargo
 target
 Cargo.lock
 
 # for my environment
 TOKEN
-fmt.sh
 cmdmng.md
 merge-dev.sh
+.vscode
 
 # Experimental
