@@ -1,6 +1,10 @@
 //! For Japanese Stable Diffusion
 
 use crate::util::fmt::cb;
+use chrono::Utc;
+use colored::Colorize;
+use core::panic;
+use rogger::*;
 use serde::{Deserialize, Serialize};
 use serenity::{
     client::Context,
@@ -37,9 +41,7 @@ impl JSDRequest {
     ///
     /// Panics if `scale` is not between 0 and 20.
     fn new(prompts: String, scale: f64) -> Self {
-        if !(0. ..=20.).contains(&scale) {
-            panic!("Argument `scale` must be between 0 and 20.");
-        }
+        assert!((0. ..=20.).contains(&scale));
         Self { prompts, scale }
     }
 
@@ -96,7 +98,8 @@ pub async fn jsd_interact_to_discord(
         let s = if let Some(s) = dict.get(key) {
             s
         } else {
-            panic!("Invalid dict key: {}", key);
+            error!("Invalid dict key: {}", key);
+            panic!();
         };
         if locale == "ja" {
             s.1.clone()
@@ -123,12 +126,12 @@ pub async fn jsd_interact_to_discord(
             match interact {
                 Interaction::AppCmd(i) => {
                     if let Err(why) = i.delete_original_interaction_response(&ctx.http).await {
-                        eprintln!("{}{}", ftdtm, why);
+                        error!("{}{}", ftdtm, why);
                     };
                 }
                 Interaction::MsgCmp(i) => {
                     if let Err(why) = i.message.delete(&ctx.http).await {
-                        eprintln!("{}{}", ftdtm, why);
+                        error!("{}{}", ftdtm, why);
                     };
                 }
             }
@@ -180,7 +183,7 @@ pub async fn jsd_interact_to_discord(
                 )
                 .await
             {
-                eprintln!("Failed to send the image: {}", why);
+                error!("Failed to send the image: {}", why);
             }
         }
         Err(err) => match err {
@@ -192,7 +195,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        eprintln!("Failed to edit the message: {}", why);
+                        error!("Failed to edit the message: {}", why);
                     };
                 }
             }
@@ -218,7 +221,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        eprintln!("Failed to edit message: {}", why);
+                        error!("Failed to edit the message: {}", why);
                     };
                 }
                 Interaction::MsgCmp(i) => {
@@ -244,7 +247,7 @@ pub async fn jsd_interact_to_discord(
                         })
                         .await
                     {
-                        eprintln!("Failed to edit message: {}", why);
+                        error!("Failed to edit message: {}", why);
                     };
                 }
             },
