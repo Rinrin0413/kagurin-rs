@@ -319,7 +319,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            info!("Cannot respond to slash command: {}", why);
+                            error!("Cannot respond to slash command: {}", why);
                         }
                         let after = Instant::now();
                         if let Err(why) = interact
@@ -679,7 +679,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            info!("Cannot respond to slash command: {}", why);
+                            error!("Cannot respond to slash command: {}", why);
                         }
                         let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
                         let post_data = playground::PostData {
@@ -1192,7 +1192,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            info!("Cannot respond to slash command: {}", why);
+                            error!("Cannot respond to slash command: {}", why);
                         }
 
                         let subject = args
@@ -1462,13 +1462,13 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             interact.data.options
                                         );
                                     } else {
-                                        info!("Cannot respond to slash command: {}", err_msg);
+                                        error!("Cannot respond to slash command: {}", err_msg);
                                     }
                                 } else {
-                                    info!("Cannot respond to slash command: {}", err_msg);
+                                    error!("Cannot respond to slash command: {}", err_msg);
                                 }
                             } else {
-                                info!("Cannot respond to slash command: {}", err_msg);
+                                error!("Cannot respond to slash command: {}", err_msg);
                             }
                         }
                     }
@@ -1483,7 +1483,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             })
                             .await
                         {
-                            info!("Cannot respond to slash command: {}", why);
+                            error!("Cannot respond to slash command: {}", why);
                         } else {
                             warn!("Unimplemented slash command: {}", interact.data.name);
                         }
