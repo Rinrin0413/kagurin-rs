@@ -1,7 +1,6 @@
 //! For Japanese Stable Diffusion
 
 use crate::util::fmt::cb;
-use chrono::Utc;
 use colored::Colorize;
 use core::panic;
 use rogger::*;
