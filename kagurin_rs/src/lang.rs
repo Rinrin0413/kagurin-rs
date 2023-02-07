@@ -347,6 +347,28 @@ pub mod dict {
         d
     }
 
+    pub fn sfinder() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("output".to_string(), (
+            "Output:".to_string(), 
+            "出力:".to_string()
+        ));
+        d.insert("error".to_string(), (
+            "Error:".to_string(), 
+            "エラー:".to_string()
+        ));
+        d.insert("patterns.minimal".to_string(), (
+            "All minimal patterns".to_string(),
+            "全てのミニマルパターン".to_string()
+        ));
+        d.insert("patterns.unique".to_string(), (
+            "All unique patterns".to_string(),
+            "全てのユニークパターン".to_string()
+        ));
+        d.insert("unauthorized".to_string(), unauth());
+        d
+    }
+
     fn unauth() -> (String, String) {
         (
             "Sorry, you cannot call this command:(".to_string(), 

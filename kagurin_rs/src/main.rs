@@ -4,8 +4,9 @@ use colored::Colorize;
 use kgrs::{
     cmds::{
         jsd::{self, jsd_interact_to_discord},
-        tetr::*,
+        sfinder,
         //playground
+        tetr::*,
     },
     response_interactions::{InteractMode, Interactions},
     util::{fmt::*, *},
@@ -31,7 +32,7 @@ use serenity::{
     },
     prelude::*,
 };
-use std::{collections::HashMap, env, process, time::Instant};
+use std::{collections::HashMap, env, fs::File, io::Read, process, time::Instant};
 use tetr_ch::{client::Client as TetrClient, model::league::Rank};
 use thousands::Separable;
 
@@ -42,10 +43,11 @@ const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
 const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
-//const TRUSTED: [u64; 2] = [
-//    724976600873041940, // Rinrin.rs
-//    801082943371477022, // Rinrin.wgsl
-//];
+const TRUSTED: [u64; 3] = [
+    724976600873041940, // Rinrin.rs
+    801082943371477022, // Rinrin.wgsl
+    680687014072287265, // Rinloid
+];
 const DEVELOPERS: [u64; 2] = [
     724976600873041940, // Rinrin.rs
     801082943371477022, // Rinrin.wgsl
@@ -217,6 +219,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         s.1.clone()
                     } else {
                         s.0.clone()
+                    }
+                };
+                let defer = || async {
+                    if let Err(why) = interact.defer(&ctx).await {
+                        error!("Error while deferring interaction: {}", why);
                     }
                 };
 
@@ -543,15 +550,18 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         a.icon_url(bot_icon).name(dict_lookup(dict, "title"))
                                     })
                                     .title(dict_lookup(dict, "nameTitle"))
-                                    .description(format!(
-                                        "```ansi\n[0;37m{}[0;0m#{}\n```",
-                                        client.name, client.discriminator
+                                    .description(cb(
+                                        format!(
+                                            "[0;37m{}[0;0m#{}",
+                                            client.name, client.discriminator
+                                        ),
+                                        "ansi",
                                     ))
                                     .fields(vec![
-                                        ("ID:", format!("```ansi\n[0;34m{}\n```", client.id), true),
+                                        ("ID:", cb(format!("[0;34m{}", client.id), "ansi"), true),
                                         (
                                             &dict_lookup(dict, "botVer"),
-                                            format!("```ansi\n[0;32m{}\n```", VER),
+                                            cb(format!("[0;32m{}", VER), "ansi"),
                                             true,
                                         ),
                                         (
@@ -564,47 +574,46 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         ),
                                         (
                                             &dict_lookup(dict, "guildsTitle"),
-                                            format!(
-                                                "```ansi\n[0;36m{}{}\n```",
-                                                if let Ok(g) = client.guilds(&ctx.http).await {
-                                                    g.len()
-                                                } else {
-                                                    0
-                                                },
-                                                dict_lookup(dict, "guildsTxt")
+                                            cb(
+                                                format!(
+                                                    "[0;36m{}{}",
+                                                    if let Ok(g) = client.guilds(&ctx.http).await {
+                                                        g.len()
+                                                    } else {
+                                                        0
+                                                    },
+                                                    dict_lookup(dict, "guildsTxt")
+                                                ),
+                                                "ansi",
                                             ),
                                             true,
                                         ),
                                         (
                                             &dict_lookup(dict, "dev"),
-                                            "```ansi\n[0;0m@Rinrin.rs[0;30m#5671\n```".to_string(),
+                                            cb("@Rinrin.rs#5671".to_string(), "ansi"),
                                             true,
                                         ),
                                         (
                                             &dict_lookup(dict, "lang"),
-                                            format!("```ansi\n[0;33mRust {}\n```", RUST_VERSION),
+                                            cb(format!("Rust {}", RUST_VERSION), "ansi"),
                                             true,
                                         ),
                                         (
                                             &dict_lookup(dict, "lib"),
-                                            "```ansi\n[0;35mSerenity-rs v0.11.5```".to_string(),
+                                            cb("Serenity-rs v0.11.5".to_string(), "ansi"),
                                             true,
                                         ),
-                                        ("OS:", format!("```ansi\n[0;31m{}\n```", OS), true),
+                                        ("OS:", cb(format!("[0;31m{}", OS), "ansi"), true),
                                         ("\u{200B}", "\u{200B}".to_string(), true),
                                         (
                                             &dict_lookup(dict, "memory"),
-                                            format!(
-                                                "```\n{:.1}MiB / 31873MiB\n```",
-                                                get_memory_usage()
+                                            cb(
+                                                format!("{:.1}MiB / 31873MiB", get_memory_usage()),
+                                                "",
                                             ),
                                             true,
                                         ),
-                                        (
-                                            &dict_lookup(dict, "uptime"),
-                                            format!("```\n{}\n```", get_uptime()),
-                                            true,
-                                        ),
+                                        (&dict_lookup(dict, "uptime"), cb(get_uptime(), ""), true),
                                     ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
@@ -1377,6 +1386,107 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         })])
                     }
 
+                    // Get the solution to Perfect Clear from a specified field with solution-finder | 1072236238574190754
+                    "sfinder-path" => {
+                        let dict = dict::sfinder();
+                        let authed = TRUSTED.contains(interact.user.id.as_u64());
+
+                        Interactions::Some(if authed {
+                            sfinder::init_output_dir();
+
+                            defer().await;
+
+                            let stdout = process::Command::new("sh")
+                                .args([
+                                    format!(
+                                        "{}/../assets/shells/sfinder.sh",
+                                        env!("CARGO_MANIFEST_DIR")
+                                    ),
+                                    "path".to_string(),
+                                    // Tetfu
+                                    format!("-t {}", args[0].value.as_ref().unwrap().to_string()),
+                                    // Patterns
+                                    format!(
+                                        "-p {}",
+                                        if let Some(cdo) = args.get(1) {
+                                            cdo.value.as_ref().unwrap().to_string()
+                                        } else {
+                                            "*!".to_string()
+                                        }
+                                    ),
+                                    // Threads
+                                    // "-th 1".to_string(),
+                                ])
+                                .output()
+                                .unwrap()
+                                .stdout;
+                            let stdout = String::from_utf8_lossy(&stdout);
+
+                            let mut e = CreateEmbed::default();
+                            e.title("solution-finder (path)");
+                            e.color(MAIN_COL);
+
+                            if !stdout.is_empty() {
+                                e.field(dict_lookup(&dict, "output"), cb(stdout, "bash"), false);
+                            }
+
+                            let output_dir = sfinder::output_dir();
+
+                            if let Ok(mut f) = File::open(format!("{}/error.txt", output_dir)) {
+                                let mut stderr = String::new();
+                                if let Err(why) = f.read_to_string(&mut stderr) {
+                                    stderr = cb(why.to_string(), "bash");
+                                    error!("Failed to read /output/error.txt:\n{}", why);
+                                } else if let Some(i) = stderr.rfind("\n\n\n") {
+                                    // Delete the Stack trace.
+                                    stderr = stderr[..i].to_string();
+                                }
+                                e.field(dict_lookup(&dict, "error"), cb(stderr, "bash"), false);
+                            }
+
+                            let mut interactions = vec![InteractMode::Embed(e)];
+
+                            if let Ok(mut f) =
+                                File::open(format!("{}/path_minimal.html", output_dir))
+                            {
+                                interactions.push(InteractMode::Button(
+                                    CreateButton::default()
+                                        .label(dict_lookup(&dict, "patterns.minimal"))
+                                        .style(ButtonStyle::Link)
+                                        .url("https://fumen.zui.jp")
+                                        .to_owned(),
+                                ));
+                            }
+
+                            if let Ok(mut f) =
+                                File::open(format!("{}/path_unique.html", output_dir))
+                            {
+                                interactions.push(InteractMode::Button(
+                                    CreateButton::default()
+                                        .label(dict_lookup(&dict, "patterns.unique"))
+                                        .style(ButtonStyle::Link)
+                                        .url("https://fumen.zui.jp")
+                                        .to_owned(),
+                                ));
+                            }
+
+                            // DEBUG
+                            // if let Err(why) = interact
+                            //     .edit_original_interaction_response(&ctx.http, |m| {
+                            //         m.content("TEST")
+                            //     })
+                            //     .await
+                            // {
+                            //     error!("Cannot respond to edit message: {}", why);
+                            // };
+
+                            sfinder::init_output_dir();
+                            interactions
+                        } else {
+                            vec![InteractMode::Message(dict_lookup(&dict, "unauthorized"))]
+                        })
+                    }
+
                     _ => Interactions::Some(vec![InteractMode::Message(
                         "\
                     not implemented yet :<\n\
@@ -1436,6 +1546,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     *http_err
                                 {
                                     let mut is_btml_error = false;
+                                    dbg!(&res);
                                     for e in res.error.errors {
                                         if e.code == "BASE_TYPE_MAX_LENGTH" {
                                             is_btml_error = true;
