@@ -1523,7 +1523,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .to_owned(),
                             ));
 
-                            // sfinder::init_output_dir();
+                            sfinder::init_output_dir();
                             Interactions::Edit(interactions)
                         } else {
                             Interactions::Some(vec![InteractMode::Message(dict_lookup(
