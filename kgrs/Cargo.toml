@@ -1,10 +1,10 @@
 [package]
 name = "kgrs"
 description = "A library for Kagurin.rs"
-version = "1.10.1"
+version = "1.10.2"
 authors.workspace = true
 license-file.workspace = true
-repository = "https://github.com/Rinrin0413/kagurin-rs/kgrs/"
+repository = "https://github.com/Rinrin0413/kagurin-rs/tree/master/kgrs"
 edition.workspace = true
 
 [dependencies]
