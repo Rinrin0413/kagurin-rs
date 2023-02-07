@@ -1415,8 +1415,6 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             "*!".to_string()
                                         }
                                     ),
-                                    // Threads
-                                    // "-th 1".to_string(),
                                 ])
                                 .output()
                                 .unwrap()
@@ -1448,7 +1446,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             let mut interactions = vec![InteractMode::Embed(e)];
 
                             // Set the link buttons to the fumen.zui.jp with.
-                            for pattern in ["minimal", "unique"] {
+                            for pattern in ["unique", "minimal"] {
                                 if let Ok(mut f) =
                                     File::open(format!("{}/path_{}.html", output_dir, pattern))
                                 {

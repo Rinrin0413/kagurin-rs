@@ -369,13 +369,13 @@ pub mod dict {
             "Error:".to_string(), 
             "エラー:".to_string()
         ));
-        d.insert("patterns.minimal".to_string(), (
-            "All minimal patterns".to_string(),
-            "全てのミニマルパターン".to_string()
-        ));
         d.insert("patterns.unique".to_string(), (
-            "All unique patterns".to_string(),
-            "全てのユニークパターン".to_string()
+            "All patterns".to_string(),
+            "全パターン".to_string()
+        ));
+        d.insert("patterns.minimal".to_string(), (
+            "Minimal patterns".to_string(),
+            "だいたい最小パターン".to_string()
         ));
         d.insert("unauthorized".to_string(), unauth());
         d
