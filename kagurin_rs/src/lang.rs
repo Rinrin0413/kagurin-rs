@@ -148,6 +148,10 @@ pub mod dict {
             "Commands for users trusted by Rinrin".to_string(), 
             "Rinrinに信頼されてるユーザー向けコマンド一覧".to_string()
         ));
+        d.insert("sfinder-path".to_string(), (
+            "Get the solution to Perfect Clear from a specified field with [solution-finder](https://github.com/knewjade/solution-finder).".to_string(),
+            "指定されたフィールドからのパフェルートを [solution-finder](https://github.com/knewjade/solution-finder) で求めます。".to_string()
+        ));
         d
     }
 
@@ -196,6 +200,14 @@ pub mod dict {
         d.insert("uptime".to_string(), (
             "Uptime:".to_string(),
             "稼働時間:".to_string()
+        ));
+        d.insert("btn.invite".to_string(), (
+            "Invite me!".to_string(),
+            "招待！".to_string()
+        ));
+        d.insert("btn.sourceCode".to_string(), (
+            "Source code (GitHub)".to_string(),
+            "ソースコード (GitHub)".to_string()
         ));
         d
     }
@@ -280,8 +292,8 @@ pub mod dict {
     pub fn jsd_retry() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("retrying".to_string(), (
-            "Retrying...\n* You will be said this interaction failed, but no problem".to_string(), 
-            "お待ち下さい...\n※「インタラクションに失敗しました」と表示されますが 問題はありません".to_string()
+            "Retrying...".to_string(), 
+            "再試行中です。お待ち下さい...".to_string()
         ));
         d
     }

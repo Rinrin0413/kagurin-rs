@@ -8,7 +8,7 @@ use kgrs::{
         //playground
         tetr::*,
     },
-    response_interactions::{InteractMode, Interactions},
+    response_interactions::{self, InteractMode, Interactions},
     util::{fmt::*, *},
 };
 use lang::dict;
@@ -25,10 +25,7 @@ use serenity::{
         },
         channel::Message,
         gateway::{Activity, Ready},
-        prelude::{
-            interaction::application_command::CommandDataOptionValue, ChannelId, GuildId,
-            MessageType,
-        },
+        prelude::{interaction::application_command::CommandDataOptionValue, *},
     },
     prelude::*,
 };
@@ -43,6 +40,11 @@ const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
 const INVITE_URL: &str =
     "https://discord.com/api/oauth2/authorize?client_id=936116497502318654&permissions=8&scope=bot";
+const GITHUB_EMOJI: ReactionType = ReactionType::Custom {
+    animated: false,
+    id: EmojiId(1072455141350973471),
+    name: None,
+};
 const TRUSTED: [u64; 3] = [
     724976600873041940, // Rinrin.rs
     801082943371477022, // Rinrin.wgsl
@@ -228,7 +230,6 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 };
 
                 let mut is_ephemeral = false;
-                let locale = &interact.locale;
 
                 let content = match interact.data.name.as_str() {
                     // Shutdown Rinrin's computer | 1025594392720965702
@@ -473,8 +474,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![(
-                                            "/",
-                                            "Nothing here yet :(".to_string(),
+                                            "</sfinder-path:1072236238574190754> <field:str> [next:str]",
+                                            dict_lookup(dict, "sfinder-path"),
                                             false,
                                         )])
                                         .set_footer(ftr())
@@ -622,16 +623,17 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             ),
                             InteractMode::Button(
                                 CreateButton::default()
-                                    .label("Invite me!")
+                                    .label(dict_lookup(dict, "btn.invite"))
                                     .style(ButtonStyle::Link)
                                     .url(INVITE_URL)
                                     .to_owned(),
                             ),
                             InteractMode::Button(
                                 CreateButton::default()
-                                    .label("Source code(GitHub)")
+                                    .label(dict_lookup(dict, "btn.sourceCode"))
                                     .style(ButtonStyle::Link)
                                     .url(env!("CARGO_PKG_REPOSITORY"))
+                                    .emoji(GITHUB_EMOJI)
                                     .to_owned(),
                             ),
                         ])
@@ -1391,9 +1393,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         let dict = dict::sfinder();
                         let authed = TRUSTED.contains(interact.user.id.as_u64());
 
-                        Interactions::Some(if authed {
+                        if authed {
                             sfinder::init_output_dir();
-
                             defer().await;
 
                             let stdout = process::Command::new("sh")
@@ -1404,7 +1405,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     ),
                                     "path".to_string(),
                                     // Tetfu
-                                    format!("-t {}", args[0].value.as_ref().unwrap().to_string()),
+                                    format!("-t {}", args[0].value.as_ref().unwrap()),
                                     // Patterns
                                     format!(
                                         "-p {}",
@@ -1446,45 +1447,83 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                             let mut interactions = vec![InteractMode::Embed(e)];
 
-                            if let Ok(mut f) =
-                                File::open(format!("{}/path_minimal.html", output_dir))
-                            {
-                                interactions.push(InteractMode::Button(
-                                    CreateButton::default()
-                                        .label(dict_lookup(&dict, "patterns.minimal"))
-                                        .style(ButtonStyle::Link)
-                                        .url("https://fumen.zui.jp")
-                                        .to_owned(),
-                                ));
+                            // Set the link buttons to the fumen.zui.jp with.
+                            for pattern in ["minimal", "unique"] {
+                                if let Ok(mut f) =
+                                    File::open(format!("{}/path_{}.html", output_dir, pattern))
+                                {
+                                    let mut mu = String::new();
+                                    if let Err(why) = f.read_to_string(&mut mu) {
+                                        error!(
+                                            "Failed to read /output/path_{}.html: {}",
+                                            pattern, why
+                                        );
+                                    } else {
+                                        let url = Regex::new(r"href='(.+?)'")
+                                            .unwrap()
+                                            .captures(&mu)
+                                            .unwrap()
+                                            .get(1)
+                                            .unwrap()
+                                            .as_str()
+                                            .replace("v115@", "D115@");
+
+                                        // Use TinyURL API
+                                        match reqwest::Client::new()
+                                            .post("http://tinyurl.com/api-create.php")
+                                            .form(&[("url", url)])
+                                            .send()
+                                            .await
+                                        {
+                                            Ok(tinyurl_res) => {
+                                                match tinyurl_res.text().await {
+                                                    Ok(tinyurl) => {
+                                                        // Add the button.
+                                                        interactions.push(InteractMode::Button(
+                                                            CreateButton::default()
+                                                                .label(dict_lookup(
+                                                                    &dict,
+                                                                    &format!(
+                                                                        "patterns.{}",
+                                                                        pattern
+                                                                    ),
+                                                                ))
+                                                                .style(ButtonStyle::Link)
+                                                                .url(tinyurl)
+                                                                .to_owned(),
+                                                        ));
+                                                    }
+                                                    Err(why) => {
+                                                        error!("Failed to read TinyURL API response: {}", why);
+                                                    }
+                                                }
+                                            }
+                                            Err(why) => {
+                                                error!("Failed to get TinyURL: {}", why);
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
-                            if let Ok(mut f) =
-                                File::open(format!("{}/path_unique.html", output_dir))
-                            {
-                                interactions.push(InteractMode::Button(
-                                    CreateButton::default()
-                                        .label(dict_lookup(&dict, "patterns.unique"))
-                                        .style(ButtonStyle::Link)
-                                        .url("https://fumen.zui.jp")
-                                        .to_owned(),
-                                ));
-                            }
-
-                            // DEBUG
-                            // if let Err(why) = interact
-                            //     .edit_original_interaction_response(&ctx.http, |m| {
-                            //         m.content("TEST")
-                            //     })
-                            //     .await
-                            // {
-                            //     error!("Cannot respond to edit message: {}", why);
-                            // };
+                            // Set the link button to solution-finder (GitHub).
+                            interactions.push(InteractMode::Button(
+                                CreateButton::default()
+                                    .label("solution-finder (GitHub)")
+                                    .style(ButtonStyle::Link)
+                                    .url("https://github.com/knewjade/solution-finder")
+                                    .emoji(GITHUB_EMOJI)
+                                    .to_owned(),
+                            ));
 
                             sfinder::init_output_dir();
-                            interactions
+                            Interactions::Edit(interactions)
                         } else {
-                            vec![InteractMode::Message(dict_lookup(&dict, "unauthorized"))]
-                        })
+                            Interactions::Some(vec![InteractMode::Message(dict_lookup(
+                                &dict,
+                                "unauthorized",
+                            ))])
+                        }
                     }
 
                     _ => Interactions::Some(vec![InteractMode::Message(
@@ -1498,89 +1537,97 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     )]),
                 };
 
+                let is_edit = content.is_edit();
                 match content {
-                    Interactions::Some(im) => {
-                        // TODO: refactor this.
-                        if let Err(err) = interact
-                            .create_interaction_response(&ctx.http, |response| {
-                                response
-                                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                                    .interaction_response_data(|m| {
-                                        let mut action_row = CreateActionRow::default();
-                                        for i in im {
-                                            match i {
-                                                InteractMode::Message(c) => {
-                                                    m.content(c);
-                                                }
-                                                InteractMode::Attach(a) => {
-                                                    m.add_file(a);
-                                                }
-                                                InteractMode::Embed(e) => {
-                                                    m.add_embed(e);
-                                                }
-                                                InteractMode::Button(b) => {
-                                                    action_row.add_button(b);
-                                                }
+                    Interactions::Some(im) | Interactions::Edit(im) => {
+                        let response = if is_edit {
+                            if let Err(e) = interact
+                                .edit_original_interaction_response(&ctx.http, |res| {
+                                    let mut action_row = CreateActionRow::default();
+                                    for i in im {
+                                        match i {
+                                            InteractMode::Message(c) => {
+                                                res.content(c);
+                                            }
+                                            InteractMode::Attach(_) => {
+                                                /*res.add_file(a);*/
+                                                warn!(
+                                                    "Cannot attach files at edit (cmd: {})",
+                                                    interact.data.name
+                                                );
+                                            }
+                                            InteractMode::Embed(e) => {
+                                                res.add_embed(e);
+                                            }
+                                            InteractMode::Button(b) => {
+                                                action_row.add_button(b);
                                             }
                                         }
-                                        if is_ephemeral {
-                                            m.ephemeral(true);
-                                            is_ephemeral = false;
-                                        }
-                                        if action_row.0.is_empty() {
-                                            m
-                                        } else {
-                                            m.set_components(
-                                                CreateComponents::default()
-                                                    .set_action_row(action_row)
-                                                    .to_owned(),
-                                            )
-                                        }
-                                    })
-                            })
-                            .await
-                        {
-                            let err_msg = err.to_string();
-                            if let serenity::Error::Http(http_err) = err {
-                                if let serenity::http::error::Error::UnsuccessfulRequest(res) =
-                                    *http_err
-                                {
-                                    let mut is_btml_error = false;
-                                    dbg!(&res);
-                                    for e in res.error.errors {
-                                        if e.code == "BASE_TYPE_MAX_LENGTH" {
-                                            is_btml_error = true;
-                                        }
                                     }
-                                    if is_btml_error {
-                                        let dict = dict::btml();
-                                        let msg = dict.get("msg").unwrap();
-                                        interact
-                                            .create_interaction_response(&ctx.http, |response| {
-                                                response
-                                                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                                                    .interaction_response_data(|m| {
-                                                        m.content(if locale == "ja" {
-                                                            &msg.1
-                                                        } else {&msg.0}).ephemeral(true)
-                                                    })
-                                            })
-                                            .await
-                                            .expect("Failed to send a `BASE_TYPE_MAX_LENGTH` message");
-                                        warn!(
-                                            "Could not respond to `{}` command due to character limit. Args: {:?}",
-                                            interact.data.name.as_str(),
-                                            interact.data.options
-                                        );
+                                    /*if is_ephemeral {
+                                        res.ephemeral(true);
+                                        is_ephemeral = false;
+                                    }*/
+                                    if action_row.0.is_empty() {
+                                        res
                                     } else {
-                                        error!("Cannot respond to slash command: {}", err_msg);
+                                        res.components(|c| c.set_action_row(action_row))
                                     }
-                                } else {
-                                    error!("Cannot respond to slash command: {}", err_msg);
-                                }
+                                })
+                                .await
+                            {
+                                Result::Err(e)
                             } else {
-                                error!("Cannot respond to slash command: {}", err_msg);
+                                Result::Ok(())
                             }
+                        } else {
+                            interact
+                                .create_interaction_response(&ctx.http, |res| {
+                                    res.kind(InteractionResponseType::ChannelMessageWithSource)
+                                        .interaction_response_data(|m| {
+                                            let mut action_row = CreateActionRow::default();
+                                            for i in im {
+                                                match i {
+                                                    InteractMode::Message(c) => {
+                                                        m.content(c);
+                                                    }
+                                                    InteractMode::Attach(a) => {
+                                                        m.add_file(a);
+                                                    }
+                                                    InteractMode::Embed(e) => {
+                                                        m.add_embed(e);
+                                                    }
+                                                    InteractMode::Button(b) => {
+                                                        action_row.add_button(b);
+                                                    }
+                                                }
+                                            }
+                                            if is_ephemeral {
+                                                m.ephemeral(true);
+                                                is_ephemeral = false;
+                                            }
+                                            if action_row.0.is_empty() {
+                                                m
+                                            } else {
+                                                m.set_components(
+                                                    CreateComponents::default()
+                                                        .set_action_row(action_row)
+                                                        .to_owned(),
+                                                )
+                                            }
+                                        })
+                                })
+                                .await
+                        };
+                        if let Err(err) = response {
+                            response_interactions::handle_err(
+                                is_edit,
+                                err,
+                                &interact,
+                                ctx,
+                                dict::btml(),
+                            )
+                            .await;
                         }
                     }
                     Interactions::Dev => {
@@ -1617,6 +1664,12 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         s.0.clone()
                     }
                 };
+                let defer = || async {
+                    if let Err(why) = msg_cmp.defer(&ctx).await {
+                        error!("Error while deferring interaction: {}", why);
+                    }
+                };
+
                 match msg_cmp.data.component_type {
                     ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
                         "deleteUnwrappedMsg" => {
@@ -1625,6 +1678,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             }
                         }
                         "jsdRetry" => {
+                            defer().await;
+
                             let dict = dict::jsd_retry();
                             let cmd_dict = dict::jsd();
 
@@ -1648,7 +1703,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 error!("Failed deleting message: {}", why);
                             }
 
-                            let subject = regex::Regex::new(r": (.*) \|")
+                            let subject = Regex::new(r": (.*) \|")
                                 .unwrap()
                                 .captures(&msg_cmp.message.content.replace('\n', "\\n"))
                                 .unwrap()
