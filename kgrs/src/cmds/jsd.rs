@@ -254,7 +254,6 @@ pub async fn jsd_interact_to_discord(
     }
 }
 
-#[allow(clippy::large_enum_variant)]
 pub enum Interaction<'a> {
     AppCmd(&'a ApplicationCommandInteraction),
     MsgCmp(MessageComponentInteraction),

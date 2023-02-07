@@ -1,6 +1,6 @@
 //! Functions for solution-finder
 
-use std::{path::Path, fs};
+use std::{fs, path::Path};
 
 /// Returns a path to the output directory for the solution-finder.
 pub fn output_dir() -> String {
