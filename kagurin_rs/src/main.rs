@@ -1420,6 +1420,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 .unwrap()
                                 .stdout;
                             let stdout = String::from_utf8_lossy(&stdout);
+                            let is_unique_path_exists = !stdout.contains("Found path [unique] = 0");
+                            let is_minimal_path_exists =
+                                !stdout.contains("Found path [minimal] = 0");
 
                             let mut e = CreateEmbed::default();
                             e.title("solution-finder (path)");
@@ -1447,57 +1450,63 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                             // Set the link buttons to the fumen.zui.jp with.
                             for pattern in ["unique", "minimal"] {
-                                if let Ok(mut f) =
-                                    File::open(format!("{}/path_{}.html", output_dir, pattern))
+                                if (pattern == "unique" && is_unique_path_exists)
+                                    || (pattern == "minimal" && is_minimal_path_exists)
                                 {
-                                    let mut mu = String::new();
-                                    if let Err(why) = f.read_to_string(&mut mu) {
-                                        error!(
-                                            "Failed to read /output/path_{}.html: {}",
-                                            pattern, why
-                                        );
-                                    } else {
-                                        let url = Regex::new(r"href='(.+?)'")
-                                            .unwrap()
-                                            .captures(&mu)
-                                            .unwrap()
-                                            .get(1)
-                                            .unwrap()
-                                            .as_str()
-                                            .replace("v115@", "D115@");
+                                    if let Ok(mut f) =
+                                        File::open(format!("{}/path_{}.html", output_dir, pattern))
+                                    {
+                                        let mut mu = String::new();
+                                        if let Err(why) = f.read_to_string(&mut mu) {
+                                            error!(
+                                                "Failed to read /output/path_{}.html: {}",
+                                                pattern, why
+                                            );
+                                        } else {
+                                            let url = Regex::new(r"href='(.+?)'")
+                                                .unwrap()
+                                                .captures(&mu)
+                                                .unwrap()
+                                                .get(1)
+                                                .unwrap()
+                                                .as_str()
+                                                .replace("v115@", "D115@");
 
-                                        // Use TinyURL API
-                                        match reqwest::Client::new()
-                                            .post("http://tinyurl.com/api-create.php")
-                                            .form(&[("url", url)])
-                                            .send()
-                                            .await
-                                        {
-                                            Ok(tinyurl_res) => {
-                                                match tinyurl_res.text().await {
-                                                    Ok(tinyurl) => {
-                                                        // Add the button.
-                                                        interactions.push(InteractMode::Button(
-                                                            CreateButton::default()
-                                                                .label(dict_lookup(
-                                                                    &dict,
-                                                                    &format!(
-                                                                        "patterns.{}",
-                                                                        pattern
-                                                                    ),
-                                                                ))
-                                                                .style(ButtonStyle::Link)
-                                                                .url(tinyurl)
-                                                                .to_owned(),
-                                                        ));
-                                                    }
-                                                    Err(why) => {
-                                                        error!("Failed to read TinyURL API response: {}", why);
+                                            // Use TinyURL API
+                                            match reqwest::Client::new()
+                                                .post("http://tinyurl.com/api-create.php")
+                                                .form(&[("url", url)])
+                                                .send()
+                                                .await
+                                            {
+                                                Ok(tinyurl_res) => {
+                                                    match tinyurl_res.text().await {
+                                                        Ok(tinyurl) => {
+                                                            // Add the button.
+                                                            interactions.push(
+                                                                InteractMode::Button(
+                                                                    CreateButton::default()
+                                                                        .label(dict_lookup(
+                                                                            &dict,
+                                                                            &format!(
+                                                                                "patterns.{}",
+                                                                                pattern
+                                                                            ),
+                                                                        ))
+                                                                        .style(ButtonStyle::Link)
+                                                                        .url(tinyurl)
+                                                                        .to_owned(),
+                                                                ),
+                                                            );
+                                                        }
+                                                        Err(why) => {
+                                                            error!("Failed to read TinyURL API response: {}", why);
+                                                        }
                                                     }
                                                 }
-                                            }
-                                            Err(why) => {
-                                                error!("Failed to get TinyURL: {}", why);
+                                                Err(why) => {
+                                                    error!("Failed to get TinyURL: {}", why);
+                                                }
                                             }
                                         }
                                     }
@@ -1514,7 +1523,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .to_owned(),
                             ));
 
-                            sfinder::init_output_dir();
+                            // sfinder::init_output_dir();
                             Interactions::Edit(interactions)
                         } else {
                             Interactions::Some(vec![InteractMode::Message(dict_lookup(
