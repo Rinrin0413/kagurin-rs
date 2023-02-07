@@ -26,13 +26,13 @@
 
 ### [TETR.IO](https://tetr.io) related commands
 - `/tetr-user <user:name/id>`: Display details of the target TETR.IO user.
-- `/tetr-user <user>`: Search for a TETR.IO account by Discord account.
+- `/tetr-user-search <user>`: Search for a TETR.IO account by Discord account.
 
 ### Admin commands
 - 
 
 ### Commands for users trusted by developer
-- 
+- `/sfinder-path <field:str> [next:str]`: Get the solution to Perfect Clear from a specified field with [solution-finder](https://github.com/knewjade/solution-finder).
 
 ### Commands for Rinrin
 - `/exit`: Kill the bot.
