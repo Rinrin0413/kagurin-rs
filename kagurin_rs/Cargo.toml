@@ -1,7 +1,7 @@
 [package]
 name = "kagurin_rs"
 description.workspace = true
-version = "2.1.3-unstable"
+version = "2.1.4-unstable"
 authors.workspace = true
 license-file.workspace = true
 repository = "https://github.com/Rinrin0413/kagurin-rs"
