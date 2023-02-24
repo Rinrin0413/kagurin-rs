@@ -1210,7 +1210,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             error!("Cannot respond to slash command: {}", why);
                         }
 
-                        let subject = args
+                        let prompts = args
                             .get(0)
                             .unwrap()
                             .value
@@ -1223,7 +1223,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         jsd_interact_to_discord(
                             &ctx,
                             &jsd::Interaction::AppCmd(&interact),
-                            subject,
+                            prompts,
                             dict,
                         )
                         .await;
@@ -1714,7 +1714,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 error!("Failed deleting message: {}", why);
                             }
 
-                            let subject = Regex::new(r": (.*) \|")
+                            let prompts = Regex::new(r": (.*) \|")
                                 .unwrap()
                                 .captures(&msg_cmp.message.content.replace('\n', "\\n"))
                                 .unwrap()
@@ -1726,7 +1726,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             jsd_interact_to_discord(
                                 &ctx,
                                 &jsd::Interaction::MsgCmp(msg_cmp),
-                                subject,
+                                prompts,
                                 cmd_dict,
                             )
                             .await;

@@ -258,9 +258,9 @@ pub mod dict {
             "A problem occurred on the API side.\nSorry, please try again.".to_string(), 
             "API側で問題が発生しました。\n申し訳ありませんが、もう一度お試しください。".to_string()
         ));
-        d.insert("subject".to_string(), (
-            "Subject".to_string(), 
-            "主題".to_string()
+        d.insert("prompts".to_string(), (
+            "Prompts".to_string(), 
+            "プロンプト".to_string()
         ));
         d.insert("sensitiveFrag".to_string(), (
             "\n* This image has the NSFW content flag set.".to_string(), 
