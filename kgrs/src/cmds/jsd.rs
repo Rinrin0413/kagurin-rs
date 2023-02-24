@@ -21,7 +21,7 @@ use std::{collections::HashMap, env};
 
 #[derive(Serialize, Debug, PartialEq)]
 pub struct JSDRequest {
-    /// The subject of the image.
+    /// The prompt of the image.
     pub prompts: String,
     /// Higher values keep your image closer to your prompt(0-20)
     pub scale: f64,
@@ -32,7 +32,7 @@ impl JSDRequest {
     ///
     /// # Arguments
     ///
-    /// - `prompts` - The subject of the image.
+    /// - `prompts` - The prompt of the image.
     ///
     /// - `scale` - Higher values keep your image closer to your prompt(0-20)
     ///
@@ -86,7 +86,7 @@ enum JSDError {
 pub async fn jsd_interact_to_discord(
     ctx: &Context,
     interact: &Interaction<'_>,
-    subject: String,
+    prompts: String,
     dict: HashMap<String, (String, String)>,
 ) {
     let locale = match interact {
@@ -113,7 +113,7 @@ pub async fn jsd_interact_to_discord(
     };
     let _typing = Typing::start(ctx.http.clone(), channel_id.as_u64().to_owned());
 
-    match JSDRequest::new(subject.clone(), 10.).send().await {
+    match JSDRequest::new(prompts.clone(), 10.).send().await {
         Ok(body) => {
             // Image preparation
             let img = base64::decode(body.image.replace("data:image/png;base64,", "").as_bytes())
@@ -150,8 +150,8 @@ pub async fn jsd_interact_to_discord(
                         };
                         m.content(format!(
                             "{}: {} |  {}{}{}{}{}",
-                            dict_lookup(&dict, "subject"),
-                            subject,
+                            dict_lookup(&dict, "prompts"),
+                            prompts,
                             dict_lookup(&dict, "calledBy.before"),
                             username,
                             dict_lookup(&dict, "calledBy.after"),
@@ -205,8 +205,8 @@ pub async fn jsd_interact_to_discord(
                             m.content(format!(
                                 "{}\n{}: {} |",
                                 dict_lookup(&dict, "err.plzRetry"),
-                                dict_lookup(&dict, "subject"),
-                                subject,
+                                dict_lookup(&dict, "prompts"),
+                                prompts,
                             ))
                             .components(|c| {
                                 c.create_action_row(|ar| {
@@ -231,8 +231,8 @@ pub async fn jsd_interact_to_discord(
                             m.content(format!(
                                 "{}\n{}: {} |",
                                 dict_lookup(&dict, "err.plzRetry"),
-                                dict_lookup(&dict, "subject"),
-                                subject,
+                                dict_lookup(&dict, "prompts"),
+                                prompts,
                             ))
                             .components(|c| {
                                 c.create_action_row(|ar| {
