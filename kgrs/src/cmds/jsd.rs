@@ -10,7 +10,7 @@ use serenity::{
     http::typing::Typing,
     model::{
         application::interaction::application_command::ApplicationCommandInteraction,
-        prelude::component::ButtonStyle,
+        prelude::{component::ButtonStyle, interaction::application_command::CommandDataOption},
     },
     model::{
         channel::AttachmentType,
@@ -87,6 +87,7 @@ pub async fn jsd_interact_to_discord(
     ctx: &Context,
     interact: &Interaction<'_>,
     prompts: String,
+    scale: Option<&CommandDataOption>,
     dict: HashMap<String, (String, String)>,
 ) {
     let locale = match interact {
@@ -113,7 +114,13 @@ pub async fn jsd_interact_to_discord(
     };
     let _typing = Typing::start(ctx.http.clone(), channel_id.as_u64().to_owned());
 
-    match JSDRequest::new(prompts.clone(), 10.).send().await {
+    let scale = if let Some(s) = scale {
+        s.value.as_ref().unwrap().as_f64().unwrap()
+    } else {
+        10.
+    };
+
+    match JSDRequest::new(prompts.clone(), scale).send().await {
         Ok(body) => {
             // Image preparation
             let img = base64::decode(body.image.replace("data:image/png;base64,", "").as_bytes())

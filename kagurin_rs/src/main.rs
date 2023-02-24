@@ -407,7 +407,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![(
-                                            "</jsd:1021893935204925550>",
+                                            "</jsd:1078586252393197659>",
                                             dict_lookup(dict, "jsd"),
                                             false,
                                         )])
@@ -1194,7 +1194,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         }
                     }
 
-                    // Create a image with Japanese Stable diffusion | 1021893935204925550
+                    // Generate a image with Japanese Stable diffusion | 1078586252393197659
                     "jsd" => {
                         let dict = dict::jsd();
 
@@ -1220,10 +1220,13 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .unwrap()
                             .to_string();
 
+                        let scale = args.get(1);
+
                         jsd_interact_to_discord(
                             &ctx,
                             &jsd::Interaction::AppCmd(&interact),
                             prompts,
+                            scale,
                             dict,
                         )
                         .await;
@@ -1714,7 +1717,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 error!("Failed deleting message: {}", why);
                             }
 
-                            let prompts = Regex::new(r": (.*) \|")
+                            let prompts = Regex::new(r": (.*) \| ")
                                 .unwrap()
                                 .captures(&msg_cmp.message.content.replace('\n', "\\n"))
                                 .unwrap()
@@ -1723,10 +1726,13 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 .as_str()
                                 .to_string();
 
+                            let scale = None; // TODO: Get scale from message...
+
                             jsd_interact_to_discord(
                                 &ctx,
                                 &jsd::Interaction::MsgCmp(msg_cmp),
                                 prompts,
+                                scale,
                                 cmd_dict,
                             )
                             .await;
