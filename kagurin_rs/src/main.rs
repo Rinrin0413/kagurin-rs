@@ -16,7 +16,10 @@ use regex::Regex;
 use rogger::*;
 use serenity::{
     async_trait,
-    builder::{CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter},
+    builder::{
+        CreateActionRow, CreateButton, CreateComponents, CreateEmbed, CreateEmbedFooter,
+        CreateInputText,
+    },
     http::typing::Typing,
     model::{
         application::{
@@ -25,7 +28,9 @@ use serenity::{
         },
         channel::Message,
         gateway::{Activity, Ready},
-        prelude::{interaction::application_command::CommandDataOptionValue, *},
+        prelude::{
+            component::InputTextStyle, interaction::application_command::CommandDataOptionValue, *,
+        },
     },
     prelude::*,
 };
@@ -634,52 +639,50 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .to_owned(),
                     )]),
 
-                    // Run Rust code with Rust playground | 1018021689793196142
+                    // Run Rust code with Rust playground | 1097501737994162228
                     "rust" => {
-                        /*if let Err(why) = interact
-                            .create_interaction_response(&ctx.http, |response| {
-                                response
-                                    .kind(InteractionResponseType::ChannelMessageWithSource)
-                                    .interaction_response_data(|m| m.content("Running..."))
-                            })
-                            .await
-                        {
-                            error!("Cannot respond to slash command: {}", why);
+                        // let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
+                        // let post_data = playground::PostData {
+                        //     code,
+                        //     crate_type: "bin".to_string(),
+                        //     mode: "debug".to_string(),
+                        //     channel: "stable".to_string(),
+                        //     edition: "2021".to_string(),
+                        //     backtrace: false,
+                        //     tests: false,
+                        // };
+                        // let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
+                        //     &post_data
+                        // );
+                        // match client.send().await {
+                        //     Ok(res) => {
+                        //         let res = res.json::<playground::Response>().await.unwrap();
+                        //         if let Err(why) = interact
+                        //             .edit_original_interaction_response(&ctx.http, |e| {
+                        //                 e.content(format!(
+                        //                     "```\n{:?}\n```",
+                        //                     res.stderr
+                        //                 ))
+                        //             })
+                        //             .await
+                        //         {
+                        //             error!("Cannot respond to edit message: {}", why);
+                        //         }
+                        //     }
+                        //     Err(why) => {
+                        //         error!("Request failed: {}", why);
+                        //     }
+                        // }
+                        Interactions::Modal {
+                            id: "rust".to_string(),
+                            title: "Rust playground".to_string(),
+                            input_texts: vec![CreateInputText::default()
+                                .custom_id("code")
+                                .style(InputTextStyle::Paragraph)
+                                .label("Code")
+                                .placeholder("fn main() {\n    println!(\"Hello, Rust!\");\n}")
+                                .to_owned()],
                         }
-                        let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
-                        let post_data = playground::PostData {
-                            code,
-                            crate_type: "bin".to_string(),
-                            mode: "debug".to_string(),
-                            channel: "stable".to_string(),
-                            edition: "2021".to_string(),
-                            backtrace: false,
-                            tests: false,
-                        };
-                        let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
-                            &post_data
-                        );
-                        match client.send().await {
-                            Ok(res) => {
-                                let res = res.json::<playground::Response>().await.unwrap();
-                                if let Err(why) = interact
-                                    .edit_original_interaction_response(&ctx.http, |e| {
-                                        e.content(format!(
-                                            "```\n{:?}\n```",
-                                            res.stderr
-                                        ))
-                                    })
-                                    .await
-                                {
-                                    error!("Cannot respond to edit message: {}", why);
-                                }
-                            }
-                            Err(why) => {
-                                error!("Request failed: {}", why);
-                            }
-                        }
-                        Interactions::None*/
-                        Interactions::Dev
                     }
 
                     // Display details of the target TETR.IO user | 1018530733314289737
@@ -1594,6 +1597,38 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .await;
                         }
                     }
+                    Interactions::Modal {
+                        id,
+                        title,
+                        input_texts,
+                    } => {
+                        if let Err(err) = interact
+                            .create_interaction_response(&ctx.http, |res| {
+                                res.kind(InteractionResponseType::Modal)
+                                    .interaction_response_data(|m| {
+                                        let mut action_row = CreateActionRow::default();
+                                        for input_text in input_texts {
+                                            action_row.add_input_text(input_text);
+                                        }
+                                        m.custom_id(id).title(title).set_components(
+                                            CreateComponents::default()
+                                                .set_action_row(action_row)
+                                                .to_owned(),
+                                        )
+                                    })
+                            })
+                            .await
+                        {
+                            response_interactions::handle_err(
+                                is_edit,
+                                err,
+                                &interact,
+                                ctx,
+                                dict::btml(),
+                            )
+                            .await;
+                        };
+                    }
                     Interactions::Dev => {
                         if let Err(why) = interact
                             .create_interaction_response(&ctx.http, |response| {
@@ -1728,10 +1763,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
             // ! WARNING: If manage multiple commands at once, Clone the variable `cmd`.
             // !          Recommend always cloning to avoid mistakes.
             let cmd = serenity::builder::CreateApplicationCommand::default();
-            CmdManager::new()
-                .delete(1025594392720965702)
-                .run(&ctx.http)
-                .await;
+            CmdManager::new().run(&ctx.http).await;
         }
     }
 }

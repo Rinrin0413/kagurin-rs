@@ -1,7 +1,7 @@
 use colored::Colorize;
 use rogger::*;
 use serenity::{
-    builder::{CreateButton, CreateEmbed},
+    builder::{CreateButton, CreateEmbed, CreateInputText},
     model::{
         channel::AttachmentType,
         prelude::interaction::{
@@ -22,6 +22,15 @@ pub enum Interactions<'a> {
     ///
     /// Cannot attach files at edit.
     Edit(Vec<InteractMode<'a>>),
+    /// Show a modal.
+    Modal {
+        /// The ID of the modal.
+        id: String,
+        /// The title of the modal.
+        title: String,
+        /// The input texts of the modal.
+        input_texts: Vec<CreateInputText>,
+    },
     /// Send "Not implemented yet :<".
     Dev,
     /// Do nothing.
