@@ -88,19 +88,12 @@ impl CmdManager {
     pub async fn run(self, http: impl AsRef<Http>) {
         println!("[ == Command manager running... == ]");
 
-        // Creates commands.
-        for cmd in self.cmds_to_create {
-            let created_cmd = Command::create_global_application_command(&http, |c| {
-                *c = cmd;
-                c
-            })
-            .await;
-            match created_cmd {
-                Ok(cmd) => println!(
-                    "{}",
-                    format!("Command created: {}({})", cmd.name, cmd.id).green()
-                ),
-                Err(why) => eprintln!("{}", format!("Could not create a command: {}", why).red()),
+        // Deletes commands.
+        for id in self.cmds_to_delete {
+            let cmd = Command::delete_global_application_command(&http, CommandId(id)).await;
+            match cmd {
+                Ok(()) => println!("{}", format!("Command deleted: {}", id).green()),
+                Err(why) => eprintln!("{}", format!("Could not delete a command: {}", why).red()),
             }
         }
 
@@ -120,12 +113,19 @@ impl CmdManager {
             }
         }
 
-        // Deletes commands.
-        for id in self.cmds_to_delete {
-            let cmd = Command::delete_global_application_command(&http, CommandId(id)).await;
-            match cmd {
-                Ok(()) => println!("{}", format!("Command deleted: {}", id).green()),
-                Err(why) => eprintln!("{}", format!("Could not delete a command: {}", why).red()),
+        // Creates commands.
+        for cmd in self.cmds_to_create {
+            let created_cmd = Command::create_global_application_command(&http, |c| {
+                *c = cmd;
+                c
+            })
+            .await;
+            match created_cmd {
+                Ok(cmd) => println!(
+                    "{}",
+                    format!("Command created: {}({})", cmd.name, cmd.id).green()
+                ),
+                Err(why) => eprintln!("{}", format!("Could not create a command: {}", why).red()),
             }
         }
 
