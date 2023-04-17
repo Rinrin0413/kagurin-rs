@@ -36,7 +36,6 @@
 
 ### Commands for Rinrin
 - `/exit`: Kill the bot.
-- `/shutdown`: Shutdown Rinrin's computer.
 
 <!--
 ### Display commands

@@ -298,12 +298,6 @@ pub mod dict {
         d
     }
 
-    pub fn shutdown() ->  HashMap<String, (String, String)> {
-        let mut d = HashMap::new();
-        d.insert("unauthorized".to_string(), unauth());
-        d
-    }
-
     pub fn btml() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("msg".to_string(), (

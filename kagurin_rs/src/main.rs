@@ -232,55 +232,6 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 let mut is_ephemeral = false;
 
                 let content = match interact.data.name.as_str() {
-                    // Shutdown Rinrin's computer | 1025594392720965702
-                    "shutdown" => {
-                        let _dict = dict::shutdown();
-                        // let authed = DEVELOPER.contains(interact.user.id.as_u64());
-                        // let msg = if authed {
-                        //     format!(
-                        //         "Shut down Rinrin's computer at <t:{}:F>",
-                        //         Utc::now().timestamp()
-                        //     )
-                        // } else {
-                        //     dict_lookup(&dict, "unauthorized")
-                        // };
-
-                        // if let Err(why) = interact
-                        //     .create_interaction_response(&ctx.http, |response| {
-                        //         response
-                        //             .kind(InteractionResponseType::ChannelMessageWithSource)
-                        //             .interaction_response_data(|m| m.content(msg))
-                        //     })
-                        //     .await
-                        // {
-                        //     error!("Cannot respond to slash command: {}", why);
-                        // }
-
-                        // if authed {
-                        //     let process = process::Command::new("sudo")
-                        //         .args(["shutdown", "-h", "now"])
-                        //         .spawn()
-                        //         .unwrap();
-
-                        //     // if !stderr.is_empty() {
-                        //     //     if let Err(why) = interact
-                        //     //         .edit_original_interaction_response(&ctx.http, |response| {
-                        //     //             response.content(format!(
-                        //     //                 "Error: {}",
-                        //     //                 String::from_utf8_lossy(&stderr)
-                        //     //             ))
-                        //     //         })
-                        //     //         .await
-                        //     //     {
-                        //     //         error!("Cannot respond to edit command: {}", why);
-                        //     //     }
-                        //     // }
-                        // }
-
-                        // Interactions::None
-
-                        Interactions::Dev
-                    }
 
                     // Kill the bot | 1019672344643522580
                     "exit" => {
@@ -1778,7 +1729,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
             // ! WARNING: If manage multiple commands at once, Clone the variable `cmd`.
             // !          Recommend always cloning to avoid mistakes.
             let cmd = serenity::builder::CreateApplicationCommand::default();
-            CmdManager::new().run(&ctx.http).await;
+            CmdManager::new()
+                .delete(1025594392720965702)
+                .run(&ctx.http)
+                .await;
         }
     }
 }
