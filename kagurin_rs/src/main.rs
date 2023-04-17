@@ -232,7 +232,6 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 let mut is_ephemeral = false;
 
                 let content = match interact.data.name.as_str() {
-
                     // Kill the bot | 1019672344643522580
                     "exit" => {
                         let dict = dict::exit();
