@@ -87,6 +87,10 @@ pub mod dict {
             "Get UNIX timestamp of the specified datetime(UTC).".to_string(), 
             "指定した日時(UTC)の UNIXタイムスタンプを取得します。".to_string()
         ));
+        d.insert("rust".to_string(), (
+            "Run Rust code in Rust playground.".to_string(),
+            "Rust のコードを Rust Playground で実行します。".to_string()
+        ));
         d
     }
 

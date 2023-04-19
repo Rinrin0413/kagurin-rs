@@ -351,6 +351,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 dict_lookup(dict, "ts"),
                                                 false,
                                             ),
+                                            (
+                                                "</rust:1097501737994162228>",
+                                                dict_lookup(dict, "rust"),
+                                                false,
+                                            )
                                         ])
                                         .set_footer(ftr())
                                         .timestamp(Utc::now().to_rfc3339())
