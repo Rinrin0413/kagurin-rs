@@ -375,6 +375,27 @@ pub mod dict {
         d
     }
 
+    pub fn rust() ->  HashMap<String, (String, String)> {
+        let mut d = HashMap::new();
+        d.insert("code".to_string(), (
+            "Code:".to_string(), 
+            "コード:".to_string()
+        ));
+        d.insert("stderr".to_string(), (
+            "stderr:".to_string(), 
+            "標準エラー出力:".to_string()
+        ));
+        d.insert("stdout".to_string(), (
+            "stdout:".to_string(), 
+            "標準出力:".to_string()
+        ));
+        d.insert("err.playground".to_string(), (
+            "Error was occurred on Rust Playground".to_string(),
+            "Rust Playground 側でエラーが発生しました".to_string()
+        ));
+        d
+    }
+
     fn unauth() -> (String, String) {
         (
             "Sorry, you cannot call this command:(".to_string(), 

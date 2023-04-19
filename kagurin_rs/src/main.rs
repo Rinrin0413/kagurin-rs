@@ -4,8 +4,7 @@ use colored::Colorize;
 use kgrs::{
     cmds::{
         jsd::{self, jsd_interact_to_discord},
-        sfinder,
-        //playground
+        playground, sfinder,
         tetr::*,
     },
     response_interactions::{self, InteractMode, Interactions},
@@ -29,7 +28,9 @@ use serenity::{
         channel::Message,
         gateway::{Activity, Ready},
         prelude::{
-            component::InputTextStyle, interaction::application_command::CommandDataOptionValue, *,
+            component::{ActionRowComponent, InputTextStyle},
+            interaction::application_command::CommandDataOptionValue,
+            *,
         },
     },
     prelude::*,
@@ -641,45 +642,15 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                     // Run Rust code with Rust playground | 1097501737994162228
                     "rust" => {
-                        // let code = args.get(0).unwrap().value.as_ref().unwrap().to_string();
-                        // let post_data = playground::PostData {
-                        //     code,
-                        //     crate_type: "bin".to_string(),
-                        //     mode: "debug".to_string(),
-                        //     channel: "stable".to_string(),
-                        //     edition: "2021".to_string(),
-                        //     backtrace: false,
-                        //     tests: false,
-                        // };
-                        // let client = reqwest::Client::new().post("https://play.rust-lang.org/execute").json(
-                        //     &post_data
-                        // );
-                        // match client.send().await {
-                        //     Ok(res) => {
-                        //         let res = res.json::<playground::Response>().await.unwrap();
-                        //         if let Err(why) = interact
-                        //             .edit_original_interaction_response(&ctx.http, |e| {
-                        //                 e.content(format!(
-                        //                     "```\n{:?}\n```",
-                        //                     res.stderr
-                        //                 ))
-                        //             })
-                        //             .await
-                        //         {
-                        //             error!("Cannot respond to edit message: {}", why);
-                        //         }
-                        //     }
-                        //     Err(why) => {
-                        //         error!("Request failed: {}", why);
-                        //     }
-                        // }
+                        let dict = dict::rust();
+
                         Interactions::Modal {
-                            id: "rust".to_string(),
+                            id: "rustCode".to_string(),
                             title: "Rust playground".to_string(),
                             input_texts: vec![CreateInputText::default()
-                                .custom_id("code")
+                                .custom_id("rustCode")
                                 .style(InputTextStyle::Paragraph)
-                                .label("Code")
+                                .label(dict_lookup(&dict, "code"))
                                 .placeholder("fn main() {\n    println!(\"Hello, Rust!\");\n}")
                                 .to_owned()],
                         }
@@ -1648,7 +1619,6 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     Interactions::None => {}
                 }
             }
-            #[allow(clippy::single_match)]
             Interaction::MessageComponent(msg_cmp) => {
                 let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
                     let s = if let Some(s) = dict.get(key) {
@@ -1669,6 +1639,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     }
                 };
 
+                #[allow(clippy::single_match)]
                 match msg_cmp.data.component_type {
                     ComponentType::Button => match msg_cmp.data.custom_id.as_ref() {
                         "deleteUnwrappedMsg" => {
@@ -1724,6 +1695,133 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         }
                         _ => (),
                     },
+                    _ => (),
+                }
+            }
+            Interaction::ModalSubmit(modal_submit) => {
+                let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
+                    let s = if let Some(s) = dict.get(key) {
+                        s
+                    } else {
+                        error!("Invalid dict key: {}", key);
+                        panic!();
+                    };
+                    if modal_submit.locale == "ja" {
+                        s.1.clone()
+                    } else {
+                        s.0.clone()
+                    }
+                };
+
+                #[allow(clippy::single_match)]
+                match modal_submit.data.custom_id.as_ref() {
+                    "rustCode" => {
+                        let dict = dict::rust();
+
+                        if let ActionRowComponent::InputText(it) =
+                            &modal_submit.data.components[0].components[0]
+                        {
+                            let code = &it.value;
+
+                            if let Err(why) = modal_submit
+                                .create_interaction_response(&ctx.http, |response| {
+                                    response
+                                        .kind(InteractionResponseType::ChannelMessageWithSource)
+                                        .interaction_response_data(|m| {
+                                            m.content(format!(
+                                                "{}\n```rs\n{}\n```",
+                                                dict_lookup(&dict, "code"),
+                                                if 3984 < code.len() {
+                                                    code.chars().take(3984).collect::<String>()
+                                                } else {
+                                                    code.to_string()
+                                                }
+                                            ))
+                                        })
+                                })
+                                .await
+                            {
+                                error!("Cannot respond to input text: {}", why);
+                            }
+
+                            let channel_id = modal_submit.channel_id;
+
+                            let post_data = playground::PostData {
+                                code: code.to_string(),
+                                crate_type: "bin".to_string(),
+                                mode: "debug".to_string(),
+                                channel: "stable".to_string(),
+                                edition: "2021".to_string(),
+                                backtrace: false,
+                                tests: false,
+                            };
+                            let client = reqwest::Client::new()
+                                .post("https://play.rust-lang.org/execute")
+                                .json(&post_data);
+
+                            let playground_error = || async {
+                                if let Err(why) = channel_id
+                                    .send_message(&ctx.http, |m| {
+                                        m.embed(|e| {
+                                            e.title(dict_lookup(&dict, "err.playground"))
+                                                .color(MAIN_COL)
+                                        })
+                                    })
+                                    .await
+                                {
+                                    error!("Failed to send message: {}", why);
+                                }
+                            };
+
+                            match client.send().await {
+                                Ok(response) => match response.json::<playground::Response>().await
+                                {
+                                    Ok(res) => {
+                                        let mut stderr = res.stderr;
+                                        if 1016 < stderr.len() {
+                                            stderr = stderr.chars().take(1013).collect();
+                                            stderr.push_str("...");
+                                        }
+                                        let mut stdout = res.stdout;
+                                        if 1016 < stdout.len() {
+                                            stdout = stdout.chars().take(1013).collect();
+                                            stdout.push_str("...");
+                                        }
+                                        if let Err(why) = channel_id
+                                            .send_message(&ctx.http, |m| {
+                                                m.embed(|e| {
+                                                    e.fields(vec![
+                                                        (
+                                                            dict_lookup(&dict, "stderr"),
+                                                            format!("```\n{}\n```", stderr),
+                                                            false,
+                                                        ),
+                                                        (
+                                                            dict_lookup(&dict, "stdout"),
+                                                            format!("```\n{}\n```", stdout),
+                                                            false,
+                                                        ),
+                                                    ])
+                                                    .color(MAIN_COL)
+                                                })
+                                            })
+                                            .await
+                                        {
+                                            error!("Failed to send message: {}", why);
+                                        }
+                                    }
+                                    Err(why) => {
+                                        error!("Cannot parse response: {}", why);
+                                        playground_error().await;
+                                    }
+                                },
+                                Err(why) => {
+                                    error!("Error was occurred on Rust Playground: {}", why);
+                                    playground_error().await;
+                                }
+                            }
+                        }
+                    }
                     _ => (),
                 }
             }
