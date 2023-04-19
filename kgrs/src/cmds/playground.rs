@@ -1,4 +1,4 @@
-/*use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize)]
 pub struct PostData {
@@ -16,7 +16,7 @@ pub struct PostData {
     /// Whether to enable backtrace.
     pub backtrace: bool,
     /// Whether to enable testings.
-    pub tests: bool
+    pub tests: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -24,4 +24,3 @@ pub struct Response {
     pub stdout: String,
     pub stderr: String,
 }
-*/
