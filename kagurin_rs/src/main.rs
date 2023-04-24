@@ -1678,9 +1678,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 error!("Failed deleting message: {}", why);
                             }
 
-                            let prompts = Regex::new(r": (.*) \| ")
+                            let prompts = Regex::new(r": (.*) \|")
                                 .unwrap()
-                                .captures(&msg_cmp.message.content.replace('\n', "\\n"))
+                                .captures(&msg_cmp.message.content)
                                 .unwrap()
                                 .get(1)
                                 .unwrap()
