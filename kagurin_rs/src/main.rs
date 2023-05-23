@@ -130,7 +130,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
             } else {
                 return;
             };
-            if ch.is_nsfw() || (that_msg.embeds.is_empty() && that_msg.content.is_empty()) {
+            if ch.is_nsfw()
+                || (that_msg.embeds.is_empty()
+                    && that_msg.content.is_empty()
+                    && that_msg.attachments.is_empty())
+            {
                 return;
             }
             msg.channel_id
@@ -144,9 +148,13 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         e.description(format!(
                             "**[Jump to the message](https://discord.com/channels/{}/{}/{})**\n\n{}",
                             guild_id, channel_id, msg_id, if that_msg.content.is_empty() {
-                                "||NO CONTENT, BUT HAS EMBED(S)||"
+                                format!("||NO CONTENT, BUT HAS {}(S)||", if that_msg.embeds.is_empty() {
+                                    "ATTACHMENT".to_string()
+                                } else {
+                                    "EMBED".to_string()
+                                })
                             } else {
-                                &that_msg.content
+                                that_msg.content
                             }
                         ));
                         e.field("Sent date:", format!("<t:{}:R>", that_msg.timestamp.unix_timestamp()), true);
