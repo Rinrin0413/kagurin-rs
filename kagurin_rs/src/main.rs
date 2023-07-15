@@ -52,13 +52,13 @@ const GITHUB_EMOJI: ReactionType = ReactionType::Custom {
     name: None,
 };
 const TRUSTED: [u64; 3] = [
-    724976600873041940, // Rinrin.rs
-    801082943371477022, // Rinrin.wgsl
-    680687014072287265, // Rinloid
+    724976600873041940, // rinrin0413
+    801082943371477022, // rinrin.wgsl
+    680687014072287265, // rinloid
 ];
 const DEVELOPERS: [u64; 2] = [
-    724976600873041940, // Rinrin.rs
-    801082943371477022, // Rinrin.wgsl
+    724976600873041940, // rinrin0413
+    801082943371477022, // rinrin.wgsl
 ];
 //const IS_DST: bool = true; // Is daylight saving time(for Sky:CotL)
 
@@ -560,7 +560,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         ),
                                         (
                                             &dict_lookup(dict, "dev"),
-                                            cb("@Rinrin.rs#5671".to_string(), "ansi"),
+                                            cb("@rinrin0413".to_string(), "ansi"),
                                             true,
                                         ),
                                         (
@@ -619,7 +619,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
  [33m.s*R*RRRRRR*===       [0m---------- 
 [33m:sRRRRRRRRRRR*-:-      [34mVersion[0m: {}
  [33m*RRRR*RRRRRRR-:sR     [34mOS[0m: {}
- [33mR***s==ss*****RRR     [34mHost[0m: Rinrin.rs#5671
+ [33mR***s==ss*****RRR     [34mHost[0m: rinrin0413
   [33ms==s-.::=ss=sRRR     [34mMemory[0m: {:.1}MiB / 31873MiB
   [33m=::s=   :=s---RR     [34mUptime[0m: {}
    [33m- ..    ..:-RRR     [34mLanguage[0m: Rust {}
@@ -1847,7 +1847,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
         // Set activity.
         ctx.set_activity(Activity::playing(
-            "スラッシュコマンド実装中... | Dev:Rinrin.rs#5671",
+            "スラッシュコマンド実装中... | Dev:rinrin0413",
         ))
         .await;
 
