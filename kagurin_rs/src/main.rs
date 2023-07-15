@@ -36,7 +36,10 @@ use serenity::{
     prelude::*,
 };
 use std::{collections::HashMap, env, fs::File, io::Read, process, time::Instant};
-use tetr_ch::{client::Client as TetrClient, model::league::Rank};
+use tetr_ch::{
+    client::Client as TetrClient,
+    model::{league::Rank, record::EndContext},
+};
 use thousands::Separable;
 
 const RUST_VERSION: &str = "1.67.0-nightly";
@@ -873,7 +876,14 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     ("VS:", usr.league.vs.unwrap().to_string(), true),
                                                 ]);
                                             }
-                                            if let Some(fl) = record.records.forty_lines.record {
+                                            if let Some(fl) = &record.records.forty_lines.record {
+                                                let end_ctx = if let EndContext::SinglePlay(ec) =
+                                                    &fl.endcontext
+                                                {
+                                                    ec
+                                                } else {
+                                                    unreachable!()
+                                                };
                                                 e.fields(vec![
                                                     (
                                                         "\u{200B}",
@@ -897,12 +907,19 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                         ),
                                                         false,
                                                     ),
-                                                    ("Time:", fmt_forty_lines_time(fl.endcontext.final_time.unwrap()), true),
-                                                    ("PPS:", round_mid(fl.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(fl), true),
+                                                    ("Time:", fmt_forty_lines_time(end_ctx.final_time.unwrap()), true),
+                                                    ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
+                                                    ("Finesse:", fmt_finesse(&end_ctx), true),
                                                 ]);
                                             }
                                             if let Some(bltz) = record.records.blitz.record {
+                                                let end_ctx = if let EndContext::SinglePlay(ec) =
+                                                    &bltz.endcontext
+                                                {
+                                                    ec
+                                                } else {
+                                                    unreachable!()
+                                                };
                                                 e.fields(vec![
                                                     (
                                                         "\u{200B}",
@@ -926,9 +943,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                         ),
                                                         false,
                                                     ),
-                                                    ("Score:", bltz.endcontext.score.unwrap().separate_with_commas(), true),
-                                                    ("PPS:", round_mid(bltz.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(bltz), true),
+                                                    ("Score:", end_ctx.score.unwrap().separate_with_commas(), true),
+                                                    ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
+                                                    ("Finesse:", fmt_finesse(&end_ctx), true),
                                                 ]);
                                             }
                                             e.field(
@@ -1254,7 +1271,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     }
                                 }
                                 Err(why) => Interactions::Some(vec![InteractMode::Message(
-                                    format!("Error: {}", why.to_string()),
+                                    format!("Error: {}", why),
                                 )]),
                             }
                         } else {

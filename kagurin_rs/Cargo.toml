@@ -11,7 +11,7 @@ edition.workspace = true
 
 [dependencies]
 colored = "2"
-tetr_ch = "0.3"
+tetr_ch = "0.4"
 thousands = "0.2.0"
 cjp = "0.1"
 regex = "1.6.0"
