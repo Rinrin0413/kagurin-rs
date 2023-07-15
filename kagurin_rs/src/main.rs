@@ -909,7 +909,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     ),
                                                     ("Time:", fmt_forty_lines_time(end_ctx.final_time.unwrap()), true),
                                                     ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(&end_ctx), true),
+                                                    ("Finesse:", fmt_finesse(end_ctx), true),
                                                 ]);
                                             }
                                             if let Some(bltz) = record.records.blitz.record {
@@ -945,7 +945,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     ),
                                                     ("Score:", end_ctx.score.unwrap().separate_with_commas(), true),
                                                     ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(&end_ctx), true),
+                                                    ("Finesse:", fmt_finesse(end_ctx), true),
                                                 ]);
                                             }
                                             e.field(
