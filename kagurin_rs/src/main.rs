@@ -1028,7 +1028,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     }
                                 }
                                 Err(why) => Interactions::Some(vec![InteractMode::Message(
-                                    format!("Error: {}", why.to_string()),
+                                    format!("Error: {}", why),
                                 )]),
                             }
                         } else {
