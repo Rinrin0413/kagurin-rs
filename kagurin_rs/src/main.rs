@@ -1846,8 +1846,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
         info!("Kagurin-rs v{} is connected.", VER);
 
         // Set activity.
-        ctx.set_activity(Activity::playing(
-            "スラッシュコマンド実装中... | Dev:rinrin0413",
+        ctx.set_activity(Activity::listening(
+            "/help",
         ))
         .await;
 
