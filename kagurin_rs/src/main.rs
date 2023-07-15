@@ -1846,10 +1846,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
         info!("Kagurin-rs v{} is connected.", VER);
 
         // Set activity.
-        ctx.set_activity(Activity::listening(
-            "/help",
-        ))
-        .await;
+        ctx.set_activity(Activity::listening("/help")).await;
 
         // Management of the commands.
         // If you want to run in command management mode,
