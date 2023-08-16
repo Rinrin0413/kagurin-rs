@@ -3,6 +3,7 @@ members = [
     "kagurin_rs",
     "kgrs",
 ]
+resolver = "2"
 
 [workspace.package]
 description = "Faster, reliable and efficient rusted Kagurin bot."
