@@ -1,4 +1,4 @@
-# Kagurin.rs's command list
+# Kagurin.rs' command list
 
 ### Help commands
 - `/help`: Show kind of help commands. 
@@ -34,7 +34,7 @@
 ### Commands for users trusted by developer
 - `/sfinder-path <field:str> [next:str]`: Get the solution to Perfect Clear from a specified field with [solution-finder](https://github.com/knewjade/solution-finder).
 
-### Commands for Rinrin
+### Commands for Rinrin.rs
 - `/exit`: Kill the bot.
 
 <!--
