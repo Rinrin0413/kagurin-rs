@@ -9,7 +9,7 @@ edition.workspace = true
 
 [dependencies]
 colored = "2"
-tetr_ch = "0.4"
+tetr_ch = "0.5"
 base64 = "0.13.0"
 chrono = "0.4"
 #rand = "0.8.5"
