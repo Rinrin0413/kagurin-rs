@@ -16,7 +16,7 @@
 - `/neofetch`: Display information about this bot in an aesthetic and visually pleasing way.
 
 ### Utility commands
-- `/cjp <string:sentence>`: Convert the string to 怪レい日本语(correct Japanese).
+- `/cjp <string:sentence>`: Convert the string to 怪レい日本语(Ayashī Nihongo).
 - `/now`: Get current UNIX timestamp.
 - `/ts <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]`: Get UNIX timestamp of the specified datetime(UTC).
 - `/rust`: Run Rust code in Rust playground.

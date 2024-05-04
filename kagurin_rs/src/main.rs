@@ -1114,7 +1114,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         }
                     }
 
-                    // Convert the string to 怪レい日本语(correct Japanese) | 1021847038545100810
+                    // Convert the string to 怪レい日本语(Ayashī Nihongo) | 1021847038545100810
                     "cjp" => {
                         let dict = dict::cjp();
                         let original = args
