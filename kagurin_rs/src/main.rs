@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use cjp::AsCjp;
+use cjp_v0::AsCJp as AsCjpV0;
 use colored::Colorize;
 use kgrs::{
     cmds::{
@@ -348,7 +349,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![
                                             (
-                                                "</cjp:1021847038545100810> <string:sentence>",
+                                                "</cjp:1021847038545100810> <string:sentence> [string:version]",
                                                 dict_lookup(dict, "cjp"),
                                                 false,
                                             ),
@@ -1124,9 +1125,18 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .as_ref()
                             .unwrap()
                             .as_str()
-                            .unwrap()
-                            .to_string();
-                        let correct = <String as AsRef<str>>::as_ref(&original).cjp();
+                            .unwrap();
+                        let cjp_ver = if let Some(v) = args.get(1) {
+                            v.value.as_ref().unwrap().as_str().unwrap()
+                        } else {
+                            "latest"
+                        };
+
+                        let correct = match cjp_ver {
+                            "v0" => AsCjpV0::cjp(original),
+                            _ => AsCjp::cjp(original),
+                        };
+
                         if 1016 < original.chars().count() || 1016 < correct.chars().count() {
                             Interactions::Some(vec![InteractMode::Message(dict_lookup(
                                 &dict,
@@ -1139,6 +1149,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     .fields([
                                         (dict_lookup(&dict, "input"), cb(original, ""), false),
                                         (dict_lookup(&dict, "output"), cb(correct, ""), false),
+                                        ("".to_string(), format!(
+                                            "Converted with [cjp.rs](https://github.com/Rinrin0413/cjp-rs) ({})",
+                                            match cjp_ver { "v0" => "v0.1.0", _ => "latest" }
+                                        ), false),
                                     ])
                                     .set_footer(ftr())
                                     .timestamp(Utc::now().to_rfc3339())
