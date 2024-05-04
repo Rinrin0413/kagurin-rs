@@ -3,7 +3,7 @@ name = "kgrs"
 description = "A library for Kagurin.rs"
 version = "1.10.6"
 authors.workspace = true
-license-file.workspace = true
+license.workspace = true
 repository = "https://github.com/Rinrin0413/kagurin-rs/tree/master/kgrs"
 edition.workspace = true
 
