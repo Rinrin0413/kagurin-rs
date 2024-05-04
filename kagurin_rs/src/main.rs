@@ -349,7 +349,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![
                                             (
-                                                "</cjp:1021847038545100810> <string:sentence> [string:version]",
+                                                "</cjp:1021847038545100810> <sentence:string> [version:string]",
                                                 dict_lookup(dict, "cjp"),
                                                 false,
                                             ),
@@ -359,7 +359,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 false,
                                             ),
                                             (
-                                                "</ts:1040293233839845396> <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]",
+                                                "</ts:1040293233839845396> <year:integer> <month:integer> <day:integer> [hour:integer] [minute:integer] [second:integer] [millisecond:integer]",
                                                 dict_lookup(dict, "ts"),
                                                 false,
                                             ),
@@ -396,7 +396,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![
                                             (
-                                                "</tetr-user:1018530733314289737> <user:name/id>",
+                                                "</tetr-user:1018530733314289737> <username/user-id:string>",
                                                 dict_lookup(dict, "tetr-user"),
                                                 false,
                                             ),
@@ -447,7 +447,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![(
-                                            "</sfinder-path:1072236238574190754> <field:str> [next:str]",
+                                            "</sfinder-path:1072236238574190754> <field:string> [next:string]",
                                             dict_lookup(dict, "sfinder-path"),
                                             false,
                                         )])

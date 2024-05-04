@@ -1,7 +1,7 @@
 # Kagurin.rs' command list
 
 ### Help commands
-- `/help`: Show kind of help commands. 
+- `/help`: Show kind of help commands.
 - `/help display`: Show help for display commands.
 - `/help util`: Show help for utility commands.
 - `/help fun`: Show help for entertainment commands.
@@ -16,23 +16,23 @@
 - `/neofetch`: Display information about this bot in an aesthetic and visually pleasing way.
 
 ### Utility commands
-- `/cjp <string:sentence> [string:version]`: Convert the string to 怪レい日本语(Ayashī Nihongo).
+- `/cjp <sentence:string> [version:string]`: Convert the string to 怪レい日本语(Ayashī Nihongo).
 - `/now`: Get current UNIX timestamp.
-- `/ts <year:int> <month:int> <day:int> [hour:int] [minute:int] [second:int] [millisecond:int]`: Get UNIX timestamp of the specified datetime(UTC).
+- `/ts <year:integer> <month:integer> <day:integer> [hour:integer] [minute:integer] [second:integer] [millisecond:integer]`: Get UNIX timestamp of the specified datetime(UTC).
 - `/rust`: Run Rust code in Rust playground.
 
 ### Entertainment commands
-- `/jsd <prompts:string> [scale:int]`: Generate a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion).
+- `/jsd <prompts:string> [scale:integer]`: Generate a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion).
 
 ### [TETR.IO](https://tetr.io) related commands
-- `/tetr-user <user:name/id>`: Display details of the target TETR.IO user.
+- `/tetr-user <username/user-id:string>`: Display details of the target TETR.IO user.
 - `/tetr-user-search <user>`: Search for a TETR.IO account by Discord account.
 
 ### Admin commands
-- 
+-
 
 ### Commands for users trusted by developer
-- `/sfinder-path <field:str> [next:str]`: Get the solution to Perfect Clear from a specified field with [solution-finder](https://github.com/knewjade/solution-finder).
+- `/sfinder-path <field:string> [next:string]`: Get the solution to Perfect Clear from a specified field with [solution-finder](https://github.com/knewjade/solution-finder).
 
 ### Commands for Rinrin.rs
 - `/exit`: Kill the bot.
@@ -58,7 +58,7 @@ if no arguments are passed,display the those of the server where called the comm
 - `kgrs!tetr-user <user:str>`: display details of the target TETR.IO user.
 
 ### Administrator commands
-- 
+-
 
 ### Commands for people trusted by developer
 - `kgrs!set_activity <ActivityType:ACTIVITY-TYPE> <content:str>`: change Kagurin'rs's activity.  
