@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use cjp::AsCJp;
+use cjp::AsCjp;
 use colored::Colorize;
 use kgrs::{
     cmds::{
