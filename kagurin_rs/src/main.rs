@@ -380,7 +380,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![(
-                                            "</jsd:1078586252393197659>",
+                                            "</jsd:1078586252393197659> <prompts:string> [scale:integer]",
                                             dict_lookup(dict, "jsd"),
                                             false,
                                         )])
