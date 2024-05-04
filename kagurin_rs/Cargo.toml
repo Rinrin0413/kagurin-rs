@@ -6,7 +6,6 @@ authors.workspace = true
 license.workspace = true
 repository = "https://github.com/Rinrin0413/kagurin-rs"
 readme.workspace = true
-keywords = ["bot", "discord", "discord-bot", "serenity", "serenity-rs" ]
 edition.workspace = true
 
 [dependencies]
