@@ -1,19 +1,18 @@
 [package]
 name = "kagurin_rs"
 description.workspace = true
-version = "2.2.6-unstable"
+version = "2.2.7-unstable"
 authors.workspace = true
-license-file.workspace = true
+license.workspace = true
 repository = "https://github.com/Rinrin0413/kagurin-rs"
 readme.workspace = true
-keywords = ["bot", "discord", "discord-bot", "serenity", "serenity-rs" ]
 edition.workspace = true
 
 [dependencies]
 colored = "2"
 tetr_ch = "0.5"
 thousands = "0.2.0"
-cjp = "0.1"
+cjp = "1.0.0"
 regex = "1.6.0"
 
 [dependencies.serenity]
@@ -47,3 +46,7 @@ features = ["json"]
 [dependencies.rogger]
 version = "*"
 features = ["jst"]
+
+[dependencies.cjp_v0]
+package = "cjp"
+version = "0.1.0"

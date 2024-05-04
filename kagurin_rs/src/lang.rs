@@ -76,7 +76,7 @@ pub mod dict {
             "機能系コマンド一覧".to_string()
         ));
         d.insert("cjp".to_string(), (
-            "Convert the string to 怪レい日本语(correct Japanese).".to_string(), 
+            "Convert the string to 怪レい日本语(Ayashī Nihongo).".to_string(), 
             "渡された文字列を怪レい日本语に変換します。".to_string()
         ));
         d.insert("now".to_string(), (
@@ -238,7 +238,7 @@ pub mod dict {
             "文字列が長すぎます。".to_string()
         ));
         d.insert("title".to_string(), (
-            "Converted to 怪レい日本语(correct Japanese)".to_string(), 
+            "Converted to 怪レい日本语(Ayashī Nihongo)".to_string(), 
             "変换 to 怪レい日本语.".to_string()
         ));
         d.insert("input".to_string(), (
