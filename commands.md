@@ -22,7 +22,8 @@
 - `/rust`: Run Rust code in Rust playground.
 
 ### Entertainment commands
-- `/jsd <prompts:string> [scale:integer]`: Generate a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion).
+-
+<!-- - `/jsd <prompts:string> [scale:integer]`: Generate a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion). -->
 
 ### [TETR.IO](https://tetr.io) related commands
 - `/tetr-user <username/user-id:string>`: Display details of the target TETR.IO user.

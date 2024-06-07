@@ -100,10 +100,6 @@ pub mod dict {
             "Entertainment commands".to_string(), 
             "娯楽系コマンド一覧".to_string()
         ));
-        d.insert("jsd".to_string(), (
-            "Create a image with [Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion).".to_string(), 
-            "[Japanese Stable diffusion](https://github.com/rinnakk/japanese-stable-diffusion) で画像を作成します。".to_string()
-        ));
         d
     }
 
@@ -252,7 +248,7 @@ pub mod dict {
         d
     }
 
-    pub fn jsd() ->  HashMap<String, (String, String)> {
+    /* pub fn jsd() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();
         d.insert("plzWait".to_string(), (
             "Please wait...".to_string(), 
@@ -300,7 +296,7 @@ pub mod dict {
             "再試行中です。お待ち下さい...".to_string()
         ));
         d
-    }
+    } */
 
     pub fn btml() ->  HashMap<String, (String, String)> {
         let mut d = HashMap::new();

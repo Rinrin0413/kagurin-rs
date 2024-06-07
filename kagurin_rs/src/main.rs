@@ -3,11 +3,7 @@ use cjp::AsCjp;
 use cjp_v0::AsCJp as AsCjpV0;
 use colored::Colorize;
 use kgrs::{
-    cmds::{
-        jsd::{self, jsd_interact_to_discord},
-        playground, sfinder,
-        tetr::*,
-    },
+    cmds::{playground, sfinder, tetr::*},
     response_interactions::{self, InteractMode, Interactions},
     util::{fmt::*, *},
 };
@@ -380,8 +376,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         .title(dict_lookup(dict, "title"))
                                         .description(dict_lookup(general_dict, "implSlashCmds"))
                                         .fields(vec![(
-                                            "</jsd:1078586252393197659> <prompts:string> [scale:integer]",
-                                            dict_lookup(dict, "jsd"),
+                                            "/",
+                                            "Nothing here yet :(".to_string(),
                                             false,
                                         )])
                                         .set_footer(ftr())
@@ -1163,7 +1159,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     }
 
                     // Generate a image with Japanese Stable diffusion | 1078586252393197659
-                    "jsd" => {
+                    /* "jsd" => {
                         let dict = dict::jsd();
 
                         // Say "Please wait..."
@@ -1200,8 +1196,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                         .await;
 
                         Interactions::None
-                    }
-
+                    } */
                     // Search for a TETR.IO account by Discord account | 1035478275910275093
                     "tetr-user-search" => {
                         if let CommandDataOptionValue::User(u, _) =
@@ -1664,7 +1659,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                 }
             }
             Interaction::MessageComponent(msg_cmp) => {
-                let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
+                /* let dict_lookup = |dict: &HashMap<String, (String, String)>, key: &str| {
                     let s = if let Some(s) = dict.get(key) {
                         s
                     } else {
@@ -1681,7 +1676,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     if let Err(why) = msg_cmp.defer(&ctx).await {
                         error!("Error while deferring interaction: {}", why);
                     }
-                };
+                }; */
 
                 #[allow(clippy::single_match)]
                 match msg_cmp.data.component_type {
@@ -1691,7 +1686,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 error!("Failed deleting message: {}", why);
                             }
                         }
-                        "jsdRetry" => {
+                        /* "jsdRetry" => {
                             defer().await;
 
                             let dict = dict::jsd_retry();
@@ -1736,7 +1731,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 cmd_dict,
                             )
                             .await;
-                        }
+                        } */
                         _ => (),
                     },
                     _ => (),
