@@ -3,7 +3,6 @@ target/
 
 # for my environment
 TOKEN
-cmdmng.md
 .vscode/
 output/
 

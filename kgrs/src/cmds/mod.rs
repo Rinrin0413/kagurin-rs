@@ -1,6 +1,6 @@
-//! A modules for command of kagrin-rs.
+//! Modules for commands for Kagurin.rs.
 
-pub mod jsd;
 pub mod playground;
 pub mod sfinder;
 pub mod tetr;
+// pub mod jsd;

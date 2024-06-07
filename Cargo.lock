@@ -638,7 +638,7 @@ dependencies = [
 
 [[package]]
 name = "kagurin_rs"
-version = "2.2.7-unstable"
+version = "2.2.8-unstable"
 dependencies = [
  "chrono",
  "cjp 0.1.0",
@@ -656,7 +656,7 @@ dependencies = [
 
 [[package]]
 name = "kgrs"
-version = "1.10.6"
+version = "1.10.7"
 dependencies = [
  "base64 0.13.1",
  "chrono",
