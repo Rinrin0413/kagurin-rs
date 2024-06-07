@@ -1,4 +1,4 @@
-//! A modules for command of kagrin-rs.
+//! Modules for commands for Kagurin.rs.
 
 pub mod playground;
 pub mod sfinder;
