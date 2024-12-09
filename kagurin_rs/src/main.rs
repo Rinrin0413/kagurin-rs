@@ -144,7 +144,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             format!("{}#{}", 
                                 that_msg.author.name, that_msg.author.discriminator
                             )
-                        ).icon_url(&that_msg.author.face()));
+                        ).icon_url(that_msg.author.face()));
                         e.description(format!(
                             "**[Jump to the message](https://discord.com/channels/{}/{}/{})**\n\n{}",
                             guild_id, channel_id, msg_id, if that_msg.content.is_empty() {
@@ -813,7 +813,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     e.field("About me:", cb(bio, ""), false);
                                                 }
                                             }
-                                            e.field("Role:", &usr.role.to_string(), true);
+                                            e.field("Role:", usr.role.to_string(), true);
                                             if 0. <= usr.play_time {
                                                 e.field(
                                                     "Play time:",
@@ -959,7 +959,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 if let Some(f) = usr.national_flag_url() {
                                                     a.icon_url(f);
                                                 }
-                                                a.name(&format!(
+                                                a.name(format!(
                                                     "Lv.{} {} {}xp",
                                                     usr.level(),
                                                     level_symbol(usr.level()),
