@@ -308,7 +308,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     // Show command help | 1014735729139662898
                     "help" => {
                         let general_dict = &dict::help_cmd_general();
-                        if let Some(k) = args.get(0) {
+                        if let Some(k) = args.first() {
                             let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
                             Interactions::Some(vec![InteractMode::Embed(match arg_val {
                                 "display" => {
@@ -672,7 +672,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     // Display details of the target TETR.IO user | 1018530733314289737
                     "tetr-user" => {
                         let mut user = args
-                            .get(0)
+                            .first()
                             .unwrap()
                             .value
                             .as_ref()
@@ -1115,7 +1115,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     "cjp" => {
                         let dict = dict::cjp();
                         let original = args
-                            .get(0)
+                            .first()
                             .unwrap()
                             .value
                             .as_ref()
@@ -1200,7 +1200,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     // Search for a TETR.IO account by Discord account | 1035478275910275093
                     "tetr-user-search" => {
                         if let CommandDataOptionValue::User(u, _) =
-                            args.get(0).unwrap().resolved.as_ref().unwrap()
+                            args.first().unwrap().resolved.as_ref().unwrap()
                         {
                             let dict = dict::tetr_user_search();
 
