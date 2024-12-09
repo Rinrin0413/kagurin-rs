@@ -823,11 +823,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             }
                                             e.field(
                                                 "Friends:",
-                                                if let Some(fc) = usr.friend_count {
-                                                    fc
-                                                } else {
-                                                    0
-                                                },
+                                                usr.friend_count.unwrap_or_default(),
                                                 true,
                                             );
                                             if let Some(br) = &usr.league.best_rank {
