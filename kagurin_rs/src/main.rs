@@ -39,7 +39,7 @@ use tetr_ch::{
 };
 use thousands::Separable;
 
-const RUST_VERSION: &str = "1.73.0-nightly";
+const RUST_VERSION: &str = "1.83.0";
 const OS: &str = "openSUSE Leap 15.5 x86_64";
 
 const VER: &str = env!("CARGO_PKG_VERSION");
