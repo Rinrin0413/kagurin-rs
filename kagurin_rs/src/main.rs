@@ -33,13 +33,10 @@ use serenity::{
     prelude::*,
 };
 use std::{collections::HashMap, env, fs::File, io::Read, process, time::Instant};
-use tetr_ch::{
-    client::Client as TetrClient,
-    model::{league::Rank, record::EndContext},
-};
+use tetr_ch::{model::prelude::*, prelude::*};
 use thousands::Separable;
 
-const RUST_VERSION: &str = "1.73.0-nightly";
+const RUST_VERSION: &str = "1.83.0";
 const OS: &str = "openSUSE Leap 15.5 x86_64";
 
 const VER: &str = env!("CARGO_PKG_VERSION");
@@ -144,7 +141,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             format!("{}#{}", 
                                 that_msg.author.name, that_msg.author.discriminator
                             )
-                        ).icon_url(&that_msg.author.face()));
+                        ).icon_url(that_msg.author.face()));
                         e.description(format!(
                             "**[Jump to the message](https://discord.com/channels/{}/{}/{})**\n\n{}",
                             guild_id, channel_id, msg_id, if that_msg.content.is_empty() {
@@ -308,7 +305,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     // Show command help | 1014735729139662898
                     "help" => {
                         let general_dict = &dict::help_cmd_general();
-                        if let Some(k) = args.get(0) {
+                        if let Some(k) = args.first() {
                             let arg_val = k.value.as_ref().unwrap().as_str().unwrap();
                             Interactions::Some(vec![InteractMode::Embed(match arg_val {
                                 "display" => {
@@ -671,8 +668,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
 
                     // Display details of the target TETR.IO user | 1018530733314289737
                     "tetr-user" => {
-                        let mut user = args
-                            .get(0)
+                        let username = args
+                            .first()
                             .unwrap()
                             .value
                             .as_ref()
@@ -681,66 +678,53 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .unwrap()
                             .to_string();
 
-                        // Anti "Cannot GET" error
-                        user.retain(|c| c != '#');
-                        user.retain(|c| c != '\\');
-                        user.retain(|c| c != '.');
-                        user.retain(|c| c != '/');
-                        user.retain(|c| c != '?');
-                        user.retain(|c| c != ' ');
-
-                        // Anti "500 error"
-                        user.retain(|c| c != '%');
-
-                        if user.is_empty() {
+                        if username.is_empty() {
                             let dict = dict::tetr_user();
                             is_ephemeral = true;
                             Interactions::Some(vec![InteractMode::Message(dict_lookup(
                                 &dict,
                                 "err.plzSendUserNameOrID",
                             ))])
-                        } else if &user.to_lowercase() != "syabetarou" {
+                        } else {
                             let _typing = Typing::start(
                                 ctx.http.clone(),
                                 interact.channel_id.as_u64().to_owned(),
                             )
                             .expect("Failed to start typing: ");
+
                             let before = Instant::now();
-
-                            let response = TetrClient::new().get_user(&user).await;
-
-                            let after = Instant::now();
-                            let latency = || format!("latency: {}ms", (after - before).as_millis());
+                            let response = tetr_ch::client::Client::new().get_user(&username).await;
+                            let mut latency = format!("latency: {}ms", (Instant::now() - before).as_millis());
 
                             match response {
                                 Ok(res) => {
                                     if res.is_success {
-                                        let record = TetrClient::new()
-                                            .get_user_records(&user)
-                                            .await
-                                            .unwrap()
-                                            .data
-                                            .unwrap();
+                                        let user_data = res.data.as_ref().unwrap();
 
-                                        #[allow(unused_variables)]
-                                        let after = Instant::now();
-
-                                        let usr = &res.data.as_ref().unwrap().user;
-                                        if !usr.is_banned() {
+                                        if !user_data.is_banned() {
                                             let mut e = CreateEmbed::default();
+
+                                            let league = tetr_ch::client::Client::new()
+                                                .get_user_league(&user_data.username)
+                                                .await
+                                                .unwrap()
+                                                .data
+                                                .unwrap();
+
+                                            latency = format!("latency: {}ms", (Instant::now() - before).as_millis());
+
                                             e.title(format!(
-                                                "{}{}  ||{}||",
-                                                usr.name.to_uppercase(),
-                                                if usr.is_verified { " ✓" } else { "" },
-                                                usr.id
+                                                "{}  ||{}||",
+                                                user_data.username.to_uppercase(),
+                                                user_data.id
                                             ));
-                                            if usr.is_supporter() {
+                                            if user_data.is_supporter {
                                                 let supporter_card = format!(
                                                     "**<{:★>st$}>**",
                                                     "SUPPORTER",
-                                                    st = (usr.supporter_tier + 9 - 1) as usize
+                                                    st = (user_data.supporter_tier + 9 - 1) as usize
                                                 );
-                                                if usr.is_badstanding() {
+                                                if user_data.is_badstanding {
                                                     e.description(format!(
                                                         "{}\n| **- BAD STANDING -** |",
                                                         supporter_card
@@ -748,48 +732,59 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 } else {
                                                     e.description(supporter_card);
                                                 }
-                                            } else if usr.is_badstanding() {
+                                            } else if user_data.is_badstanding {
                                                 e.description("| **- BAD STANDING -** |");
                                             }
-                                            if usr.is_supporter() || usr.is_admin() {
-                                                if let Some(url) = usr.banner() {
-                                                    e.image(url);
+                                            if let Some(rev) = user_data.banner_revision {
+                                                if (user_data.is_supporter || user_data.is_admin()) && rev != 0 {
+                                                    e.image(format!(
+                                                        "https://tetr.io/user-content/banners/{}.jpg?rv={}",
+                                                        user_data.id, rev
+                                                    ));
                                                 }
                                             }
-                                            if usr.has_badge() {
+                                            if user_data.has_badge() {
                                                 e.field(
-                                                    format!("Badges: {}", badge_emojis(usr)),
+                                                    format!("Badges: {}", badge_emojis(user_data)),
                                                     "\u{200B}",
                                                     false,
                                                 );
                                             }
-                                            let is_rating = 0. <= usr.league.rating;
-                                            if is_rating {
-                                                let rank = usr.league.rank.as_ref();
+                                            let is_rating = 0. <= league.tr;
+                                            if is_rating && league.standing.is_some() {
+                                                let rank = &league.rank;
                                                 e.field(
                                                     format!(
                                                         "〔{} **{:.4}TR** 〕{}",
-                                                        rank_emoji(&rank.to_string()),
-                                                        usr.league.rating,
+                                                        rank_emoji(rank),
+                                                        league.tr,
                                                         match rank {
                                                             Rank::Z => "".to_string(),
                                                             _ => format!(
-                                                                "\n　Global: №{}\n　Local: №{}",
-                                                                usr.league.standing,
-                                                                usr.league.standing_local
+                                                                "\n　Global: №{}{}",
+                                                                league.standing.unwrap(),
+                                                                if let Some(s) = league.standing_local {
+                                                                    if s != -1 {
+                                                                        format!("\n　Local: №{}", s)
+                                                                    } else {
+                                                                        String::new()
+                                                                    }
+                                                                } else {
+                                                                    String::new()
+                                                                }
                                                             ),
                                                         }
                                                     ),
                                                     match rank {
-                                                        Rank::Z => format!(
-                                                            "Probably around {}",
-                                                            rank_emoji(
-                                                                &usr.league
-                                                                    .percentile_rank
-                                                                    .to_string()
+                                                        Rank::Z => if let Some(r) = &league.percentile_rank {
+                                                            format!(
+                                                                "Probably around {}",
+                                                                rank_emoji(r)
                                                             )
-                                                        ),
-                                                        _ => create_progress_bar(usr),
+                                                        } else {
+                                                            String::new()
+                                                        },
+                                                        _ => generate_progress_bar(&league).unwrap_or_default(),
                                                     },
                                                     false,
                                                 );
@@ -797,48 +792,44 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 e.field(
                                                     format!(
                                                         "**{}/10** rating games played",
-                                                        usr.league.play_count
+                                                        league.games_played
                                                     ),
                                                     format!(
                                                         "{} rating games won",
-                                                        usr.league.win_count
+                                                        league.games_won
                                                     ),
                                                     false,
                                                 );
                                             }
-                                            if let Some(bio) = &usr.bio {
+                                            if let Some(bio) = &user_data.bio {
                                                 if !bio.is_empty()
-                                                    && (usr.is_supporter() || usr.is_admin())
+                                                    && (user_data.is_supporter || user_data.is_admin())
                                                 {
                                                     e.field("About me:", cb(bio, ""), false);
                                                 }
                                             }
-                                            e.field("Role:", &usr.role.to_string(), true);
-                                            if 0. <= usr.play_time {
+                                            e.field("Role:", &user_data.role, true);
+                                            if 0. <= user_data.play_time {
                                                 e.field(
                                                     "Play time:",
-                                                    fmt_gametime(usr.play_time),
+                                                    fmt_gametime(user_data.play_time),
                                                     true,
                                                 );
                                             }
                                             e.field(
                                                 "Friends:",
-                                                if let Some(fc) = usr.friend_count {
-                                                    fc
-                                                } else {
-                                                    0
-                                                },
+                                                user_data.friend_count.unwrap_or_default(),
                                                 true,
                                             );
-                                            if let Some(br) = &usr.league.best_rank {
+                                            if let Some(br) = &league.best_rank {
                                                 e.field(
                                                     "Top rank:",
-                                                    rank_emoji(&br.to_string()),
+                                                    rank_emoji(br),
                                                     true,
                                                 );
                                             }
-                                            if let Some(du) = &usr.connections.discord {
-                                                e.field("Discord:", format!("<@!{}>", du.id), true);
+                                            if let Some(d) = &user_data.connections.discord {
+                                                e.field("Discord:", format!("<@!{}>", d.id), true);
                                             }
                                             if is_rating {
                                                 e.fields(vec![
@@ -846,131 +837,137 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                         "\u{200B}",
                                                         format!(
                                                             "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
-                                                            usr.id,
+                                                            user_data.id,
                                                         ),
                                                         false,
                                                     ),
-                                                    ("Glicko:", format!("{:.3}±{:.3}", usr.league.glicko.unwrap(), usr.league.rd.unwrap()), true),
+                                                    ("Glicko:", format!("{:.3}±{:.3}", league.glicko, league.rd.unwrap()), true),
                                                     (
                                                         "Play count:",
-                                                        usr.league.play_count.separate_with_commas(),
+                                                        league.games_played.separate_with_commas(),
                                                         true,
                                                     ),
                                                     (
                                                         "Wins:",
                                                         format!(
                                                             "{} ({:.3}%)",
-                                                            usr.league.win_count.separate_with_commas(),
-                                                            (usr.league.win_count as f64
-                                                                / usr.league.play_count
+                                                            league.games_won.separate_with_commas(),
+                                                            (league.games_won as f64
+                                                                / league.games_played
                                                                     as f64
                                                                 * 100.)
                                                         ),
                                                         true,
                                                     ),
-                                                    ("APM:", usr.league.apm.unwrap().to_string(), true),
-                                                    ("PPS:", usr.league.pps.unwrap().to_string(), true),
-                                                    ("VS:", usr.league.vs.unwrap().to_string(), true),
+                                                    ("APM:", league.apm.unwrap().to_string(), true),
+                                                    ("PPS:", league.pps.unwrap().to_string(), true),
+                                                    ("VS:", league.vs.unwrap().to_string(), true),
                                                 ]);
                                             }
-                                            if let Some(fl) = &record.records.forty_lines.record {
-                                                let end_ctx = if let EndContext::SinglePlay(ec) =
-                                                    &fl.endcontext
-                                                {
-                                                    ec
-                                                } else {
-                                                    unreachable!()
-                                                };
-                                                e.fields(vec![
-                                                    (
-                                                        "\u{200B}",
-                                                        format!(
-                                                            "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
-                                                            fl.record_url(),
-                                                            fl.recorded_at(),
-                                                            if let Some(r) = record.records.forty_lines.rank {
-                                                                format!(
-                                                                    " | №{}{}",
-                                                                    r,
-                                                                    if r == 1 {
-                                                                        "\n| 𝟜𝟘 𝐋𝐈𝐍𝐄𝐒 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
-                                                                    } else {
-                                                                        ""
-                                                                    }
-                                                                )
-                                                            } else {
-                                                                String::new()
-                                                            },
-                                                        ),
-                                                        false,
+                                            // if let Some(fl) = &record.records.forty_lines.record {
+                                            //     let end_ctx = if let EndContext::SinglePlay(ec) =
+                                            //         &fl.endcontext
+                                            //     {
+                                            //         ec
+                                            //     } else {
+                                            //         unreachable!()
+                                            //     };
+                                            //     e.fields(vec![
+                                            //         (
+                                            //             "\u{200B}",
+                                            //             format!(
+                                            //                 "[**== 40 LINES ==**]({}) | Achieved <t:{}:R>{}",
+                                            //                 fl.record_url(),
+                                            //                 fl.recorded_at(),
+                                            //                 if let Some(r) = record.records.forty_lines.rank {
+                                            //                     format!(
+                                            //                         " | №{}{}",
+                                            //                         r,
+                                            //                         if r == 1 {
+                                            //                             "\n| 𝟜𝟘 𝐋𝐈𝐍𝐄𝐒 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
+                                            //                         } else {
+                                            //                             ""
+                                            //                         }
+                                            //                     )
+                                            //                 } else {
+                                            //                     String::new()
+                                            //                 },
+                                            //             ),
+                                            //             false,
+                                            //         ),
+                                            //         ("Time:", fmt_forty_lines_time(end_ctx.final_time.unwrap()), true),
+                                            //         ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
+                                            //         ("Finesse:", fmt_finesse(end_ctx), true),
+                                            //     ]);
+                                            // }
+                                            // if let Some(bltz) = record.records.blitz.record {
+                                            //     let end_ctx = if let EndContext::SinglePlay(ec) =
+                                            //         &bltz.endcontext
+                                            //     {
+                                            //         ec
+                                            //     } else {
+                                            //         unreachable!()
+                                            //     };
+                                            //     e.fields(vec![
+                                            //         (
+                                            //             "\u{200B}",
+                                            //             format!(
+                                            //                 "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
+                                            //                 bltz.record_url(),
+                                            //                 bltz.recorded_at(),
+                                            //                 if let Some(r) = record.records.blitz.rank {
+                                            //                     format!(
+                                            //                         " | №{}{}",
+                                            //                         r,
+                                            //                         if r == 1 {
+                                            //                             "\n| 𝐁𝐋𝐈𝐓𝐙 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
+                                            //                         } else {
+                                            //                             ""
+                                            //                         }
+                                            //                     )
+                                            //                 } else {
+                                            //                     "".to_string()
+                                            //                 },
+                                            //             ),
+                                            //             false,
+                                            //         ),
+                                            //         ("Score:", end_ctx.score.unwrap().separate_with_commas(), true),
+                                            //         ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
+                                            //         ("Finesse:", fmt_finesse(end_ctx), true),
+                                            //     ]);
+                                            // }
+                                            if let Some(m) = &user_data.bot_master {
+                                                e.field("This bot is operated by:", m, false);
+                                            }
+                                            if let Some(c) = res.cache {
+                                                e.field(
+                                                    "\u{200B}",
+                                                    format!(
+                                                        "{} | <t:{}:R>",
+                                                        latency,
+                                                        c.cached_at()
                                                     ),
-                                                    ("Time:", fmt_forty_lines_time(end_ctx.final_time.unwrap()), true),
-                                                    ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(end_ctx), true),
-                                                ]);
+                                                    false,
+                                                );
                                             }
-                                            if let Some(bltz) = record.records.blitz.record {
-                                                let end_ctx = if let EndContext::SinglePlay(ec) =
-                                                    &bltz.endcontext
-                                                {
-                                                    ec
-                                                } else {
-                                                    unreachable!()
-                                                };
-                                                e.fields(vec![
-                                                    (
-                                                        "\u{200B}",
-                                                        format!(
-                                                            "[**== BLITZ ==**]({}) | Achieved <t:{}:R>{}",
-                                                            bltz.record_url(),
-                                                            bltz.recorded_at(),
-                                                            if let Some(r) = record.records.blitz.rank {
-                                                                format!(
-                                                                    " | №{}{}", 
-                                                                    r,
-                                                                    if r == 1 {
-                                                                        "\n| 𝐁𝐋𝐈𝐓𝐙 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍 |"
-                                                                    } else {
-                                                                        ""
-                                                                    }
-                                                                )
-                                                            } else {
-                                                                "".to_string()
-                                                            },
-                                                        ),
-                                                        false,
-                                                    ),
-                                                    ("Score:", end_ctx.score.unwrap().separate_with_commas(), true),
-                                                    ("PPS:", round_mid(end_ctx.pps(), 2).to_string(), true),
-                                                    ("Finesse:", fmt_finesse(end_ctx), true),
-                                                ]);
-                                            }
-                                            e.field(
-                                                "\u{200B}",
-                                                format!(
-                                                    "{} | <t:{}:R>",
-                                                    latency(),
-                                                    res.cached_at()
-                                                ),
-                                                false,
-                                            );
                                             e.timestamp(Utc::now().to_rfc3339());
                                             e.author(|a| {
-                                                if let Some(f) = usr.national_flag_url() {
-                                                    a.icon_url(f);
+                                                if let Some(u) = user_data.national_flag_url() {
+                                                    a.icon_url(u);
                                                 }
-                                                a.name(&format!(
+                                                let level = user_data.level();
+                                                a.name(format!(
                                                     "Lv.{} {} {}xp",
-                                                    usr.level(),
-                                                    level_symbol(usr.level()),
-                                                    usr.xp.separate_with_commas()
+                                                    level,
+                                                    level_symbol(level),
+                                                    user_data.xp.floor().separate_with_commas()
                                                 ))
                                             });
                                             e.color(rank_col(
-                                                &usr.league.rank,
-                                                &usr.league.percentile_rank,
+                                                &league.rank,
+                                                &league.percentile_rank,
                                             ));
-                                            e.thumbnail(usr.face());
+                                            e.thumbnail(user_data.avatar_url());
                                             e.set_footer(ftr());
                                             Interactions::Some(vec![InteractMode::Embed(e)])
                                         } else {
@@ -978,8 +975,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 CreateEmbed::default()
                                                     .title(format!(
                                                         "{}  ||{}||",
-                                                        usr.name.to_uppercase(),
-                                                        usr.id
+                                                        user_data.username.to_uppercase(),
+                                                        user_data.id
                                                     ))
                                                     .description("")
                                                     .thumbnail(
@@ -990,7 +987,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     .footer(|f| {
                                                         f.text(format!(
                                                             "{}\n/tetr-user{}",
-                                                            latency(),
+                                                            latency,
                                                             if let Some(m) =
                                                                 interact.member.as_ref()
                                                             {
@@ -1011,11 +1008,11 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                     } else {
                                         Interactions::Some(vec![InteractMode::Embed(
                                             CreateEmbed::default()
-                                                .title(user.to_uppercase())
+                                                .title(username.to_uppercase())
                                                 .description(format!(
-                                                    "```\n{}\n```\n{}",
-                                                    res.error.unwrap(),
-                                                    latency()
+                                                    "{}\n{}",
+                                                    cb(res.error.expect("there is no error data").msg.expect("there is no error message"), ""),
+                                                    latency
                                                 ))
                                                 .set_footer(ftr())
                                                 .timestamp(Utc::now().to_rfc3339())
@@ -1024,90 +1021,10 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         )])
                                     }
                                 }
-                                Err(why) => Interactions::Some(vec![InteractMode::Message(
-                                    format!("Error: {}", why),
+                                Err(e) => Interactions::Some(vec![InteractMode::Message(
+                                    format!("Error: {}", e),
                                 )]),
                             }
-                        } else {
-                            let before = Instant::now();
-                            let after = Instant::now();
-                            let latency = format!("latency: {}ms", (after - before).as_millis());
-                            Interactions::Some(vec![InteractMode::Embed(
-                                CreateEmbed::default()
-                                    .title("SYABETAROU ✓ ||77a02950-bde0447f9851fd||")
-                                    .description("**<SUPPORTER>**")
-                                    .fields(vec![
-                                        (
-                                            "Badges: <:indev:992100717726810214><:bugbounty:992104885531197511><:secretgrade:992079389611278477><:20tsd:992097227260567553><:allclear:992096168664383622><:100player:992097864081735730><:kod_founder:992096688653209610>| More 18 badges",
-                                            "\u{200B}",
-                                            false,
-                                        ),
-                                        (
-                                            "〔<:xx:994631831460790272> **25000.0000TR** 〕\n　Global: №1\n　Local: №1",
-                                            "<:x_:993091489376776232>|`━━━━━━━━━━━━━━━━━`👑\n**𝐓𝐄𝐓𝐑𝐀 𝐋𝐄𝐀𝐆𝐔𝐄 𝐂𝐇𝐀𝐌𝐏𝐈𝐎𝐍**",
-                                            false,
-                                        ),
-                                        ("About me:", &cb("まいど。😉", ""), false),
-                                        ("Role:", "User", true),
-                                        (
-                                            "Play time:",
-                                            "2000 years",
-                                            true,
-                                        ),
-                                        (
-                                            "Friends:",
-                                            "0",
-                                            true,
-                                        ),
-                                        (
-                                            "Top rank:",
-                                            "<:xx:994631831460790272>",
-                                            true,
-                                        ),
-                                        (
-                                            "Discord:",
-                                            "<@!518899666637553667>",
-                                            true,
-                                        ),
-                                        (
-                                            "\u{200B}",
-                                            "[**== TETRA LEAGUE ==**]()",
-                                            false,
-                                        ),
-                                        ("Glicko:", "9999.999±60.00", true),
-                                        (
-                                            "Play count:",
-                                            "999,999",
-                                            true,
-                                        ),
-                                        (
-                                            "Wins:",
-                                            "999,999 (100.000%)",
-                                            true,
-                                        ),
-                                        ("APM:", "15504.96", true),
-                                        ("PPS:", "108.09", true),
-                                        ("VS:", "45238.5", true),
-                                        (
-                                            "\u{200B}",
-                                            &format!(
-                                                "{} | cached at: <t:{}:R>",
-                                                latency,
-                                                Utc::now().timestamp()
-                                            ),
-                                            false,
-                                        )
-                                    ])
-                                    .set_footer(ftr())
-                                    .timestamp(Utc::now().to_rfc3339())
-                                    .author(|a| {
-                                        a.icon_url("https://tetr.io/res/flags/jp.png");
-                                        a.name("Lv.9999 ⬢ 763,539,360xp")
-                                    })
-                                    .color(0xeca5ff)
-                                    .thumbnail("https://cdn.discordapp.com/avatars/518899666637553667/3ae6b018626d3b596c31c241a56df088.webp")
-                                    .to_owned()
-                            )])
                         }
                     }
 
@@ -1115,7 +1032,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     "cjp" => {
                         let dict = dict::cjp();
                         let original = args
-                            .get(0)
+                            .first()
                             .unwrap()
                             .value
                             .as_ref()
@@ -1199,8 +1116,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                     } */
                     // Search for a TETR.IO account by Discord account | 1035478275910275093
                     "tetr-user-search" => {
-                        if let CommandDataOptionValue::User(u, _) =
-                            args.get(0).unwrap().resolved.as_ref().unwrap()
+                        if let CommandDataOptionValue::User(discord_usr, _) =
+                            args.first().unwrap().resolved.as_ref().unwrap()
                         {
                             let dict = dict::tetr_user_search();
 
@@ -1211,70 +1128,68 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .expect("Failed to start typing: ");
                             let before = Instant::now();
 
-                            let response = TetrClient::new().search_user(&u.id.to_string()).await;
+                            let response = tetr_ch::client::Client::new().search_user(SocialConnection::Discord(discord_usr.id.to_string())).await;
 
                             let after = Instant::now();
 
                             match response {
                                 Ok(res) => {
-                                    if let Some(ud) = res.data {
-                                        let usr_if = ud.user;
-                                        let latency = || {
-                                            format!("latency: {}ms", (after - before).as_millis())
-                                        };
-                                        Interactions::Some(vec![
-                                            InteractMode::Embed(
-                                                CreateEmbed::default()
-                                                    .description(format!(
-                                                        "**{}{}**",
-                                                        u.mention(),
-                                                        dict_lookup(&dict, "accountOf"),
-                                                    ))
-                                                    .fields(vec![
-                                                        (
-                                                            "\u{200B}",
-                                                            format!(
-                                                                "**Name**: {}\n**ID**: `{}`",
-                                                                usr_if.name.to_uppercase(),
-                                                                usr_if.id
-                                                            ),
-                                                            false,
-                                                        ),
-                                                        (
-                                                            "\u{200B}",
-                                                            format!(
-                                                                "cached at: <t:{}:R>",
-                                                                res.cache.unwrap().cached_at()
-                                                            ),
-                                                            false,
-                                                        ),
-                                                    ])
-                                                    .footer(|f| {
-                                                        f.text(latency());
-                                                        f
-                                                    })
-                                                    .timestamp(Utc::now().to_rfc3339())
-                                                    .color(MAIN_COL)
-                                                    .to_owned(),
+                                    if let Some(d) = res.data {
+                                        let user_data = d.user.unwrap();
+                                        let latency = format!("latency: {}ms", (after - before).as_millis());
+                                        let mut e = CreateEmbed::default();
+                                        e.description(format!(
+                                            "**{}{}**",
+                                            discord_usr.mention(),
+                                            dict_lookup(&dict, "accountOf"),
+                                        ));
+                                        e.field(
+                                            "\u{200B}",
+                                            format!(
+                                                "**Name**: {}\n**ID**: `{}`",
+                                                user_data.username.to_uppercase(),
+                                                user_data.id
                                             ),
+                                            false,
+                                        );
+                                        if let Some(c) = res.cache {
+                                            e.field(
+                                                "\u{200B}",
+                                                format!(
+                                                    "{} | <t:{}:R>",
+                                                    latency,
+                                                    c.cached_at()
+                                                ),
+                                                false,
+                                            );
+                                        }
+                                        e.timestamp(Utc::now().to_rfc3339());
+                                        e.color(MAIN_COL);
+                                        e.set_footer(ftr());
+                                        Interactions::Some(vec![
+                                            InteractMode::Embed(e),
                                             InteractMode::Button(
                                                 CreateButton::default()
                                                     .label(dict_lookup(&dict, "btn.label"))
                                                     .style(ButtonStyle::Link)
                                                     .url(format!(
                                                         "https://ch.tetr.io/u/{}",
-                                                        usr_if.name
+                                                        user_data.username
                                                     ))
                                                     .to_owned(),
                                             ),
                                         ])
                                     } else {
                                         Interactions::Some(vec![InteractMode::Message(format!(
-                                            "{} `{}#{}`({}) {}",
+                                            "{} `{}{}`({}) {}",
                                             dict_lookup(&dict, "err.notFound.0"),
-                                            u.name,
-                                            u.discriminator,
-                                            u.id,
+                                            discord_usr.name,
+                                            if discord_usr.discriminator == 0 {
+                                                String::new()
+                                            } else {
+                                                format!("#{}", discord_usr.discriminator)
+                                            },
+                                            discord_usr.id,
                                             dict_lookup(&dict, "err.notFound.1"),
                                         ))])
                                     }
@@ -1921,7 +1836,10 @@ async fn main() {
     intents.insert(GatewayIntents::GUILD_MESSAGES);
 
     // Build client.
-    let mut client = match Client::builder(token, intents).event_handler(Handler).await {
+    let mut client = match serenity::Client::builder(token, intents)
+        .event_handler(Handler)
+        .await
+    {
         Ok(c) => c,
         Err(e) => {
             error!("Failed to build client: {}", e);
