@@ -1534,15 +1534,17 @@ dependencies = [
 
 [[package]]
 name = "tetr_ch"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b757ec6867d1e4ec4883250b5a94ec79c615d3ef3cd76b4ce3f6f0537add7684"
+checksum = "d9367febf89a0c53d03adce4ec00a8959d77a261262ff2bf60b459b87291ff1b"
 dependencies = [
  "chrono",
  "http",
+ "percent-encoding",
  "reqwest",
  "serde",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -1813,6 +1815,15 @@ name = "utf8_iter"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
+
+[[package]]
+name = "uuid"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
+dependencies = [
+ "getrandom",
+]
 
 [[package]]
 name = "vcpkg"
