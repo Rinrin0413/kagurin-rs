@@ -767,7 +767,7 @@ dependencies = [
 
 [[package]]
 name = "kagurin_rs"
-version = "2.2.8-unstable"
+version = "2.2.9-unstable"
 dependencies = [
  "chrono",
  "cjp 0.1.0",
