@@ -709,6 +709,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                 .await
                                                 .unwrap()
                                                 .data
+                                                .unwrap()
                                                 .unwrap();
 
                                             latency = format!("latency: {}ms", (Instant::now() - before).as_millis());
