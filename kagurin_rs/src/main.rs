@@ -736,12 +736,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             } else if user_data.is_badstanding {
                                                 e.description("| **- BAD STANDING -** |");
                                             }
-                                            if let Some(rev) = user_data.banner_revision {
-                                                if (user_data.is_supporter || user_data.is_admin()) && rev != 0 {
-                                                    e.image(format!(
-                                                        "https://tetr.io/user-content/banners/{}.jpg?rv={}",
-                                                        user_data.id, rev
-                                                    ));
+                                            if let Some(u) = user_data.banner_url() {
+                                                if user_data.is_supporter || user_data.is_admin() {
+                                                    e.image(u);
                                                 }
                                             }
                                             if user_data.has_badge() {
