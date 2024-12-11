@@ -785,7 +785,7 @@ dependencies = [
 
 [[package]]
 name = "kgrs"
-version = "1.10.8"
+version = "1.10.9"
 dependencies = [
  "base64 0.13.1",
  "chrono",
