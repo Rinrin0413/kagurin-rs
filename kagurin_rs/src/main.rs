@@ -693,7 +693,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .expect("Failed to start typing: ");
 
                             let before = Instant::now();
-                            let response = tetr_ch::client::Client::new().get_user(&username).await;
+                            let response = tetr_ch::Client::new().get_user(&username).await;
                             let mut latency = format!("latency: {}ms", (Instant::now() - before).as_millis());
 
                             match response {
@@ -704,11 +704,12 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         if !user_data.is_banned() {
                                             let mut e = CreateEmbed::default();
 
-                                            let league = tetr_ch::client::Client::new()
+                                            let league = tetr_ch::Client::new()
                                                 .get_user_league(&user_data.username)
                                                 .await
                                                 .unwrap()
                                                 .data
+                                                .unwrap()
                                                 .unwrap();
 
                                             latency = format!("latency: {}ms", (Instant::now() - before).as_millis());
@@ -735,12 +736,9 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                             } else if user_data.is_badstanding {
                                                 e.description("| **- BAD STANDING -** |");
                                             }
-                                            if let Some(rev) = user_data.banner_revision {
-                                                if (user_data.is_supporter || user_data.is_admin()) && rev != 0 {
-                                                    e.image(format!(
-                                                        "https://tetr.io/user-content/banners/{}.jpg?rv={}",
-                                                        user_data.id, rev
-                                                    ));
+                                            if let Some(u) = user_data.banner_url() {
+                                                if user_data.is_supporter || user_data.is_admin() {
+                                                    e.image(u);
                                                 }
                                             }
                                             if user_data.has_badge() {
@@ -1128,7 +1126,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                             .expect("Failed to start typing: ");
                             let before = Instant::now();
 
-                            let response = tetr_ch::client::Client::new().search_user(SocialConnection::Discord(discord_usr.id.to_string())).await;
+                            let response = tetr_ch::Client::new().search_user(SocialConnection::Discord(discord_usr.id.to_string())).await;
 
                             let after = Instant::now();
 
