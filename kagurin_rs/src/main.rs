@@ -37,7 +37,7 @@ use tetr_ch::{model::prelude::*, prelude::*};
 use thousands::Separable;
 
 const RUST_VERSION: &str = "1.83.0";
-const OS: &str = "openSUSE Leap 15.5 x86_64";
+const OS: &str = "openSUSE Leap 15.6 x86_64";
 
 const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
