@@ -37,7 +37,8 @@ use tetr_ch::{model::prelude::*, prelude::*};
 use thousands::Separable;
 
 const RUST_VERSION: &str = "1.83.0";
-const OS: &str = "openSUSE Leap 15.5 x86_64";
+const OS: &str = "openSUSE Leap 15.6 x86_64";
+const LIB: &str = "Serenity v0.11.7";
 
 const VER: &str = env!("CARGO_PKG_VERSION");
 const MAIN_COL: u32 = 0xB89089;
@@ -567,7 +568,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                         ),
                                         (
                                             &dict_lookup(dict, "lib"),
-                                            cb("Serenity-rs v0.11.5".to_string(), "ansi"),
+                                            cb(LIB.to_string(), "ansi"),
                                             true,
                                         ),
                                         ("OS:", cb(format!("[0;31m{}", OS), "ansi"), true),
@@ -620,7 +621,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
   [33ms==s-.::=ss=sRRR     [34mMemory[0m: {:.1}MiB / 31873MiB
   [33m=::s=   :=s---RR     [34mUptime[0m: {}
    [33m- ..    ..:-RRR     [34mLanguage[0m: Rust {}
-   [33mR:      .-=sRRR     [34mLibrary[0m: Serenity-rs v0.11.5
+   [33mR:      .-=sRRR     [34mLibrary[0m: {}
   [33mRRRs-....:==sRRR     [34mID[0m: {}
   [33m*R RR=-:::--sRRR     [34mServers[0m: {} guilds
  [33ms**:*s--:::==s***s    [34mCreated at[0m: {}
@@ -638,6 +639,7 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                 get_memory_usage(),
                                 get_uptime(),
                                 RUST_VERSION,
+                                LIB,
                                 client.id,
                                 if let Ok(g) = client.guilds(&ctx.http).await {
                                     g.len()
