@@ -836,8 +836,8 @@ English: Do you need help? If so, please use </help:1014735729139662898>.\n\
                                                     (
                                                         "\u{200B}",
                                                         format!(
-                                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/s/league_userrecent_{})",
-                                                            user_data.id,
+                                                            "[**== TETRA LEAGUE ==**](https://ch.tetr.io/u/{}/league)",
+                                                            user_data.username,
                                                         ),
                                                         false,
                                                     ),
